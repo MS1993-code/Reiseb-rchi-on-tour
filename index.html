@@ -210,6 +210,7 @@
   .converter .input{flex:1;min-width:76px;}
   .conv-arrow{color:var(--ink-muted);}
   .conv-result{margin-top:10px;font-size:15px;font-weight:700;color:var(--teal);min-height:20px;}
+  .translate-result-box{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface-alt);border-radius:12px;padding:12px 14px;font-size:15px;font-weight:600;flex-wrap:wrap;}
   .budget-totals{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
   .budget-grand-total{display:flex;align-items:center;gap:8px;background:var(--surface-alt);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;flex-wrap:wrap;}
   .budget-grand-total select{max-width:90px;}
@@ -220,7 +221,7 @@
   .budget-cat{font-weight:600;font-size:14px;}
   .budget-amount{font-size:13px;color:var(--ink-muted);margin-top:2px;}
 
-  .doc-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
+  .doc-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
   .doc-label{font-size:12px;color:var(--ink-muted);}
   .doc-value{font-size:15px;font-weight:600;}
   .doc-tel{color:var(--teal);text-decoration:none;}
@@ -237,6 +238,7 @@
   .ticket-times{display:flex;gap:10px;font-size:12px;color:rgba(245,240,227,0.68);margin-top:3px;}
   .ticket-stub{width:74px;border-left:2px dashed rgba(245,240,227,0.3);padding:12px 8px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;word-break:break-word;color:var(--brass);}
   .ticket-delete{position:absolute;top:6px;right:6px;background:none;border:none;color:rgba(245,240,227,0.65);font-size:13px;cursor:pointer;padding:4px;}
+  .ticket-edit{position:absolute;top:6px;right:26px;background:none;border:none;color:rgba(245,240,227,0.65);font-size:13px;cursor:pointer;padding:4px;}
 
   .diary-place{font-size:12px;color:var(--ink-muted);font-weight:600;margin-bottom:6px;}
   .route-meta{display:flex;gap:14px;font-size:12px;color:var(--ink-muted);margin-bottom:8px;flex-wrap:wrap;}
@@ -608,7 +610,7 @@ let state = {
   showAddDest:false, addingList:null, addingDiary:false, addingBudget:false,
   addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null,
   tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false,
-  addingActivityTicket:false, ticketPhotoTarget:null,
+  addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null,
   collapsedContinents:[], confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
   addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
   recipeId:null, editingRecipe:false, recipeImportDraft:null,
@@ -678,6 +680,8 @@ async function init(){
     if(!t.photoIds) t.photoIds = [];
     if(!t.dayPlan) t.dayPlan = [];
     if(!t.budget) t.budget = [];
+    if(t.buchungsdatum===undefined) t.buchungsdatum = null;
+    if(t.hotelName===undefined) t.hotelName = '';
   });
 
   const migrationDone = await sGet('migration-v2', false);
@@ -692,7 +696,7 @@ async function init(){
     }
     const hasCruiseTrip = trips.some(t=> t.destIds.includes('madeira') && t.destIds.includes('kanaren'));
     if(!hasCruiseTrip){
-      trips.push({id:genId(), dateFrom:'2027-01-16', dateTo:'2027-01-23', type:'Schiffsreise', companions:'', destIds:['madeira','kanaren'], documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[]});
+      trips.push({id:genId(), dateFrom:'2027-01-16', dateTo:'2027-01-23', buchungsdatum:null, hotelName:'', type:'Schiffsreise', companions:'', destIds:['madeira','kanaren'], documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[]});
       await saveTrips();
     }
     await sSet('migration-v2', true);
@@ -1557,7 +1561,7 @@ async function deleteRecipe(id){
 
 /* ---------- Reise (Detailansicht mit 4 Reitern) ---------- */
 async function createNewTrip(){
-  const trip = {id:genId(), dateFrom:null, dateTo:null, type:'Städtetrip', companions:'', destIds:[],
+  const trip = {id:genId(), dateFrom:null, dateTo:null, buchungsdatum:null, hotelName:'', type:'Städtetrip', companions:'', destIds:[],
     documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[]};
   trips.push(trip);
   state.isDraftTrip = true;
@@ -1598,14 +1602,52 @@ async function extractPdfText(file){
   }
   return text;
 }
+let tesseractLoadPromise = null;
+function loadTesseract(){
+  if(typeof Tesseract !== 'undefined') return Promise.resolve();
+  if(tesseractLoadPromise) return tesseractLoadPromise;
+  tesseractLoadPromise = new Promise((resolve, reject)=>{
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Tesseract.js konnte nicht geladen werden'));
+    document.head.appendChild(script);
+  });
+  return tesseractLoadPromise;
+}
+async function extractImageText(file){
+  await loadTesseract();
+  const worker = await Tesseract.createWorker('deu+eng');
+  try{
+    const { data:{ text } } = await worker.recognize(file);
+    return text;
+  } finally {
+    await worker.terminate();
+  }
+}
+function normalizeDateStr(raw){
+  const dmy = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if(dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+  return raw;
+}
 function parseBookingText(text){
-  const result = {dateFrom:null, dateTo:null, matchedDestIds:[], ticket:null};
+  const result = {dateFrom:null, dateTo:null, buchungsdatum:null, hotelName:'', matchedDestIds:[], ticket:null};
+
+  let textForRangeDates = text;
+  const bookingDateMatch = text.match(/(?:Buchungsdatum|Rechnungsdatum|Bestelldatum|Booking date|Order date|Gebucht am|Purchase date)[:\s]*(\d{1,2}\.\d{1,2}\.\d{4}|\d{4}-\d{2}-\d{2})/i);
+  if(bookingDateMatch){
+    result.buchungsdatum = normalizeDateStr(bookingDateMatch[1]);
+    textForRangeDates = textForRangeDates.replace(bookingDateMatch[0], '');
+  }
+  const hotelMatch = text.match(/(?:Hotel|Unterkunft|Apartment|Ferienwohnung|Resort)[:\s]+([A-ZÄÖÜ][^\n,;]{2,50})/);
+  if(hotelMatch){ result.hotelName = hotelMatch[1].trim(); }
+
   const dateMatches = [];
   let m;
   const reDMY = /\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b/g;
-  while((m = reDMY.exec(text))){ dateMatches.push(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`); }
+  while((m = reDMY.exec(textForRangeDates))){ dateMatches.push(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`); }
   const reISO = /\b(\d{4})-(\d{2})-(\d{2})\b/g;
-  while((m = reISO.exec(text))){ dateMatches.push(`${m[1]}-${m[2]}-${m[3]}`); }
+  while((m = reISO.exec(textForRangeDates))){ dateMatches.push(`${m[1]}-${m[2]}-${m[3]}`); }
   if(dateMatches.length){
     dateMatches.sort();
     result.dateFrom = dateMatches[0];
@@ -1633,14 +1675,23 @@ function parseBookingText(text){
 async function onBookingFileSelected(file){
   const trip = trips.find(t=>t.id===state.tripId);
   if(!trip){ showToast('Keine aktive Reise gefunden.'); return; }
-  showToast('Lese Buchungsunterlagen…');
   try{
     const name = file.name.toLowerCase();
     let text = '';
     if(name.endsWith('.pdf')){
+      showToast('Lese Buchungsunterlagen…');
       if(typeof pdfjsLib==='undefined'){ showToast('PDF-Dienst nicht verfügbar (keine Internetverbindung).'); return; }
       text = await extractPdfText(file);
+    } else if(file.type.startsWith('image/')){
+      showToast('Erkenne Text im Screenshot… das kann einen Moment dauern.');
+      try{
+        text = await extractImageText(file);
+      }catch(e){
+        showToast('Texterkennung nicht verfügbar (keine Internetverbindung beim ersten Mal nötig).');
+        return;
+      }
     } else {
+      showToast('Lese Buchungsunterlagen…');
       if(typeof mammoth==='undefined'){ showToast('Datei-Import-Dienst nicht verfügbar.'); return; }
       const arrayBuffer = await file.arrayBuffer();
       const res = await mammoth.extractRawText({arrayBuffer});
@@ -1649,6 +1700,8 @@ async function onBookingFileSelected(file){
     const parsed = parseBookingText(text);
     if(parsed.dateFrom && !trip.dateFrom) trip.dateFrom = parsed.dateFrom;
     if(parsed.dateTo && !trip.dateTo) trip.dateTo = parsed.dateTo;
+    if(parsed.buchungsdatum && !trip.buchungsdatum) trip.buchungsdatum = parsed.buchungsdatum;
+    if(parsed.hotelName && !trip.hotelName) trip.hotelName = parsed.hotelName;
     parsed.matchedDestIds.forEach(id=>{
       if(trip.destIds.length<3 && !trip.destIds.includes(id)) trip.destIds.push(id);
     });
@@ -1661,22 +1714,36 @@ async function onBookingFileSelected(file){
     showToast('Datei konnte nicht gelesen werden.');
   }
 }
+function collectUnterlagenPhotoIds(trip){
+  const ids = [];
+  (trip.tickets||[]).forEach(t=>{ if(t.photoId) ids.push(t.photoId); });
+  (trip.activityTickets||[]).forEach(t=>{ if(t.photoId) ids.push(t.photoId); });
+  (trip.documents||[]).forEach(d=>{ if(d.fileId) ids.push(d.fileId); });
+  return ids;
+}
 async function openTripDetail(tripId, tab){
   state.view='trip'; state.tripId=tripId; state.tripTab=tab||'reisedaten';
-  state.addingTicket=false; state.addingTripDoc=false; state.addingDiary=false;
+  state.addingTicket=false; state.addingTripDoc=false; state.addingDiary=false; state.editingTicketId=null;
   state.addingActivityTicket=false; state.lightboxPhotoId=null; state.lightboxContext=null;
   state.showDayImport=false; state.dayImportDestId=null; state.dayImportRouteId=null;
   const trip = trips.find(t=>t.id===tripId);
-  if(trip) await ensureLinkedGuidesLoaded(trip);
+  if(trip){
+    await ensureLinkedGuidesLoaded(trip);
+    if(state.tripTab==='unterlagen') await ensurePhotosLoaded(collectUnterlagenPhotoIds(trip));
+    if(state.tripTab==='bilder') await ensurePhotosLoaded(trip.photoIds);
+  }
   render();
 }
 async function switchTripTab(tab){
   state.tripTab = tab;
-  state.addingTicket=false; state.addingTripDoc=false; state.addingDiary=false; state.addingActivityTicket=false;
+  state.addingTicket=false; state.addingTripDoc=false; state.addingDiary=false; state.addingActivityTicket=false; state.editingTicketId=null;
   state.showDayImport=false; state.dayImportDestId=null; state.dayImportRouteId=null; state.addingBudget=false;
   const trip = trips.find(t=>t.id===state.tripId);
   if(tab==='bilder'){
     await ensurePhotosLoaded(trip.photoIds);
+  }
+  if(tab==='unterlagen'){
+    await ensurePhotosLoaded(collectUnterlagenPhotoIds(trip));
   }
   if(tab==='reisedaten' || tab==='tagesplaner' || tab==='budget'){
     await ensureLinkedGuidesLoaded(trip);
@@ -1744,8 +1811,9 @@ function renderTripReisedatenTab(trip){
   const bucketlistHtml = renderTripBucketlistSection(trip);
 
   return `
-    <button type="button" class="btn" data-action="trigger-booking-upload" style="margin-bottom:18px;">📄 Aus Buchungsunterlagen befüllen</button>
-    <input type="file" id="booking-file-input" accept=".pdf,.docx" style="display:none">
+    <button type="button" class="btn" data-action="trigger-booking-upload" style="margin-bottom:6px;">📄 Aus Buchungsunterlagen befüllen</button>
+    <p class="hint-text" style="margin-top:0;margin-bottom:18px;">PDF, Word oder Screenshot – Texterkennung bei Screenshots kann etwas dauern.</p>
+    <input type="file" id="booking-file-input" accept=".pdf,.docx,image/*" style="display:none">
     <div class="field-group">
       <label class="field-label">Von</label>
       <input type="date" class="input" data-trip-field="dateFrom" value="${trip.dateFrom||''}">
@@ -1755,6 +1823,14 @@ function renderTripReisedatenTab(trip){
       <input type="date" class="input" data-trip-field="dateTo" value="${trip.dateTo||''}">
     </div>
     <div id="trip-duration-display">${renderTripDurationInfo(trip)}</div>
+    <div class="field-group" style="margin-top:14px;">
+      <label class="field-label">Buchungsdatum</label>
+      <input type="date" class="input" data-trip-field="buchungsdatum" value="${trip.buchungsdatum||''}">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Hotel / Unterkunft</label>
+      <input class="input" data-trip-field="hotelName" value="${escapeHtml(trip.hotelName||'')}" placeholder="z.B. Hotel Praia Mar">
+    </div>
     <div class="field-group" style="margin-top:22px;">
       <label class="field-label">Art der Reise</label>
       <select class="input" data-trip-field="type">
@@ -1889,6 +1965,7 @@ function renderTicketPhotoLink(t, listKey){
     : `<div class="ticket-photo-link" data-action="add-ticket-photo" data-list="${listKey}" data-id="${t.id}">+ Foto/Screenshot hinzufügen</div>`;
 }
 function renderTicketCard(t){
+  if(state.editingTicketId===t.id) return renderTicketEditForm(t);
   const timesParts = [];
   if(t.departTime) timesParts.push('Abflug '+t.departTime);
   if(t.arriveTime) timesParts.push('Ankunft '+t.arriveTime);
@@ -1903,10 +1980,37 @@ function renderTicketCard(t){
       ${renderTicketPhotoLink(t,'tickets')}
     </div>
     <div class="ticket-stub">${t.bookingCode? escapeHtml(t.bookingCode) : '—'}</div>
+    <button type="button" class="ticket-edit" data-action="edit-ticket" data-id="${t.id}">✏️</button>
     <button type="button" class="ticket-delete" data-action="delete-ticket" data-id="${t.id}">✕</button>
   </div>`;
 }
+function renderTicketEditForm(t){
+  return `
+    <div class="inline-form">
+      <label class="field-label">Fluggesellschaft</label>
+      <input class="input" id="edit-ticket-airline" value="${escapeHtml(t.airline||'')}" style="margin-bottom:8px;">
+      <label class="field-label">Flugnummer</label>
+      <input class="input" id="edit-ticket-flightnum" value="${escapeHtml(t.flightNumber||'')}" style="margin-bottom:8px;">
+      <label class="field-label">Datum</label>
+      <input type="date" class="input" id="edit-ticket-date" value="${t.date||''}" style="margin-bottom:8px;">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="input" id="edit-ticket-from" value="${escapeHtml(t.from||'')}" placeholder="Von">
+        <input class="input" id="edit-ticket-to" value="${escapeHtml(t.to||'')}" placeholder="Nach">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="time" class="input" id="edit-ticket-depart" value="${t.departTime||''}">
+        <input type="time" class="input" id="edit-ticket-arrive" value="${t.arriveTime||''}">
+      </div>
+      <label class="field-label">Buchungscode</label>
+      <input class="input" id="edit-ticket-code" value="${escapeHtml(t.bookingCode||'')}" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-edit-ticket" data-id="${t.id}">Speichern</button>
+        <button type="button" class="btn" data-action="cancel-edit-ticket">Abbrechen</button>
+      </div>
+    </div>`;
+}
 function renderActivityTicketCard(t){
+  if(state.editingTicketId===t.id) return renderActivityTicketEditForm(t);
   const timeParts = [];
   if(t.date) timeParts.push(formatDateDe(t.date));
   if(t.time) timeParts.push(t.time+' Uhr');
@@ -1918,8 +2022,28 @@ function renderActivityTicketCard(t){
       ${renderTicketPhotoLink(t,'activityTickets')}
     </div>
     <div class="ticket-stub">${t.bookingCode? escapeHtml(t.bookingCode) : '—'}</div>
+    <button type="button" class="ticket-edit" data-action="edit-ticket" data-id="${t.id}">✏️</button>
     <button type="button" class="ticket-delete" data-action="delete-activity-ticket" data-id="${t.id}">✕</button>
   </div>`;
+}
+function renderActivityTicketEditForm(t){
+  return `
+    <div class="inline-form">
+      <label class="field-label">Bezeichnung</label>
+      <input class="input" id="edit-activity-title" value="${escapeHtml(t.title||'')}" style="margin-bottom:8px;">
+      <label class="field-label">Datum</label>
+      <input type="date" class="input" id="edit-activity-date" value="${t.date||''}" style="margin-bottom:8px;">
+      <label class="field-label">Uhrzeit</label>
+      <input type="time" class="input" id="edit-activity-time" value="${t.time||''}" style="margin-bottom:8px;">
+      <label class="field-label">Ort</label>
+      <input class="input" id="edit-activity-location" value="${escapeHtml(t.location||'')}" style="margin-bottom:8px;">
+      <label class="field-label">Buchungscode</label>
+      <input class="input" id="edit-activity-code" value="${escapeHtml(t.bookingCode||'')}" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-edit-activity-ticket" data-id="${t.id}">Speichern</button>
+        <button type="button" class="btn" data-action="cancel-edit-ticket">Abbrechen</button>
+      </div>
+    </div>`;
 }
 /* --- Tagesplaner tab --- */
 function syncDayPlan(trip){
@@ -2074,7 +2198,11 @@ function renderTripUnterlagenTab(trip){
 
   const docsHtml = trip.documents.length ? trip.documents.map(d=>`
     <div class="doc-row">
-      <div><div class="doc-label">${escapeHtml(d.label)}</div><div class="doc-value">${escapeHtml(d.value)}</div></div>
+      <div style="flex:1;">
+        <div class="doc-label">${escapeHtml(d.label)}</div>
+        <div class="doc-value">${escapeHtml(d.value)}</div>
+        <div style="margin-top:6px;">${renderTripDocFileButton(d)}</div>
+      </div>
       <button type="button" class="btn btn-danger" data-action="delete-trip-doc" data-id="${d.id}">🗑️</button>
     </div>`).join('') : '<p class="empty-state">Noch keine Unterlagen hinterlegt.</p>';
   const docForm = state.addingTripDoc ? `
@@ -2098,6 +2226,7 @@ function renderTripUnterlagenTab(trip){
     ${docsHtml}
     ${docForm}
     <input type="file" id="ticket-photo-input" accept="image/*" style="display:none">
+    <input type="file" id="tripdoc-file-input" accept="image/*,.pdf" style="display:none">
   `;
 }
 async function confirmAddTicket(){
@@ -2122,6 +2251,22 @@ async function deleteTicket(id){
   await saveTrips();
   render();
 }
+async function confirmEditTicket(id){
+  const trip = trips.find(t=>t.id===state.tripId);
+  const t = trip.tickets.find(x=>x.id===id);
+  if(!t) return;
+  t.airline = document.getElementById('edit-ticket-airline').value.trim();
+  t.flightNumber = document.getElementById('edit-ticket-flightnum').value.trim();
+  t.date = document.getElementById('edit-ticket-date').value;
+  t.from = document.getElementById('edit-ticket-from').value.trim();
+  t.to = document.getElementById('edit-ticket-to').value.trim();
+  t.departTime = document.getElementById('edit-ticket-depart').value;
+  t.arriveTime = document.getElementById('edit-ticket-arrive').value;
+  t.bookingCode = document.getElementById('edit-ticket-code').value.trim();
+  await saveTrips();
+  state.editingTicketId = null;
+  render();
+}
 async function confirmAddActivityTicket(){
   const title = document.getElementById('new-activity-title').value.trim();
   const date = document.getElementById('new-activity-date').value;
@@ -2141,6 +2286,19 @@ async function deleteActivityTicket(id){
   await saveTrips();
   render();
 }
+async function confirmEditActivityTicket(id){
+  const trip = trips.find(t=>t.id===state.tripId);
+  const t = trip.activityTickets.find(x=>x.id===id);
+  if(!t) return;
+  t.title = document.getElementById('edit-activity-title').value.trim();
+  t.date = document.getElementById('edit-activity-date').value;
+  t.time = document.getElementById('edit-activity-time').value;
+  t.location = document.getElementById('edit-activity-location').value.trim();
+  t.bookingCode = document.getElementById('edit-activity-code').value.trim();
+  await saveTrips();
+  state.editingTicketId = null;
+  render();
+}
 async function onTicketPhotoSelected(file, listKey, ticketId){
   try{
     const dataUrl = await compressImage(file);
@@ -2156,6 +2314,39 @@ async function onTicketPhotoSelected(file, listKey, ticketId){
     }
     render();
   }catch(e){ showToast('Foto konnte nicht gespeichert werden.'); }
+}
+function readFileAsDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function onTripDocFileSelected(file, docId){
+  try{
+    const isImage = file.type.startsWith('image/');
+    const dataUrl = isImage ? await compressImage(file) : await readFileAsDataUrl(file);
+    const fileId = genId();
+    const fileObj = {dataUrl, filename:file.name, caption:''};
+    await sSet('photo:'+fileId, fileObj);
+    photoCache[fileId] = fileObj;
+    const trip = trips.find(t=>t.id===state.tripId);
+    const doc = trip.documents.find(d=>d.id===docId);
+    if(doc){ doc.fileId = fileId; await saveTrips(); }
+    render();
+  }catch(e){ showToast('Datei konnte nicht gespeichert werden.'); }
+}
+function renderTripDocFileButton(d){
+  if(!d.fileId){
+    return `<button type="button" class="btn" data-action="add-tripdoc-file" data-id="${d.id}" style="padding:6px 10px;font-size:12px;">📎 Datei anhängen</button>`;
+  }
+  const f = photoCache[d.fileId];
+  const isImage = f && f.dataUrl && f.dataUrl.startsWith('data:image');
+  if(isImage){
+    return `<button type="button" class="btn" data-action="view-tripdoc-file" data-id="${d.id}" data-file-id="${d.fileId}" style="padding:6px 10px;font-size:12px;">📎 Ansehen</button>`;
+  }
+  return `<a href="${f?f.dataUrl:'#'}" download="${escapeHtml(f&&f.filename?f.filename:'Datei')}" class="btn" style="padding:6px 10px;font-size:12px;text-decoration:none;display:inline-block;">📎 ${escapeHtml(f&&f.filename?f.filename:'Datei öffnen')}</a>`;
 }
 async function confirmAddTripDoc(){
   const label = document.getElementById('new-tripdoc-label').value.trim();
@@ -2273,7 +2464,7 @@ function renderLightbox(){
   if(!p) return '';
   return `
     <div class="lightbox-overlay" data-action="close-lightbox">
-      <div class="lightbox-content" onclick="event.stopPropagation()">
+      <div class="lightbox-content" data-action="noop">
         <img src="${p.dataUrl}" class="lightbox-img">
         <input class="input" id="lightbox-caption" data-photo-caption="${state.lightboxPhotoId}" placeholder="Bildunterschrift hinzufügen…" style="margin-top:10px;">
         <div class="form-actions" style="margin-top:10px;">
@@ -2301,6 +2492,11 @@ async function deleteLightboxPhoto(){
     const recipe = recipes.find(r=>r.id===ctx.recipeId);
     if(recipe) recipe.photoId = null;
     await sSet('recipes', recipes);
+  } else if(ctx.type==='tripdoc'){
+    const trip = trips.find(t=>t.id===state.tripId);
+    const doc = trip.documents.find(d=>d.id===ctx.docId);
+    if(doc) doc.fileId = null;
+    await saveTrips();
   } else {
     const trip = trips.find(t=>t.id===state.tripId);
     trip.photoIds = trip.photoIds.filter(pid=>pid!==id);
@@ -2329,7 +2525,7 @@ function renderDestination(){
 
   const tabs = [
     ['guide','📖','Reiseführer'],['karte','🗺️','Karte'],['routen','🧭','Routen'],['wanderrouten','🥾','Wanderrouten'],['wetter','⛅','Wetter'],
-    ['listen','✅','Listen'],['sprache','🗣️','Sprachführer'],['faq','❓','FAQ'],['dokumente','🛂','Dokumente']
+    ['listen','✅','Listen'],['sprache','🗣️','Sprache'],['faq','❓','FAQ'],['dokumente','🛂','Dokumente']
   ];
   const tabbar = tabs.map(([key,icon,label])=>
     `<div class="tab ${state.tab===key?'active':''}" data-action="switch-tab" data-tab="${key}">${icon} ${label}</div>`
@@ -2951,14 +3147,62 @@ async function deleteFaq(id){
   render();
 }
 
-/* ---------- Sprachführer tab ---------- */
+/* ---------- Sprache tab ---------- */
+const DEST_LANG = {
+  kapverde: {code:'pt', speech:'pt-PT', name:'Portugiesisch'},
+  azoren: {code:'pt', speech:'pt-PT', name:'Portugiesisch'},
+  madeira: {code:'pt', speech:'pt-PT', name:'Portugiesisch'},
+  norwegen: {code:'no', speech:'nb-NO', name:'Norwegisch'},
+  faeroeer: {code:'fo', speech:'da-DK', name:'Färöisch'},
+  island: {code:'is', speech:'is-IS', name:'Isländisch'},
+  kanaren: {code:'es', speech:'es-ES', name:'Spanisch'},
+  sardinien: {code:'it', speech:'it-IT', name:'Italienisch'},
+  kreta: {code:'el', speech:'el-GR', name:'Griechisch'}
+};
+function speakText(text, langCode){
+  if(!text) return;
+  if(!('speechSynthesis' in window)){ showToast('Sprachausgabe wird von diesem Gerät/Browser nicht unterstützt.'); return; }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = langCode;
+  window.speechSynthesis.speak(utter);
+}
+async function doTranslate(){
+  const dest = getCurrentDest();
+  const langInfo = DEST_LANG[dest.id] || {code:'en', speech:'en-US', name:'Englisch'};
+  const text = document.getElementById('translate-input').value.trim();
+  const resultEl = document.getElementById('translate-result');
+  if(!text){ return; }
+  resultEl.innerHTML = '<p class="hint-text">Übersetze…</p>';
+  try{
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=de|${langInfo.code}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Übersetzung fehlgeschlagen');
+    const data = await res.json();
+    const translated = data.responseData && data.responseData.translatedText;
+    if(!translated) throw new Error('Keine Übersetzung erhalten');
+    state.lastTranslation = translated;
+    resultEl.innerHTML = `
+      <div class="translate-result-box">
+        <div>${escapeHtml(translated)}</div>
+        <button type="button" class="btn" data-action="speak-translation" style="padding:6px 12px;font-size:12px;">🔊 Anhören</button>
+      </div>`;
+  }catch(e){
+    resultEl.innerHTML = '<p class="hint-text">Übersetzung fehlgeschlagen (keine Verbindung zum Dienst).</p>';
+  }
+}
 function renderPhrasesTab(dd){
+  const dest = getCurrentDest();
+  const langInfo = DEST_LANG[dest.id] || {code:'en', speech:'en-US', name:'die Landessprache'};
   const phrases = dd.phrases || [];
   const list = phrases.length ? phrases.map(p=>`
     <div class="diary-entry">
       <div class="diary-date">${escapeHtml(p.german)}</div>
       <div class="diary-text">${escapeHtml(p.local)}</div>
-      <button type="button" class="btn btn-danger" data-action="delete-phrase" data-id="${p.id}">Löschen</button>
+      <div class="form-actions" style="margin-top:8px;">
+        <button type="button" class="btn" data-action="speak-phrase" data-text="${escapeHtml(p.local)}" style="padding:6px 12px;font-size:12px;">🔊 Anhören</button>
+        <button type="button" class="btn btn-danger" data-action="delete-phrase" data-id="${p.id}">Löschen</button>
+      </div>
     </div>`).join('') : '<p class="empty-state">Noch keine Vokabeln eingetragen.</p>';
   const addForm = state.addingPhrase ? `
     <div class="inline-form">
@@ -2971,7 +3215,18 @@ function renderPhrasesTab(dd){
         <button type="button" class="btn" data-action="cancel-add-phrase">Abbrechen</button>
       </div>
     </div>` : `<button type="button" class="btn" data-action="show-add-phrase">+ Vokabel hinzufügen</button>`;
-  return `${addForm}<div style="margin-top:16px;">${list}</div>`;
+
+  return `
+    <h3 class="section-title">Live-Übersetzer (Deutsch → ${escapeHtml(langInfo.name)})</h3>
+    <div class="inline-form">
+      <textarea class="textarea" id="translate-input" placeholder="Text auf Deutsch eingeben…" style="min-height:60px;"></textarea>
+      <button type="button" class="btn btn-add" data-action="do-translate" style="margin-top:8px;">Übersetzen</button>
+      <div id="translate-result" style="margin-top:10px;"></div>
+    </div>
+    <h3 class="section-title" style="margin-top:28px;">Vokabeln</h3>
+    ${addForm}
+    <div style="margin-top:16px;">${list}</div>
+  `;
 }
 async function confirmAddPhrase(){
   const german = document.getElementById('new-phrase-german').value.trim();
@@ -2991,6 +3246,45 @@ async function deletePhrase(id){
 }
 
 /* ---------- Guide-Datei-Import (.docx) ---------- */
+const CHAPTER_FIELD_MAP = [
+  {pattern:/willkommen.*wie sie diesen guide nutzen/i, field:'overview'},
+  {pattern:/verstehen/i, field:'overview'},
+  {pattern:/beste reisezeit/i, field:'bestTime'},
+  {pattern:/einreise.*formalit.*gesundheit/i, field:'entryHealth'},
+  {pattern:/^anreise\b/i, field:'arrival'},
+  {pattern:/fortbewegung vor ort/i, field:'tips'},
+  {pattern:/^unterkunft\b/i, field:'accommodation'},
+  {pattern:/regionen im überblick/i, field:'regions'},
+  {pattern:/fertige routen/i, field:'ROUTES'},
+  {pattern:/top-erlebnisse/i, field:'regions'},
+  {pattern:/essen.*trinken/i, field:'foodDrink'},
+  {pattern:/budget.*kosten/i, field:'tips'},
+  {pattern:/packliste/i, field:'PACKING'},
+  {pattern:/praktisches a.z/i, field:'tips'},
+  {pattern:/natur.*sicherheit.*wanderregeln/i, field:'natureSafety'},
+  {pattern:/checklisten/i, field:'BUCKETLIST'},
+  {pattern:/häufig gestellte fragen/i, field:'FAQ'},
+  {pattern:/zum schluss/i, field:'overview'},
+  {pattern:/mein reisetagebuch/i, field:null}
+];
+function findChapterField(headingText){
+  for(const rule of CHAPTER_FIELD_MAP){
+    if(rule.pattern.test(headingText)) return rule.field;
+  }
+  return 'overview';
+}
+function getSubHeadingText(node){
+  if(node.tagName==='H2' || node.tagName==='H3' || node.tagName==='H4') return node.textContent.trim();
+  if(node.tagName==='P'){
+    const strong = node.querySelector('strong, b');
+    if(strong){
+      const fullText = node.textContent.trim();
+      const strongText = strong.textContent.trim();
+      if(strongText.length>0 && strongText.length===fullText.length && strongText.length<150) return strongText;
+    }
+  }
+  return null;
+}
 async function onGuideFileSelected(file){
   if(typeof mammoth === 'undefined'){
     showToast('Der Datei-Import-Dienst konnte nicht geladen werden (keine Internetverbindung).');
@@ -2998,15 +3292,107 @@ async function onGuideFileSelected(file){
   }
   try{
     const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.extractRawText({arrayBuffer});
-    const text = result.value.trim();
-    if(!text){ showToast('Aus dieser Datei konnte kein Text extrahiert werden.'); return; }
+    const result = await mammoth.convertToHtml({arrayBuffer});
+    const html = result.value;
+    if(!html.trim()){ showToast('Aus dieser Datei konnte kein Text extrahiert werden.'); return; }
+
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const nodes = [...doc.body.children];
     const dd = destDataCache[state.destId];
-    dd.guide.imported = true;
-    dd.guide.importedText = text;
+    const fieldBuckets = {overview:[], bestTime:[], entryHealth:[], arrival:[], accommodation:[], regions:[], foodDrink:[], natureSafety:[], tips:[]};
+    const listBuckets = {BUCKETLIST:[], PACKING:[]};
+    let currentMode = null; // 'field' | 'ROUTES' | 'FAQ' | 'BUCKETLIST' | 'PACKING' | null
+    let currentField = null;
+    let inChapter2 = false;
+    let inSpracheSubsection = false;
+    let subBuffer = null;
+    let anyImported = false;
+
+    function flushSub(){
+      if(subBuffer){
+        const text = subBuffer.lines.join('\n').trim();
+        if(text){
+          if(currentMode==='ROUTES'){ dd.routes.push({id:genId(), title:subBuffer.title||'Route', text}); anyImported = true; }
+          else if(currentMode==='FAQ'){ dd.faq.push({id:genId(), question:subBuffer.title||'Frage', answer:text}); anyImported = true; }
+        }
+      }
+      subBuffer = null;
+    }
+
+    for(const node of nodes){
+      if(node.tagName==='H1'){
+        if(currentMode==='ROUTES' || currentMode==='FAQ') flushSub();
+        const headingText = node.textContent.trim();
+        inChapter2 = /verstehen/i.test(headingText);
+        inSpracheSubsection = false;
+        const field = findChapterField(headingText);
+        currentMode = null; currentField = null;
+        if(field==='ROUTES' || field==='FAQ' || field==='BUCKETLIST' || field==='PACKING'){ currentMode = field; }
+        else if(field!==null){ currentMode = 'field'; currentField = field; }
+        continue;
+      }
+      if(currentMode==='ROUTES' || currentMode==='FAQ'){
+        const subHeading = getSubHeadingText(node);
+        if(subHeading){
+          flushSub();
+          subBuffer = {title:subHeading, lines:[]};
+        } else {
+          const t = node.textContent.trim();
+          if(t){
+            if(!subBuffer) subBuffer = {title:'', lines:[]};
+            subBuffer.lines.push(t);
+          }
+        }
+      } else if(currentMode==='BUCKETLIST' || currentMode==='PACKING'){
+        if(node.tagName==='UL' || node.tagName==='OL'){
+          [...node.querySelectorAll('li')].forEach(li=>{
+            const t = li.textContent.trim();
+            if(t) listBuckets[currentMode].push(t);
+          });
+        }
+      } else if(currentMode==='field' && currentField){
+        if(inChapter2){
+          const subHeading = getSubHeadingText(node);
+          if(subHeading){
+            inSpracheSubsection = /^sprache\b/i.test(subHeading);
+            if(inSpracheSubsection) continue;
+          }
+          if(inSpracheSubsection && node.tagName==='TABLE'){
+            [...node.querySelectorAll('tr')].forEach(tr=>{
+              const cells = [...tr.querySelectorAll('td,th')];
+              if(cells.length>=2){
+                const german = cells[0].textContent.trim();
+                const local = cells[1].textContent.trim();
+                if(german && local && !/^deutsch$/i.test(german)){
+                  dd.phrases.push({id:genId(), german, local});
+                  anyImported = true;
+                }
+              }
+            });
+            continue;
+          }
+        }
+        const t = node.textContent.trim();
+        if(t){ fieldBuckets[currentField].push(t); anyImported = true; }
+      }
+    }
+    if(currentMode==='ROUTES' || currentMode==='FAQ') flushSub();
+
+    Object.keys(fieldBuckets).forEach(field=>{
+      if(fieldBuckets[field].length){
+        const newText = fieldBuckets[field].join('\n\n');
+        dd.guide[field] = dd.guide[field] ? dd.guide[field]+'\n\n'+newText : newText;
+      }
+    });
+    listBuckets.BUCKETLIST.forEach(text=>{ dd.bucketlist.push({id:genId(), text, checked:false}); });
+    listBuckets.PACKING.forEach(text=>{ dd.packing.push({id:genId(), text, checked:false}); });
+    if(listBuckets.BUCKETLIST.length || listBuckets.PACKING.length) anyImported = true;
+
+    dd.guide.imported = false;
     dd.guide.importedFileName = file.name;
     await saveDestData(state.destId);
     render();
+    showToast(anyImported ? 'Reiseführer eingelesen und auf die Reiter verteilt – bitte prüfen.' : 'Es konnte nichts eindeutig zugeordnet werden – bitte manuell prüfen.');
   }catch(e){
     showToast('Datei konnte nicht gelesen werden. Bitte eine .docx-Datei verwenden.');
   }
@@ -3198,7 +3584,7 @@ async function computeBudgetGrandTotal(trip){
   }
 }
 async function fetchRate(base, symbol){
-  const r = await fetch(`https://api.frankfurter.app/latest?base=${base}&symbols=${symbol}`);
+  const r = await fetch(`https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${symbol}`);
   if(!r.ok) throw new Error('rate fetch failed');
   const j = await r.json();
   return j.rates[symbol];
@@ -3422,6 +3808,19 @@ async function onAppClick(e){
     case 'cancel-add-phrase': state.addingPhrase=false; render(); break;
     case 'confirm-add-phrase': await confirmAddPhrase(); break;
     case 'delete-phrase': await deletePhrase(el.dataset.id); break;
+    case 'speak-phrase': {
+      const dest = getCurrentDest();
+      const langInfo = DEST_LANG[dest.id] || {speech:'en-US'};
+      speakText(el.dataset.text, langInfo.speech);
+      break;
+    }
+    case 'do-translate': await doTranslate(); break;
+    case 'speak-translation': {
+      const dest = getCurrentDest();
+      const langInfo = DEST_LANG[dest.id] || {speech:'en-US'};
+      speakText(state.lastTranslation||'', langInfo.speech);
+      break;
+    }
     case 'open-trip-from-dest': await openTripDetail(el.dataset.id, 'reisedaten'); break;
     case 'show-add-ticket': state.addingTicket=true; render(); break;
     case 'cancel-add-ticket': state.addingTicket=false; render(); break;
@@ -3446,6 +3845,17 @@ async function onAppClick(e){
       break;
     case 'view-ticket-photo':
       await openLightbox(el.dataset.photoId, {type:'ticket', listKey:el.dataset.list, ticketId:el.dataset.id});
+      break;
+    case 'edit-ticket': state.editingTicketId = el.dataset.id; render(); break;
+    case 'cancel-edit-ticket': state.editingTicketId = null; render(); break;
+    case 'confirm-edit-ticket': await confirmEditTicket(el.dataset.id); break;
+    case 'confirm-edit-activity-ticket': await confirmEditActivityTicket(el.dataset.id); break;
+    case 'add-tripdoc-file':
+      state.tripDocFileTarget = el.dataset.id;
+      document.getElementById('tripdoc-file-input').click();
+      break;
+    case 'view-tripdoc-file':
+      await openLightbox(el.dataset.fileId, {type:'tripdoc', docId:el.dataset.id});
       break;
     case 'delete-lightbox-photo': await deleteLightboxPhoto(); break;
     case 'trigger-poi-csv-upload': document.getElementById('poi-csv-input').click(); break;
@@ -3491,6 +3901,7 @@ async function onAppClick(e){
     case 'trigger-photo-upload': document.getElementById('photo-input').click(); break;
     case 'view-photo': await openLightbox(el.dataset.id); break;
     case 'close-lightbox': closeLightbox(); break;
+    case 'noop': break;
     case 'show-add-budget': state.addingBudget=true; render(); break;
     case 'cancel-add-budget': state.addingBudget=false; render(); break;
     case 'confirm-add-budget': await confirmAddBudget(); break;
@@ -3518,6 +3929,14 @@ document.getElementById('app').addEventListener('change', async function(e){
     }
     e.target.value='';
     state.ticketPhotoTarget = null;
+  }
+  if(e.target.id==='tripdoc-file-input'){
+    const file = e.target.files[0];
+    if(file && state.tripDocFileTarget){
+      await onTripDocFileSelected(file, state.tripDocFileTarget);
+    }
+    e.target.value='';
+    state.tripDocFileTarget = null;
   }
   if(e.target.id==='recipe-photo-input'){
     const file = e.target.files[0];
