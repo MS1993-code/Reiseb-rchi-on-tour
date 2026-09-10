@@ -1,0 +1,3636 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reisebärchi">
+<meta name="theme-color" content="#3E5142">
+<link rel="manifest" id="app-manifest">
+<link rel="apple-touch-icon" id="app-touch-icon">
+<link rel="icon" id="app-favicon">
+<title>Reisebärchi on Tour</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+  :root{
+    --bg:#F7F1E3;
+    --surface:#FBF7EE;
+    --surface-alt:#EDE3CC;
+    --ink:#332C22;
+    --ink-muted:#7A7060;
+    --navy:#3E5142;
+    --teal:#74886A;
+    --brass:#C99A3E;
+    --green:#6B8F6E;
+    --brick:#B5544A;
+    --border:rgba(51,44,34,0.14);
+    --on-navy:#F5F0E3;
+    --radius:16px;
+    --shadow:0 4px 14px rgba(51,44,34,0.14);
+    color-scheme: light;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#E4D6B0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;}
+  h1,h2,h3{margin:0;}
+  p{margin:0;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important;} }
+
+  /* Home */
+  .header-home{background:var(--navy);color:var(--on-navy);padding:26px 20px 22px;display:flex;align-items:center;gap:14px;}
+  .logo-badge{width:50px;height:50px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid var(--brass);flex:0 0 auto;overflow:hidden;cursor:pointer;}
+  .logo-badge-sm{width:38px;height:38px;}
+  .mascot-svg{width:100%;height:100%;transform-origin:50% 85%;animation:mascotWobble 3.2s ease-in-out infinite;}
+  @keyframes mascotWobble{
+    0%,100%{transform:rotate(0deg) translateY(0);}
+    25%{transform:rotate(-4deg) translateY(-1px);}
+    75%{transform:rotate(4deg) translateY(-1px);}
+  }
+  .mascot-svg.mood-wave{animation:mascotWaveHead 1.4s ease-in-out;}
+  @keyframes mascotWaveHead{
+    0%,100%{transform:rotate(0deg);}
+    20%{transform:rotate(-6deg);} 40%{transform:rotate(5deg);}
+    60%{transform:rotate(-5deg);} 80%{transform:rotate(4deg);}
+  }
+  .mascot-svg.mood-happy{animation:mascotHappyBounce 0.7s ease-in-out 2;}
+  @keyframes mascotHappyBounce{
+    0%,100%{transform:translateY(0) scale(1);}
+    50%{transform:translateY(-10px) scale(1.06);}
+  }
+  .mascot-svg.mood-giggle{animation:mascotGiggle 0.5s ease-in-out 3;}
+  @keyframes mascotGiggle{
+    0%,100%{transform:rotate(0deg) translateX(0);}
+    25%{transform:rotate(-6deg) translateX(-2px);}
+    75%{transform:rotate(6deg) translateX(2px);}
+  }
+  .mascot-mouth{transform-origin:190px 214px;}
+  .mascot-svg.mood-nom .mascot-mouth{animation:mascotNom 0.35s ease-in-out 4;}
+  @keyframes mascotNom{
+    0%,100%{transform:scaleY(1);}
+    50%{transform:scaleY(0.55) translateY(2px);}
+  }
+  .mascot-eyes-happy, .mascot-eyes-squint{opacity:0;}
+  .mascot-svg.mood-happy .mascot-eyes-normal{opacity:0;}
+  .mascot-svg.mood-happy .mascot-eyes-happy{opacity:1;}
+  .mascot-svg.mood-giggle .mascot-eyes-normal{opacity:0;}
+  .mascot-svg.mood-giggle .mascot-eyes-squint{opacity:1;}
+  .mascot-paw{opacity:0;transform-origin:308px 66px;}
+  .mascot-svg.mood-wave .mascot-paw{animation:mascotPawSwing 1.4s ease-in-out;}
+  @keyframes mascotPawSwing{
+    0%{transform:rotate(0deg);opacity:0;}
+    10%{opacity:1;} 20%{transform:rotate(-18deg);} 40%{transform:rotate(14deg);}
+    60%{transform:rotate(-14deg);} 80%{transform:rotate(10deg);}
+    95%{opacity:1;} 100%{transform:rotate(0deg);opacity:0;}
+  }
+  .logo-badge img{width:100%;height:100%;object-fit:cover;}
+  .app-title{font-size:22px;font-weight:700;line-height:1.25;letter-spacing:-0.01em;}
+  .countdown-card{margin:18px 16px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;transition:opacity 0.15s ease;}
+  .countdown-card:active{opacity:0.88;}
+  .countdown-image{height:150px;background-size:cover;background-position:center;}
+  .countdown-image-fallback{display:flex;align-items:center;justify-content:center;font-size:42px;background:var(--surface-alt);}
+  .countdown-info{padding:18px;}
+  .countdown-place{font-size:19px;font-weight:700;margin-bottom:6px;letter-spacing:-0.01em;}
+  .countdown-meta{display:flex;gap:14px;font-size:13px;color:var(--ink-muted);margin-bottom:8px;}
+  .countdown-days{font-size:15px;font-weight:700;color:var(--brass);}
+  .countdown-weather{font-size:13px;color:var(--ink-muted);margin-top:8px;}
+  .countdown-empty{display:flex;align-items:center;gap:14px;padding:20px 18px;color:var(--ink-muted);font-size:14px;}
+  .countdown-empty-icon{font-size:36px;}
+  .home-actions{padding:0 16px;display:flex;flex-direction:column;gap:10px;margin-bottom:8px;}
+  .btn-link-subtle{background:none;border:none;color:var(--ink-muted);font-size:13px;text-decoration:underline;cursor:pointer;padding:8px;display:block;margin:2px auto 4px;text-align:center;}
+  .backup-group{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;margin-top:4px;}
+  .backup-group-label{font-size:12px;color:var(--ink-muted);font-weight:600;width:100%;text-align:center;margin-bottom:-2px;}
+  .btn-block{width:100%;padding:14px 16px;font-size:15px;}
+  .trip-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;margin:0 16px 10px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);cursor:pointer;}
+  .trip-row-title{font-weight:600;font-size:14px;}
+  .trip-row-meta{font-size:12px;color:var(--ink-muted);margin-top:2px;}
+  .dest-checkbox-row{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;}
+  .dest-checkbox-row input{width:18px;height:18px;flex:0 0 auto;}
+  .dest-list{padding:18px 0 30px;}
+  .dest-card{
+    position:relative;display:flex;align-items:center;gap:14px;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px;margin:0 16px 12px;
+    box-shadow:var(--shadow);cursor:pointer;transition:opacity 0.15s ease;
+  }
+  .dest-card:active{opacity:0.85;}
+  .dest-flag{font-size:28px;flex:0 0 auto;}
+  .dest-name{font-size:17px;font-weight:700;letter-spacing:-0.01em;}
+  .dest-meta{font-size:13px;color:var(--ink-muted);margin-top:2px;}
+  .dest-countdown{font-size:12px;color:var(--brass);font-weight:700;margin-top:5px;}
+  .dest-delete{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--ink-muted);font-size:14px;cursor:pointer;padding:5px;line-height:1;}
+  .dest-card-add{border-style:dashed;box-shadow:none;color:var(--ink-muted);}
+  .dest-card-add .dest-name{color:var(--ink-muted);font-weight:600;font-size:15px;}
+
+  /* Destination view */
+  .dest-header{background:var(--navy);color:var(--on-navy);padding:18px 20px 16px;}
+  .dest-header-top{font-size:13px;color:rgba(245,240,227,0.7);margin-bottom:9px;cursor:pointer;}
+  .dest-header-title{font-size:21px;font-weight:700;letter-spacing:-0.01em;}
+  .dest-header-coords{font-size:12px;color:rgba(245,240,227,0.55);margin-top:2px;}
+  .countdown-banner{display:flex;align-items:center;justify-content:space-between;background:var(--surface-alt);padding:12px 20px;font-size:13px;gap:10px;flex-wrap:wrap;}
+  .draft-banner{display:flex;align-items:center;justify-content:space-between;background:var(--surface-alt);padding:12px 20px;font-size:13px;gap:10px;flex-wrap:wrap;border-bottom:2px dashed var(--brass);}
+  .countdown-banner input[type=date]{border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:13px;background:var(--surface);color:var(--ink);font-family:inherit;}
+
+  .tabbar{display:flex;overflow-x:auto;gap:2px;padding:0 10px;background:var(--navy);position:sticky;top:0;z-index:20;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .tabbar::-webkit-scrollbar{display:none;}
+  .tab{flex:0 0 auto;padding:12px 11px;font-size:13px;color:rgba(245,240,227,0.6);border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer;}
+  .tab.active{color:var(--on-navy);border-bottom-color:var(--brass);font-weight:700;}
+
+  .panel{padding:18px 16px 60px;}
+  .section-title{font-size:16px;font-weight:700;margin:0 0 12px;letter-spacing:-0.01em;}
+  .field-group{margin-bottom:16px;}
+  .field-label{display:block;font-size:13px;color:var(--ink-muted);margin-bottom:6px;font-weight:600;}
+  .hint-text{font-size:12px;color:var(--ink-muted);margin:10px 0 16px;}
+  .empty-state{font-size:14px;color:var(--ink-muted);padding:14px 0;}
+
+  .input,.textarea,select.input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:14px;background:var(--surface-alt);color:var(--ink);}
+  .textarea{min-height:90px;resize:vertical;}
+
+  .btn{font-size:14px;font-weight:600;padding:10px 18px;border-radius:22px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;transition:all 0.15s ease;box-shadow:0 2px 5px rgba(51,44,34,0.10);}
+  .btn:active{opacity:0.85;box-shadow:0 1px 2px rgba(51,44,34,0.10);transform:translateY(1px);}
+  .btn-primary{background:var(--teal);color:#fff;border-color:var(--teal);box-shadow:0 3px 8px rgba(116,136,106,0.35);}
+  .btn-add{background:var(--brass);color:var(--navy);border-color:var(--brass);box-shadow:0 3px 8px rgba(201,154,62,0.3);}
+  .btn-danger{background:transparent;color:var(--brick);border-color:transparent;padding:6px 10px;font-size:13px;box-shadow:none;}
+  .btn-home{
+    width:100%;display:flex;align-items:center;gap:12px;text-align:left;
+    padding:15px 18px;font-size:15px;font-weight:600;font-family:inherit;
+    border-radius:var(--radius);border:1px solid var(--border);
+    background:var(--surface);color:var(--ink);cursor:pointer;
+    box-shadow:var(--shadow);transition:all 0.15s ease;
+  }
+  .btn-home:active{opacity:0.85;box-shadow:0 2px 6px rgba(51,44,34,0.12);transform:translateY(1px);}
+
+  .inline-form{background:var(--surface-alt);border-radius:var(--radius);padding:16px;margin:10px 0;}
+  .form-actions{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}
+
+  .list-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .list-item-text{flex:1;font-size:14px;}
+  .list-item.checked .list-item-text{text-decoration:line-through;color:var(--ink-muted);}
+  .checkbox{width:20px;height:20px;border:2px solid var(--teal);border-radius:6px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;cursor:pointer;font-size:13px;color:#fff;}
+  .checkbox.checked{background:var(--teal);}
+
+  .map-container{height:300px;width:100%;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--surface-alt);}
+  .poi-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);gap:10px;}
+  .poi-name{font-weight:600;font-size:14px;}
+  .poi-region{font-size:11px;color:var(--brass);font-weight:700;margin-top:2px;}
+  .poi-geheimtipp-toggle{opacity:0.28;cursor:pointer;margin-right:2px;font-size:13px;}
+  .poi-geheimtipp-toggle.active{opacity:1;}
+  .poi-desc{font-size:12px;color:var(--ink-muted);margin-top:2px;}
+
+  .weather-loading{font-size:14px;color:var(--ink-muted);padding:20px 0;}
+  .weather-now{display:flex;align-items:center;gap:14px;padding:6px 0 16px;}
+  .wn-emoji{font-size:44px;}
+  .wn-temp{font-size:28px;font-weight:700;letter-spacing:-0.01em;}
+  .wn-label{font-size:14px;color:var(--ink-muted);}
+  .wn-meta{display:flex;gap:14px;font-size:12px;color:var(--ink-muted);margin-top:4px;}
+  .weather-forecast{display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:14px;}
+  .weather-day{text-align:center;font-size:12px;}
+  .wd-day{color:var(--ink-muted);margin-bottom:4px;}
+  .wd-emoji{font-size:20px;margin-bottom:4px;}
+
+  .diary-entry{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;background:var(--surface);}
+  .diary-date{font-size:12px;color:var(--brass);font-weight:700;margin-bottom:6px;}
+  .diary-text{font-size:14px;line-height:1.5;white-space:pre-wrap;margin-bottom:8px;}
+
+  .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .photo-thumb{aspect-ratio:1;border-radius:10px;background-size:cover;background-position:center;cursor:pointer;border:1px solid var(--border);}
+  .lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000;}
+  .lightbox-content{background:var(--surface);border-radius:var(--radius);padding:16px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;}
+  .lightbox-img{width:100%;border-radius:10px;display:block;}
+
+  .converter{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;}
+  .converter .input{flex:1;min-width:76px;}
+  .conv-arrow{color:var(--ink-muted);}
+  .conv-result{margin-top:10px;font-size:15px;font-weight:700;color:var(--teal);min-height:20px;}
+  .budget-totals{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .budget-grand-total{display:flex;align-items:center;gap:8px;background:var(--surface-alt);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;flex-wrap:wrap;}
+  .budget-grand-total select{max-width:90px;}
+  #budget-grand-total-value{margin-left:auto;font-weight:700;color:var(--brass);}
+  .budget-total-row{background:var(--surface-alt);padding:8px 14px;border-radius:10px;font-size:13px;display:flex;gap:8px;font-weight:600;}
+  .budget-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .budget-row.paid .budget-cat{text-decoration:line-through;color:var(--ink-muted);}
+  .budget-cat{font-weight:600;font-size:14px;}
+  .budget-amount{font-size:13px;color:var(--ink-muted);margin-top:2px;}
+
+  .doc-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
+  .doc-label{font-size:12px;color:var(--ink-muted);}
+  .doc-value{font-size:15px;font-weight:600;}
+  .doc-tel{color:var(--teal);text-decoration:none;}
+
+  .duration-stats{display:flex;gap:12px;margin:10px 0 4px;}
+  .duration-stat{flex:1;background:var(--surface-alt);border-radius:var(--radius);padding:14px;text-align:center;}
+  .duration-stat-num{font-size:22px;font-weight:700;color:var(--brass);}
+  .duration-stat-label{font-size:11px;color:var(--ink-muted);margin-top:2px;}
+
+  .ticket-card{display:flex;background:var(--navy);color:var(--on-navy);border-radius:var(--radius);border:1px solid rgba(201,154,62,0.3);overflow:hidden;margin-bottom:12px;position:relative;}
+  .ticket-main{flex:1;padding:14px 16px;}
+  .ticket-route{font-size:16px;font-weight:700;letter-spacing:-0.01em;}
+  .ticket-sub{font-size:12px;color:rgba(245,240,227,0.68);margin-top:3px;}
+  .ticket-times{display:flex;gap:10px;font-size:12px;color:rgba(245,240,227,0.68);margin-top:3px;}
+  .ticket-stub{width:74px;border-left:2px dashed rgba(245,240,227,0.3);padding:12px 8px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center;word-break:break-word;color:var(--brass);}
+  .ticket-delete{position:absolute;top:6px;right:6px;background:none;border:none;color:rgba(245,240,227,0.65);font-size:13px;cursor:pointer;padding:4px;}
+
+  .diary-place{font-size:12px;color:var(--ink-muted);font-weight:600;margin-bottom:6px;}
+  .route-meta{display:flex;gap:14px;font-size:12px;color:var(--ink-muted);margin-bottom:8px;flex-wrap:wrap;}
+
+  .guide-picker-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+  .distance-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;flex-wrap:wrap;}
+  .distance-arrow{color:var(--ink-muted);}
+  .distance-value{margin-left:auto;font-weight:700;color:var(--brass);}
+  .day-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+  .day-card-title{font-weight:700;font-size:14px;color:var(--brass);margin-bottom:12px;}
+  .day-import-line{border-bottom:1px solid var(--border);padding:10px 0;}
+  .day-import-text{font-size:13px;margin-bottom:8px;}
+  .guide-picker-row select{flex:1;}
+  .btn-jump{white-space:nowrap;flex:0 0 auto;padding:9px 14px;}
+  .ticket-photo-link{font-size:11px;color:rgba(245,240,227,0.8);text-decoration:underline;margin-top:8px;cursor:pointer;}
+  .csv-upload-row{margin:14px 0 4px;}
+  .map-tools-row{display:flex;align-items:center;gap:10px;margin:12px 0 10px;flex-wrap:wrap;}
+  .route-info-banner{display:flex;justify-content:space-between;align-items:center;background:var(--surface-alt);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;gap:10px;flex-wrap:wrap;}
+  .route-info-banner>span{display:flex;gap:12px;}
+  .poi-search-row{display:flex;gap:8px;margin-bottom:10px;}
+  .poi-search-row .input{flex:1;}
+  .poi-search-result{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .poi-search-name{font-size:13px;flex:1;}
+  .bucket-group{margin-bottom:22px;}
+  .bucket-group-title{font-weight:700;font-size:13px;color:var(--ink-muted);margin-bottom:6px;}
+
+  .imported-guide-meta{font-size:12px;color:var(--ink-muted);background:var(--surface-alt);border-radius:10px;padding:10px 12px;margin-bottom:14px;}
+  .imported-guide-text{font-size:14px;line-height:1.6;white-space:pre-wrap;color:var(--ink);}
+
+  .continent-group{margin-bottom:6px;}
+  .continent-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;background:var(--surface-alt);margin:0 16px 10px;border-radius:12px;}
+  .continent-caret{color:var(--ink-muted);font-size:13px;}
+  .continent-items{margin-bottom:6px;}
+
+  .dest-card-confirm{flex-direction:column;align-items:stretch;gap:10px;padding:16px;}
+  .confirm-message{font-size:14px;color:var(--ink);}
+  .confirm-inline-block{background:var(--surface-alt);border-radius:var(--radius);padding:16px;margin-top:14px;}
+  .trip-row-confirm{flex-direction:column;align-items:stretch;gap:10px;}
+
+  .app-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--surface);color:var(--ink);padding:12px 20px;border-radius:22px;font-size:14px;max-width:88%;text-align:center;opacity:0;pointer-events:none;transition:opacity 0.25s,transform 0.25s;z-index:2000;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .app-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .recipe-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin:0 16px 12px;overflow:hidden;}
+  .recipe-card-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;}
+  .recipe-flag{font-size:26px;flex:0 0 auto;}
+  .recipe-name{font-size:16px;font-weight:700;letter-spacing:-0.01em;}
+  .recipe-subname{font-size:12px;color:var(--ink-muted);margin-top:2px;}
+  .recipe-dest-tag{font-size:11px;color:var(--brass);font-weight:700;margin-top:4px;}
+  .recipe-details{padding:0 16px 16px;border-top:1px solid var(--border);}
+  .recipe-meta{display:flex;gap:14px;font-size:13px;color:var(--ink-muted);margin:12px 0;}
+  .recipe-section-title{font-size:14px;font-weight:700;margin:14px 0 8px;}
+  .recipe-list{margin:0 0 6px;padding-left:20px;font-size:14px;line-height:1.6;}
+  .recipe-list li{margin-bottom:4px;}
+  .recipe-photo{height:180px;border-radius:var(--radius);background-size:cover;background-position:center;cursor:pointer;border:1px solid var(--border);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+/* ---------- PWA: Manifest & Icons (kompass-icon, Sand & Sage) ---------- */
+const ICON_512 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAQ20lEQVR4nO3du5EcyRmF0cEGzKENEKBBhLIKBQaNgBWwgwodGEdoDgQKvTE7mEdPVeU77zkqg0CzK/P/Kqt6l5++fP/6AECeP0Z/AADGEACAUAIAEEoAAEIJAEAoAQAIJQAAoQQAIJQAAIQSAIBQAgAQSgAAQgkAQCgBAAglAAChBAAglAAAhBIAgFACABBKAABCCQBAKAEACCUAAKEEACCUAACEEgCAUAIAEEoAAEIJAEAoAQAIJQAAoQQAIJQAAIQSAIBQAgAQSgAAQgkAQCgBAAglAAChBAAglAAAhBIAgFACABBKAABCCQBAKAEACCUAAKEEACCUAACEEgCAUAIAEEoAAEIJAEAoAQAIJQAAoQQAIJQAAIQSAIBQAgAQSgAAQgkAQCgBAAglAAChPo/+ANDKz2+/av1RPx7tFDZkWbOwiiO+5C+SBxZl4bKMbuP+rNcfTBJYgmXKpKYd90dIAkuwKJnI0kP/vuf/08SASViIDLbx0H+PGDAJi48BAof+e8SAgSw4+jH373v6fpSAPqwzmjP3z1IC+rC8aMXcL6cENGVVUZm534IS0ILFRB3mfh9KQEXWEKWM/iFuX7sMUMLq4brJR/97w/HCv9hn2v+lMkAJ64bTppqGfWbfnb9lhm/DcyGusVw4Yfiwm3DAvf5IA78lBwJOsVA4ZNRQW3GWvfjM/b86GeAgS4QPdJ5f+42tUT2QAT5kcfCubqMqakg9/x/b4RuWAe6wLHhDn9FvKj19A62/cBngTRYEv+kw+o2h1/qUQAZ4wVLgL61Hv7lzRIcSyABPLAIeHlqOG4PmmtYl+Pntl0uDFZCu0XwxXGppVwJHAVz7XEb/Wm5frAxQkaseqvocMUH6aHQg8EQok0sex+jfQ/UDgaNAIBc7iNG/HxmgxB+jPwCd1J3+Px4/mxHzqH45hv9b/+jDHt5f9dFf8U+jorqnAUeBBE4Am6s4/d31L6HuZXIU2JsA7KzW7jX6l1PxkmnAxuzqPVUc/VX+HIao9VDI46BdOQFsqMr0d9e/jVqX0lFgPwKwm/JdavRvqcpl1YDNCMA+fn77VWX6V/kwzKlKA2RgGwKwCTf+HOQowBMB2IEbf87SAB78Cmh1Rj+Xlf9GyK+DVvfpy/evoz8DF5n+VGEhxfIIaFWFm9YT/xvPMR5qLAZf46IEYEnl07/WJ2EbGhBIANZTstPc+HNH4fLQgOUIwGIKp3/FT7KB25dpbL2gATkEYCWmP31oQAgBWMblfeWxDxeULBsNWIUALKDkH743+ilR0gAZmJ8AzM5jn0aef7FG1R0eB21MAKbmsQ8z8DhoVwIwL499mIoG7EcAJmX6MyEN2IwAzMj0Z1oasBMBmI7p38HrL9l4Ok4DtiEAmzD96cl624MAzOXaLZLdSH/XVp1DwFQEYCIX9oafezLQteWnAfMQgFlcm/4tPgmcogHrEoApmP49vfdtm0qXacCiBGA8058NaMCKBGAw05+NaMBaBGAY03+I+1+7YVROAxYiAAChBGAMt/9szCFgFQIwgOnP9jRgCQLQm+lPCA2YnwDMzvSv6Mh8MYMqsnonJwBdnR0u9g+rO7uGBbgnAejH9CeTBkxLADox/UmmAXMSAFIcnymmDyEEoAe3/+AQMCEBaM70hxsNmI0AtGX6w3MaMBUBAAglAA25/Z/H2WvhxrMdh4B5CEArpj+8RwMmIQBTMP1JY83PQACacMMCddlTLQjAeG6FWrs2O0yc1qz84QSgvlODwx4g2an1L8nVCUBl1ii0Y3/VJQAjuf0Hu2AgAajJwx+4wIOgUQSAzZXMC7OGvQlANW7/4TKHgCEEoA7THwppQH8CABBKACpw+w9VOAR0JgBdmf6dlc8IU6Yze6QnAShlQMAodl8hAejHrQ0cYad0IwBF3IDAWPZgCQHoxE1Nf7VGgxHTn/3ShwBcZy7ADOzEywSgB7czcJZd04EAXOSmA+ZhP14jAM25kYFr7J3WBOAKtxvzq3uNXPH5uUYXCEBbbmGghB3UlACc5kYD5mRvniUADbl5gXL2UTsCwIZa3Am6u2Q/AnDO8SngtgVqOb6bdPoUAQAIJQAnuP2HURwCWhAAgFACcJTb/1W0uwF0azmWQ0B1AgAQSgAAQgnAIZ7/wAw8BapLANhK621vrLATAajJ7T+0ZpdVJAAfc9MHK7JzPyQAAKEEoBonU+jDXqtFAD7gFLmQPhfLkliIi3WfAACEEoA6nEmhJzuuCgG4x/kRVmcX3yEAAKEEoAKn0Rn0vNFzUzkD+66cALzLJoc92MvvEQCAUAJQyjkURrH7CgkAO+h/xvdUgQ0IwNtsb9iJHf0mASjiBApj2YMlBAAglAAAhBKAN3hcuJZR18s6WYvr9ZoAXOfhI8zATrxMAABCCQBAKAF4yYPCtYy9XlbLWlyvFwQAIJQAXOS9E8zDfrxGAABCCQBAKAFgYTO805vhM8A1AvAbmxn2Zo8/JwBXeOMEs7ErLxAAgFACwKrmOcvP80ngFAEACCUAAKEE4G8O8pDATn8iAKf5sQHMyd48SwBY0mw3cbN9HjhCAABCCQBAKAEg2j/+/M/ojwDDCAC5btNfA4glAKynyhvX53O/SgO8B2Y5AkCi1xPfOYBAfjZLkPtT/uk//d9//9nl48BgTgB/OXh+90+arOv4Pb7TwLoO7lDP626MMxZzYeteGOi3/8rZo8DPb7/cIrAQJwA2V3I77yjA3gSAnZVPcA1gYwIAEEoA2Fatm3eHAHYlAKzk+BvgulP7+J/m5yUsxC8WgMFUcxQBOKfuSvWTQWAgj4DYUIun9t4EsB8BYBkHj1/tJvXBP9kDDVYhAGyl9X26cwA7EQD20Wc6awDb8BKSZdzemU/+gMWLfRbiBMBiZp6wM382eE0AWM+Px89vjto+/x7/N/+W9z4SzMySZVWTPBEy91mXtcvafjx+HtgA07+Kul/j8HuChVi+59jwExpyFLAS2IBFzCZuE/nxz05/EWzAS2C28u3f/1r6z4eeBAAglAAAhBIAgFACABBKAP5y8KcdfmI8v3bvab0Bnt/BHeqnXDcCABBKAABCCQBAKAEACCUAbKjF21pvgNmPAACEEgCAUAIAEEoATvPPgsGc7M2zBOBv/uFASGCnPxEA9lT3Rzt+AsSWBAAglAAAhBIAgFACcIUfG8Bs7MoLBOA3fh6wk1pvbr0B3ok9/pwAAIQSAIBQAgAQSgAu8sYJ5mE/XiMA7Kz8/a03wGxMAF7yIwHYld39ggAAhBIAgFACcJ33TjADO/EyAXiDB4U7KXmL6w3wTuzr1wQAIJQAAIQSgCIePsJY9mAJAXibx4WwEzv6TQLA/q69y/UGmO0JQCknUBjF7iskAAChBOBdHhrCHuzl9whABc6h0J99V04AiHD2ja43wCQQgHucHGF1dvEdAlCH0yj0ZMdVIQAAoQTgA86PsC779z4BqMaZdHLH3+t6Azw5e60WAQAIJQAfc4qEFdm5HxKAmpxMoTW7rCIBAAglAIccP0u6PZnZkbe73gDP7Pj+8vznCAEACCUAAKEE4ChPgWAsz3+qEwCAUAJwgkPABu6/4/UGeFpu/1sQAIBQAnCOQwD05/a/EQEACCUADTkEQDn7qB0BOM0ZE+Zkb54lAG25eZnQez/18ROgCdlBTQnAFW40YDZ25QUC0JxbGLjG3mlNAC5yuwHzsB+vEYAe3MjAWXZNBwJwnZuOdb1+3+sN8LrsxMsEoBO3M3Cc/dKHABRx6wFj2YMlBKAfNzVwhJ3SjQCUcgMCo9h9hQSgK7c283j+1tcb4HnYIz0JQAWnbkOsb3jPqd3h9r+cAACEEoA6HAKgkNv//gSgGg2Ay0z/IQSAXLd3v94AE0sAanIIgAvc/o8iACNpANgFAwlAZW5P1uL5z1rsr7oEoD4PguAgD3/GEoDxNIBMVv5wAtCEWxWoy55qQQCm4FaINNb8DASglbM3LPYDOc6udrf/jQhAQxoAr5n+8xAAgFAC0JZDADzn9n8qAtCcBsCN6T8bAehBA8D0n5AAAIQSgE4cAkjm9n9OAtCPBpDJ9J+WAHSlAaQx/WcmALPTANZl9U5OAHq7cINjF7GiC+vW7X9nAjCABrA9038JAjCGBrAx038VAgAQSgCGcQhgS27/FyIAI2kAmzH91yIAg2kA2zD9lyMA42kAGzD9VyQAU9AAlmb6L0oAZqEBLMr0X9enL9+/jv4M/O3aTLedGMJyXZ0TwFyu7Q1HAfoz/TcgAJvQAHqy3vYgANO5fItkT9LH5ZXm9n82AjAjDWBapv9OBGBSGsCETP/NCMC8NICpmP778TPQ2ZVMcxuPKizCXTkBzK5k/zgKUM7035gTwDIcwOnPqtubAKzEvRjdWGwJPAJaicdB9GH6hxCAxWgArZn+OTwCWlLhKLdLeZN1lcYJYEmFO81RgNdM/0BOAAsrn+M2LQ8WUjABWJute9b9byzt23iwhLK5cmu77b2SPXz779rDgYx+vAPYQfk+9FYgjenPgwBso0oDZCBBlQtt+u9BAPbx4/GzowD3VRn9pv82BGA3jgK8yY0/rwnAhqrsUhnYRq1LafrvxxXdU/mvg278RmhptRJuAezKCWBntfat08ByKl4y039jArC5irtXBpZQ9zKZ/ntzdfdX63HQjYdC06qbZ5c4gRNAirr72WlgKtUvh+kfwmUOUvco8OA0MIHqGXY1o7jYcWRgD0Y/5VzyUD8eP9edIE9/mjnSVKMnb65aJlc9V/WjwI0DQSNGP9W59umaZuDBfCnW7mW7S4MVwMNDgydCT5TgmtY/snI5eBAAnjQ6CjxRgiM6/LjW988TS4HftM7AgxK8pc8/VOEL5wULgjd0yMCDEnT8f1+I/Ya5z7LgXX0y8OKv2H5Udf4nqLf/PilhcfCBbhm4efEXbTC/Rv07Mzb46mjNEuGQzhl4smIPhv9bkpb4lpiBhcIJozLw5PVfPXzYDR/3zw3/NliL5cJpT1Nmhtl35zPU/f9CqPVHtWDuc82nL9+/jv4MrG3y4bg3o58SVg+lhj8XymT0U84aoo6pngttzNynIouJypSgBXOfFqwqWlGCcuY+TVleNKcEZ5n79GGd0Y8S3Gfu05kFxwDPJ114DAx9BrL4GCwwBoY+k7AQmcjGMTD0mZBFyaReT8yFkmDcswTLlGVMmwTjnkVZuCzs/uStmAcjni1Z1mzL1Ib7/hj9AQAYQwAAQgkAQCgBAAglAAChBAAglAAAhBIAgFACABBKAABCCQBAKAEACCUAAKEEACCUAACEEgCAUAIAEEoAAEIJAEAoAQAIJQAAoQQAIJQAAIQSAIBQAgAQSgAAQgkAQCgBAAglAAChBAAglAAAhBIAgFACABBKAABCCQBAKAEACCUAAKEEACCUAACEEgCAUAIAEEoAAEIJAEAoAQAIJQAAoQQAIJQAAIQSAIBQAgAQSgAAQgkAQCgBAAglAAChBAAglAAAhBIAgFACABBKAABCCQBAKAEACCUAAKEEACDU/wE7px9MAUTE/AAAAABJRU5ErkJggg==';
+const ICON_192 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAF20lEQVR4nO3dMXLcRhRF0ZaLy/EaFChjqMSJA5YWwVVoESoHTryB2YiXo8BBu2B4ADQweJz+7zfuKQUqaUQCjYsPTJEUPn3++qUAZ/0SvQHIjYAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICJKX6A0w8v315/EXv99YulKuHNBDuRz559dM6lr7LEZz/INfJ6ZL7OdTu2l/xuFLGnn3+nfT2IZRSxpzr86lszzGjcP/6Keorx8vo9H25/hxFY/luaTGy2icPTmYzvMO3vSRd7dkpIxG2IfdA9b5UM0/XWPbxsgo99a7pbO1AQNnlPhLGe163m8vPkdld2Mc3jCe47LED9lNp9uWPKQ9jZKOonwTqFGP1dTZ0t7IdKMoWUBb65sinbnGBudqKM2iN9LpvCUfaOuiluhylmMCRdVTP36fz7KUYhQlCGjI2XMnb0PuAa2uYLo7niO2dsq8IeuAturpvAE9D2G6hnwDCq8nSq6GTAO6bD1VooYcA7p4PVWWhuwCop5Jioa8ArKqZ74xUYfNvyGvgJauOXvmzFfAKCB+0mqL/h3Zz+MSEPW02TZkERD1HOHZkEVAhra+Qo478QExfo4zHELBAVHPo9waip9Ac9RzhNUqRQYUPn63tL/v3VDghhlNIKsTy5zPWoUFZHs2JxW1ni4TyOeUysJkxWICYvw8Q8iqWkwgk5Opah8Gq/Qd1i0gIKtjMJj+axs/gRxOo7zCV693QIyfZ+u8wsETKPwEGkDsGsZfwqwc/38OUXUN6G7pGT8f5W4leybOBIKEgCDpFxC3Dj11W+2wCWR4A3R80Q1Phqj15BIGCQFB0ikg3sB3EPJmngkECQH969zjm0BAkBAQJAQESY+A/N+CnbuhMbwN6v9GjAm049ff/ozeBGt2w8DHlE79zd9//R66OaaYQOuWg4dRtIqAVmy1QkNLBHR/p9mu5O5vDe+jOwu4B0r6wEofVtUygf7nyEWKC9kcp/v+k7nb//DiApbAc93fby8PNRS4F1ZPEHc8llHeby/l9nb78Uf7Za/f3li3CfdAkBAQJAQECQFB0iOgwJ/cPuH129vpvw3X/ztnmECQEBAkBAQJAUFCQJB0CmiMN2K8BVtiAkFCQJDwtJ5BjP+0Hs9vAxpVt9XmErZueb9sfgcdhYAg6RpQrjfziQT+7wNMIEjsnhuPR13rufGJ3ovN75oT3UF3XuH4SxhDSBG+egEBJRpC6fRf2/gJVAxOo6Qc1i0mIIbQM4SsqsUEKh4nUy4mK8bTelrqm68Ub8F4Wo/LKZWCz1pFBpRiCKUQuJJGE6g4nVgTw+uX1SrZPTfeanUMLdfn6s+Np6Hj3OopDgEhNYuAGEJHGI6fYhJQoaE9nvUUn4AKDW2zradYBbSKhsxXwCug1RPLfAWfanXffcZPcQuo0NCMfz3FMKBCQ6WUJPUUz4DK5RvKUk+xDahcuKFE9RTngMolG8pVTynl0+evX6K3YcdWMc7LekLS3bSeQNXWCo40ipLWU1IEVOIa+v76s/569mdZ/XP/ekqixxZtPRau/kmKtV5KnU6VYwJNGqMo1xWtscGJ6inpAirN9U2RUXsjc9VTEl3C5tpPObW9qA35uOp8E2iy++hQn2m0uzFJ6ylJJ9Bk94HL4dNoN+K86VS5t746mNH8xU91cPJlT6caYR+qg49/n17w4cfv+BVzjHSqcfakOpjR6mseOq7nbrBGSqdK8LWw03xuosuI6VRj7lU1HbPAkkbtZjL47lX9Sxq+m8lV9rOaH9cPj+k60cxdcZ8r8cfQrpnLEqvwH5o4IfGXMuCAgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSP4BbgtbSqy2cpYAAAAASUVORK5CYII=';
+
+function setupPwa(){
+  const manifest = {
+    name: 'Reisebärchi on Tour',
+    short_name: 'Reisebärchi',
+    description: 'Persönlicher Reisebegleiter für deine Reiseziele, Reisen und Rezepte',
+    start_url: '.',
+    display: 'standalone',
+    background_color: '#F7F1E3',
+    theme_color: '#3E5142',
+    icons: [
+      {src: ICON_192, sizes:'192x192', type:'image/png'},
+      {src: ICON_512, sizes:'512x512', type:'image/png'}
+    ]
+  };
+  try{
+    const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const link = document.getElementById('app-manifest');
+    if(link) link.setAttribute('href', url);
+  }catch(e){}
+  const touchIcon = document.getElementById('app-touch-icon');
+  if(touchIcon) touchIcon.setAttribute('href', ICON_512);
+  const favicon = document.getElementById('app-favicon');
+  if(favicon) favicon.setAttribute('href', ICON_192);
+}
+setupPwa();
+if(typeof pdfjsLib !== 'undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{
+      /* Kein sw.js am selben Ort verfügbar (z.B. Claude-Vorschau) - App läuft trotzdem normal, nur ohne Offline-Zwischenspeicher. */
+    });
+  });
+}
+
+/* ---------- Storage helpers (IndexedDB, geräteeigen) ---------- */
+const IDB_NAME = 'reisebaerchi-db';
+const IDB_STORE = 'kv';
+let idbPromise = null;
+function openIdb(){
+  if(idbPromise) return idbPromise;
+  idbPromise = new Promise((resolve, reject)=>{
+    if(!('indexedDB' in window)){ reject(new Error('IndexedDB nicht verfügbar')); return; }
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = ()=>{ req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+  return idbPromise;
+}
+async function sGet(key, fallback){
+  try{
+    const db = await openIdb();
+    return await new Promise((resolve)=>{
+      const tx = db.transaction(IDB_STORE,'readonly');
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = ()=>resolve(req.result!==undefined ? req.result : fallback);
+      req.onerror = ()=>resolve(fallback);
+    });
+  }catch(e){ return fallback; }
+}
+async function sSet(key, value){
+  try{
+    const db = await openIdb();
+    await new Promise((resolve,reject)=>{
+      const tx = db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).put(value, key);
+      tx.oncomplete = ()=>resolve();
+      tx.onerror = ()=>reject(tx.error);
+    });
+  }catch(e){ console.error('Speichern fehlgeschlagen:', key, e); }
+}
+async function sDelete(key){
+  try{
+    const db = await openIdb();
+    await new Promise((resolve,reject)=>{
+      const tx = db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).delete(key);
+      tx.oncomplete = ()=>resolve();
+      tx.onerror = ()=>reject(tx.error);
+    });
+  }catch(e){}
+}
+
+/* ---------- Utilities ---------- */
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function showToast(message){
+  let toastEl = document.getElementById('app-toast');
+  if(!toastEl){
+    toastEl = document.createElement('div');
+    toastEl.id = 'app-toast';
+    toastEl.className = 'app-toast';
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = message;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=>{ toastEl.classList.remove('show'); }, 3000);
+}
+function escapeHtml(str){
+  if(str==null) return '';
+  return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function daysUntil(dateStr){
+  if(!dateStr) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(dateStr+'T00:00:00');
+  return Math.round((target-today)/86400000);
+}
+function formatDateDe(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+const WEATHER_CODES = {
+  0:['☀️','Klarer Himmel'],1:['🌤️','Überwiegend klar'],2:['⛅','Teilweise bewölkt'],3:['☁️','Bedeckt'],
+  45:['🌫️','Nebel'],48:['🌫️','Reifnebel'],
+  51:['🌦️','Leichter Niesel'],53:['🌦️','Niesel'],55:['🌧️','Starker Niesel'],
+  61:['🌦️','Leichter Regen'],63:['🌧️','Regen'],65:['🌧️','Starker Regen'],
+  71:['🌨️','Leichter Schnee'],73:['🌨️','Schnee'],75:['❄️','Starker Schnee'],
+  80:['🌦️','Regenschauer'],81:['🌧️','Schauer'],82:['⛈️','Heftige Schauer'],
+  95:['⛈️','Gewitter'],96:['⛈️','Gewitter mit Hagel'],99:['⛈️','Schweres Gewitter']
+};
+function weatherInfo(code){ return WEATHER_CODES[code] || ['🌡️','Unbekannt']; }
+async function loadQuickWeather(dest){
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${dest.lat}&longitude=${dest.lng}&current=temperature_2m,weather_code&timezone=auto`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('fail');
+    const data = await res.json();
+    const [emoji] = weatherInfo(data.current.weather_code);
+    return {temp: Math.round(data.current.temperature_2m), emoji};
+  }catch(e){
+    return null;
+  }
+}
+const CURRENCIES = ['EUR','USD','GBP','NOK','DKK','CVE','ISK'];
+function currencyOptions(selected){
+  return CURRENCIES.map(c=>`<option value="${c}" ${c===selected?'selected':''}>${c}</option>`).join('');
+}
+
+/* ---------- Seed data ---------- */
+const SEED_DESTINATIONS = [
+  {id:'kapverde', name:'Kap Verde', flag:'🇨🇻', lat:16.7333, lng:-22.95, currency:'CVE', continent:'Afrika'},
+  {id:'azoren', name:'Azoren', flag:'🇵🇹', lat:37.7412, lng:-25.6756, currency:'EUR', continent:'Europa'},
+  {id:'madeira', name:'Madeira', flag:'🇵🇹', lat:32.6669, lng:-16.9241, currency:'EUR', continent:'Europa'},
+  {id:'norwegen', name:'Norwegen', flag:'🇳🇴', lat:59.9139, lng:10.7522, currency:'NOK', continent:'Europa'},
+  {id:'faeroeer', name:'Färöer', flag:'🇫🇴', lat:62.0107, lng:-6.7741, currency:'DKK', continent:'Europa'},
+  {id:'island', name:'Island', flag:'🇮🇸', lat:64.1466, lng:-21.9426, currency:'ISK', continent:'Europa'},
+  {id:'kanaren', name:'Kanaren', flag:'🇮🇨', lat:28.1235, lng:-15.4363, currency:'EUR', continent:'Europa'},
+  {id:'sardinien', name:'Sardinien', flag:'🇮🇹', lat:39.2238, lng:9.1217, currency:'EUR', continent:'Europa'},
+  {id:'kreta', name:'Kreta', flag:'🇬🇷', lat:35.3387, lng:25.1442, currency:'EUR', continent:'Europa'}
+];
+const EMPTY_GUIDE = {overview:'',bestTime:'',entryHealth:'',arrival:'',accommodation:'',regions:'',foodDrink:'',natureSafety:'',tips:'',imported:false,importedText:'',importedFileName:''};
+const SEED_DEST_DATA = {
+  kapverde:{
+    guide:{...EMPTY_GUIDE,
+      overview:'Deine erste Reise nach Kap Verde ist in Planung – gewünscht ist ein Mix aus Natur/Wandern, Strand und Kultur, mit mehr Zeit hier als auf den Azoren. Ergänze hier gerne die Inhalte aus deinem Reiseführer.',
+      bestTime:'April bis Juni – dein geplanter Reisezeitraum.'
+    },
+    pois:[
+      {id:'p1',name:'Praia (Santiago)',lat:14.9330,lng:-23.5133,region:'Santiago',desc:'Hauptstadt auf Santiago, koloniale Altstadt Plateau.'},
+      {id:'p2',name:'Santa Maria (Sal)',lat:16.5972,lng:-22.9036,region:'Sal',desc:'Bekannter Strand- und Kitesurf-Ort.'},
+      {id:'p3',name:'Fogo-Vulkan',lat:14.9500,lng:-24.3500,region:'Fogo',desc:'Aktiver Vulkan, Wanderungen im Krater.'}
+    ],
+    routes:[], hikingRoutes:[], faq:[], phrases:[{id:'v1',german:'Hallo',local:'Olá'},{id:'v2',german:'Danke',local:'Obrigado'}],
+    packing:[{id:'k1',text:'Reisepass',checked:false},{id:'k2',text:'Adapter (Typ F)',checked:false},{id:'k3',text:'Wanderschuhe',checked:false}],
+    todos:[{id:'t1',text:'Auslandskrankenversicherung prüfen',checked:false}],
+    diary:[], photoIds:[], budget:[], docs:[], emergency:[],
+    bucketlist:[{id:'b1',text:'Fogo-Vulkan besteigen',checked:false},{id:'b2',text:'Live-Morna-Musik hören',checked:false}]
+  },
+  azoren:{
+    guide:{...EMPTY_GUIDE,
+      overview:'Geplant: Terceira, Pico (mit Gipfelbesteigung) und Flores, kombiniert mit Kap Verde und einem Lissabon-Städtetrip (2-3 Tage). Ergänze hier deinen Reiseführer-Text.',
+      bestTime:'April bis Juni.'
+    },
+    pois:[
+      {id:'p1',name:'Sete Cidades (São Miguel)',lat:37.8686,lng:-25.7803,region:'São Miguel',desc:'Kratersee mit zwei Farben.'},
+      {id:'p2',name:'Pico',lat:38.4693,lng:-28.3986,region:'Pico',desc:'Höchster Berg Portugals, Gipfelbesteigung möglich.'},
+      {id:'p3',name:'Flores',lat:39.4570,lng:-31.1974,region:'Flores',desc:'Wasserfälle und Kraterseen.'}
+    ],
+    routes:[], hikingRoutes:[], faq:[], phrases:[{id:'v1',german:'Hallo',local:'Olá'},{id:'v2',german:'Danke',local:'Obrigado'}],
+    packing:[{id:'k1',text:'Regenjacke',checked:false},{id:'k2',text:'Wanderschuhe',checked:false}],
+    todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[],
+    bucketlist:[{id:'b1',text:'Pico besteigen',checked:false},{id:'b2',text:'In heißen Quellen baden (Furnas)',checked:false}]
+  },
+  madeira:{
+    guide:{...EMPTY_GUIDE,
+      overview:'„AIDA tanzt“-Kreuzfahrt auf der AIDAcosma, 16.–23. Januar 2027, Route Kanaren/Madeira ab/bis Las Palmas. Ergänze hier deinen Reiseführer-Text zum Landgang.',
+      bestTime:'Ganzjährig mild, Landgang im Januar.'
+    },
+    pois:[
+      {id:'p1',name:'Cabo Girão',lat:32.6579,lng:-17.0164,region:'Câmara de Lobos',desc:'Eine der höchsten Steilklippen Europas.'},
+      {id:'p2',name:'Pico Ruivo',lat:32.7615,lng:-16.9407,region:'Zentralgebirge',desc:'Höchster Berg Madeiras.'},
+      {id:'p3',name:'Funchal Altstadt',lat:32.6473,lng:-16.9089,region:'Funchal',desc:'Bemalte Türen, Markthalle, Hafenpromenade.'}
+    ],
+    routes:[], hikingRoutes:[], faq:[], phrases:[{id:'v1',german:'Hallo',local:'Olá'},{id:'v2',german:'Danke',local:'Obrigado'}],
+    packing:[], todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[],
+    bucketlist:[{id:'b1',text:'Levada-Wanderung machen',checked:false},{id:'b2',text:'Sonnenaufgang am Pico do Arieiro',checked:false}]
+  },
+  norwegen:{
+    guide:{...EMPTY_GUIDE,
+      overview:'Dieser Guide ist als Auswanderungsguide angelegt, nicht als klassischer Reiseführer. Ergänze hier relevante Inhalte.'
+    },
+    pois:[
+      {id:'p1',name:'Geirangerfjord',lat:62.1049,lng:7.0642,region:'Fjordnorwegen',desc:'UNESCO-Weltnaturerbe-Fjord.'},
+      {id:'p2',name:'Preikestolen',lat:58.9866,lng:6.1900,region:'Rogaland',desc:'Berühmter Felsvorsprung über dem Lysefjord.'},
+      {id:'p3',name:'Bergen',lat:60.3913,lng:5.3221,region:'Bergen',desc:'Hansestadt mit Bryggen-Häuserzeile.'}
+    ],
+    routes:[], hikingRoutes:[], faq:[], phrases:[{id:'v1',german:'Hallo',local:'Hei'},{id:'v2',german:'Danke',local:'Takk'}],
+    packing:[], todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[],
+    bucketlist:[{id:'b1',text:'Nordlichter sehen',checked:false},{id:'b2',text:'Auf einem Fjord Kajak fahren',checked:false}]
+  },
+  faeroeer:{
+    guide:{...EMPTY_GUIDE,
+      overview:'18 Inseln im Nordatlantik, subarktisches Klima, wechselhaftes Wetter das ganze Jahr. Ergänze hier deinen Reiseführer-Text.',
+      bestTime:'Mai bis September für die stabilsten Bedingungen.'
+    },
+    pois:[
+      {id:'p1',name:'Mulafossur (Gásadalur)',lat:62.0866,lng:-7.3894,region:'Vágar',desc:'Wasserfall direkt am Atlantik.'},
+      {id:'p2',name:'Saksun',lat:62.2432,lng:-7.1929,region:'Streymoy',desc:'Dorf an einer Lagune, Grasdächer.'},
+      {id:'p3',name:'Tórshavn',lat:62.0107,lng:-6.7741,region:'Streymoy',desc:'Hauptstadt mit historischem Tinganes.'}
+    ],
+    routes:[], hikingRoutes:[], faq:[], phrases:[{id:'v1',german:'Hallo',local:'Halló'},{id:'v2',german:'Danke',local:'Takk fyri'}],
+    packing:[], todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[],
+    bucketlist:[{id:'b1',text:'Mulafossur-Wasserfall fotografieren',checked:false},{id:'b2',text:'Papageientaucher beobachten',checked:false}]
+  },
+  island:{
+    guide:{...EMPTY_GUIDE,
+      overview:'Land aus Feuer und Eis – Vulkane, Gletscher, Geysire entlang der Ringstraße. Ergänze hier deinen Reiseführer-Text.',
+      bestTime:'Juni bis August für die Ringstraße, September bis März für Nordlichter.'
+    },
+    pois:[
+      {id:'p1',name:'Gullfoss',lat:64.3271,lng:-20.1199,region:'Golden Circle',desc:'Zweistufiger Wasserfall im Hvítá-Canyon.'},
+      {id:'p2',name:'Jökulsárlón',lat:64.0784,lng:-16.2300,region:'Südisland',desc:'Gletscherlagune mit treibenden Eisbergen.'},
+      {id:'p3',name:'Reynisfjara',lat:63.4038,lng:-19.0432,region:'Südisland',desc:'Schwarzer Lavastrand mit Basaltsäulen.'}
+    ],
+    routes:[], hikingRoutes:[], faq:[], phrases:[{id:'v1',german:'Hallo',local:'Halló'},{id:'v2',german:'Danke',local:'Takk'}],
+    packing:[{id:'k1',text:'Thermounterwäsche',checked:false},{id:'k2',text:'Regenjacke',checked:false}],
+    todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[],
+    bucketlist:[{id:'b1',text:'Nordlichter sehen',checked:false},{id:'b2',text:'Blaue Lagune besuchen',checked:false}]
+  },
+  kanaren:{
+    guide:{...EMPTY_GUIDE,
+      overview:'„AIDA tanzt“-Kreuzfahrt auf der AIDAcosma, 16.–23. Januar 2027, Route Kanaren/Madeira ab/bis Las Palmas. Ergänze hier deinen Reiseführer-Text zum Landgang.',
+      bestTime:'Ganzjährig mild, Landgang im Januar.'
+    },
+    pois:[
+      {id:'p1',name:'Roque Nublo',lat:27.9636,lng:-15.5975,region:'Gran Canaria',desc:'Markanter Felsmonolith im Inselinneren.'},
+      {id:'p2',name:'Teide-Nationalpark',lat:28.2726,lng:-16.6423,region:'Tenerife',desc:'Höchster Berg Spaniens, Mondlandschaft.'},
+      {id:'p3',name:'Playa de Papagayo',lat:28.8636,lng:-13.8319,region:'Lanzarote',desc:'Bucht mit türkisfarbenem Wasser.'}
+    ],
+    routes:[], hikingRoutes:[], faq:[], phrases:[{id:'v1',german:'Hallo',local:'Hola'},{id:'v2',german:'Danke',local:'Gracias'}],
+    packing:[{id:'k1',text:'Sonnencreme',checked:false},{id:'k2',text:'Wanderschuhe',checked:false}],
+    todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[],
+    bucketlist:[{id:'b1',text:'Sonnenaufgang am Teide',checked:false},{id:'b2',text:'Dünen von Maspalomas besuchen',checked:false}]
+  },
+  sardinien:{
+    guide:{...EMPTY_GUIDE,
+      overview:'Zweitgrößte Mittelmeerinsel mit Traumstränden, Nuraghen-Kultur und bergigem Inneren. Ergänze hier deinen Reiseführer-Text.',
+      bestTime:'Mai/Juni und September für weniger Trubel, Juli/August für Badewetter.'
+    },
+    pois:[
+      {id:'p1',name:'Costa Smeralda',lat:41.1250,lng:9.4700,region:'Gallura',desc:'Smaragdgrüne Buchten im Nordosten.'},
+      {id:'p2',name:'Grotte di Nettuno',lat:40.5636,lng:8.1614,region:'Alghero',desc:'Tropfsteinhöhle direkt am Meer.'},
+      {id:'p3',name:'Cagliari Altstadt',lat:39.2131,lng:9.1158,region:'Cagliari',desc:'Castello-Viertel mit Blick über die Stadt.'}
+    ],
+    routes:[], hikingRoutes:[], faq:[], phrases:[{id:'v1',german:'Hallo',local:'Ciao'},{id:'v2',german:'Danke',local:'Grazie'}],
+    packing:[{id:'k1',text:'Sonnencreme',checked:false},{id:'k2',text:'Schnorchelausrüstung',checked:false}],
+    todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[],
+    bucketlist:[{id:'b1',text:'In der Costa Smeralda baden',checked:false},{id:'b2',text:'Eine Nuraghe besichtigen',checked:false}]
+  },
+  kreta:{
+    guide:{...EMPTY_GUIDE,
+      overview:'Größte griechische Insel mit minoischer Geschichte, Schluchten und langer Küste. Ergänze hier deinen Reiseführer-Text.',
+      bestTime:'Mai/Juni und September/Oktober, Juli/August sehr heiß.'
+    },
+    pois:[
+      {id:'p1',name:'Palast von Knossos',lat:35.2977,lng:25.1628,region:'Heraklion',desc:'Bedeutendste minoische Ausgrabungsstätte.'},
+      {id:'p2',name:'Samaria-Schlucht',lat:35.3167,lng:24.1333,region:'Chania',desc:'Eine der längsten Schluchten Europas.'},
+      {id:'p3',name:'Balos-Lagune',lat:35.5539,lng:23.5967,region:'Chania',desc:'Türkise Lagune im Nordwesten.'}
+    ],
+    routes:[], hikingRoutes:[], faq:[], phrases:[{id:'v1',german:'Hallo',local:'Γεια σου'},{id:'v2',german:'Danke',local:'Ευχαριστώ'}],
+    packing:[{id:'k1',text:'Wanderschuhe',checked:false},{id:'k2',text:'Sonnencreme',checked:false}],
+    todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[],
+    bucketlist:[{id:'b1',text:'Samaria-Schlucht durchwandern',checked:false},{id:'b2',text:'Balos-Lagune besuchen',checked:false}]
+  }
+};
+
+
+/* ---------- State ---------- */
+let destinations = [];
+let trips = [];
+let recipes = [];
+let destDataCache = {};
+let photoCache = {};
+let leafletMap = null;
+let state = {
+  view:'home', destId:null, tab:'guide',
+  showAddDest:false, addingList:null, addingDiary:false, addingBudget:false,
+  addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null,
+  tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false,
+  addingActivityTicket:false, ticketPhotoTarget:null,
+  collapsedContinents:[], confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
+  addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
+  recipeId:null, editingRecipe:false, recipeImportDraft:null,
+  userLocation:null, currentRoute:null, pendingMascotMood:null, isDraftTrip:false,
+  showDayImport:false, dayImportDestId:null, dayImportRouteId:null,
+  addingHikingRoute:false, editingHikingRouteId:null
+};
+
+/* ---------- Data loading ---------- */
+async function loadDestData(id){
+  if(destDataCache[id]) return destDataCache[id];
+  const fallback = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[]};
+  const data = await sGet('dest-data:'+id, fallback);
+  if(!data.bucketlist) data.bucketlist = [];
+  if(!data.routes) data.routes = [];
+  if(!data.hikingRoutes) data.hikingRoutes = [];
+  if(!data.faq) data.faq = [];
+  if(!data.phrases) data.phrases = [];
+  if(data.pois) data.pois.forEach(p=>{ if(p.region===undefined) p.region = ''; if(p.geheimtipp===undefined) p.geheimtipp=false; });
+  data.guide = Object.assign({}, EMPTY_GUIDE, data.guide||{});
+  destDataCache[id] = data;
+  return data;
+}
+async function saveDestData(id){ await sSet('dest-data:'+id, destDataCache[id]); }
+async function saveTrips(){
+  if(state.isDraftTrip) return;
+  await sSet('trips', trips);
+}
+function getListContainer(){
+  return state.view==='trip' ? trips.find(t=>t.id===state.tripId) : destDataCache[state.destId];
+}
+async function saveListContainer(){
+  if(state.view==='trip'){ await saveTrips(); }
+  else { await saveDestData(state.destId); }
+}
+async function ensurePhotosLoaded(photoIds){
+  for(const id of photoIds){
+    if(!photoCache[id]){
+      const p = await sGet('photo:'+id, null);
+      if(p) photoCache[id] = p;
+    }
+  }
+}
+function getCurrentDest(){ return destinations.find(d=>d.id===state.destId); }
+
+async function init(){
+  let loaded = await sGet('destinations', null);
+  if(!loaded){
+    loaded = SEED_DESTINATIONS;
+    await sSet('destinations', loaded);
+    for(const d of loaded){ await sSet('dest-data:'+d.id, SEED_DEST_DATA[d.id]); }
+  }
+  destinations = loaded;
+  let destChanged = false;
+  destinations.forEach(d=>{
+    if(!d.continent){ d.continent = 'Rest der Welt'; destChanged = true; }
+    if('tripDate' in d){ delete d.tripDate; destChanged = true; }
+    if(d.id==='kanaren' && d.continent!=='Europa'){ d.continent = 'Europa'; destChanged = true; }
+  });
+  trips = await sGet('trips', []);
+  trips.forEach(t=>{
+    if(!t.destIds) t.destIds = [];
+    if(!t.documents) t.documents = [];
+    if(!t.tickets) t.tickets = [];
+    if(!t.activityTickets) t.activityTickets = [];
+    if(!t.diary) t.diary = [];
+    if(!t.photoIds) t.photoIds = [];
+    if(!t.dayPlan) t.dayPlan = [];
+    if(!t.budget) t.budget = [];
+  });
+
+  const migrationDone = await sGet('migration-v2', false);
+  if(!migrationDone){
+    const existingIds = new Set(destinations.map(d=>d.id));
+    for(const d of SEED_DESTINATIONS){
+      if(!existingIds.has(d.id)){
+        destinations.push(d);
+        await sSet('dest-data:'+d.id, SEED_DEST_DATA[d.id]);
+        destChanged = true;
+      }
+    }
+    const hasCruiseTrip = trips.some(t=> t.destIds.includes('madeira') && t.destIds.includes('kanaren'));
+    if(!hasCruiseTrip){
+      trips.push({id:genId(), dateFrom:'2027-01-16', dateTo:'2027-01-23', type:'Schiffsreise', companions:'', destIds:['madeira','kanaren'], documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[]});
+      await saveTrips();
+    }
+    await sSet('migration-v2', true);
+  }
+  if(destChanged) await sSet('destinations', destinations);
+
+  recipes = await sGet('recipes', []);
+  const migrationV3Done = await sGet('migration-v3', false);
+  if(!migrationV3Done){
+    const hasDakos = recipes.some(r=>r.nameNative==='Dakos');
+    if(!hasDakos){
+      recipes.push({
+        id:genId(), destId:'kreta', category:'Vegetarisch',
+        nameNative:'Dakos', nameGerman:'Kretischer Gerstenzwieback-Salat',
+        servings:'2 Personen', time:'10 Minuten, keine Kochzeit',
+        ingredients:'2 kretische Gerstenzwiebäcke (Paximadia; ersatzweise trockenes, kräftiges Vollkornbrot)\n2 reife Tomaten\n100 g Feta oder Mizithra (ersatzweise Ricotta salata)\n4 EL natives Olivenöl extra\n1 TL getrockneter Oregano\nSalz, nach Geschmack\nein paar schwarze Oliven oder Kapern',
+        steps:'Die Zwiebäcke leicht mit etwas Wasser oder Olivenöl beträufeln, bis sie gerade weich werden — sie sollen nicht durchweichen.\nTomaten grob reiben oder sehr fein würfeln, mit Salz und der Hälfte des Olivenöls vermengen.\nTomatenmasse auf die Zwiebäcke geben, den Käse darüber bröckeln.\nMit Oregano bestreuen, restliches Olivenöl darüber träufeln und sofort servieren. Optional noch mit Oliven und Kapern verfeinern.'
+      });
+      await sSet('recipes', recipes);
+    }
+    await sSet('migration-v3', true);
+  }
+  render();
+}
+
+/* ---------- Navigation ---------- */
+function discardDraftIfActive(){
+  if(state.isDraftTrip){
+    trips = trips.filter(t=>t.id!==state.tripId);
+    state.isDraftTrip = false;
+  }
+}
+async function openDestination(id){
+  discardDraftIfActive();
+  await loadDestData(id);
+  state.view='destination'; state.destId=id; state.tab='guide';
+  state.addingList=null; state.addingDiary=false; state.addingBudget=false;
+  state.addingDoc=null; state.pendingPoi=null; state.lightboxPhotoId=null;
+  state.currentRoute=null;
+  render();
+}
+function goHome(){
+  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+  discardDraftIfActive();
+  state.view='home'; state.destId=null; state.tab='guide'; state.tripId=null;
+  render();
+}
+function goToZielauswahl(){
+  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+  state.view='zielauswahl'; state.destId=null; state.tab='guide'; state.showAddDest=false;
+  render();
+}
+function goToKochbuch(){
+  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+  state.view='kochbuch'; state.addingRecipe=false; state.recipeImportDraft=null;
+  render();
+}
+function goToVergangeneReisen(){
+  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+  state.view='vergangene-reisen';
+  render();
+}
+function downloadJson(obj, filename){
+  const json = JSON.stringify(obj, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+async function exportGuidesBackup(){
+  showToast('Sammle Reiseführer & Rezepte…');
+  try{
+    const backup = {app:'Reisebärchi on Tour', kind:'guides', exportedAt:new Date().toISOString(), version:1,
+      destinations:destinations, destData:{}, recipes:recipes, photos:{}};
+    await Promise.all(destinations.map(async d=>{ backup.destData[d.id] = await loadDestData(d.id); }));
+    const photoIds = new Set();
+    recipes.forEach(r=>{ if(r.photoId) photoIds.add(r.photoId); });
+    Object.values(backup.destData).forEach(dd=>{ (dd.photoIds||[]).forEach(id=>photoIds.add(id)); });
+    await Promise.all([...photoIds].map(async pid=>{
+      if(!photoCache[pid]){ const p = await sGet('photo:'+pid, null); if(p) photoCache[pid] = p; }
+      if(photoCache[pid]) backup.photos[pid] = photoCache[pid];
+    }));
+    downloadJson(backup, `reisebaerchi-reisefuehrer-${todayStr()}.json`);
+    showToast('Reiseführer & Rezepte-Backup heruntergeladen.');
+  }catch(e){
+    showToast('Backup konnte nicht erstellt werden.');
+  }
+}
+async function exportTripsBackup(){
+  showToast('Sammle deine Reisen…');
+  try{
+    const backup = {app:'Reisebärchi on Tour', kind:'trips', exportedAt:new Date().toISOString(), version:1,
+      trips:trips, photos:{}};
+    const photoIds = new Set();
+    trips.forEach(t=>{
+      (t.photoIds||[]).forEach(id=>photoIds.add(id));
+      (t.tickets||[]).forEach(tk=>{ if(tk.photoId) photoIds.add(tk.photoId); });
+      (t.activityTickets||[]).forEach(tk=>{ if(tk.photoId) photoIds.add(tk.photoId); });
+    });
+    await Promise.all([...photoIds].map(async pid=>{
+      if(!photoCache[pid]){ const p = await sGet('photo:'+pid, null); if(p) photoCache[pid] = p; }
+      if(photoCache[pid]) backup.photos[pid] = photoCache[pid];
+    }));
+    downloadJson(backup, `reisebaerchi-meine-reisen-${todayStr()}.json`);
+    showToast('Reisen-Backup heruntergeladen.');
+  }catch(e){
+    showToast('Backup konnte nicht erstellt werden.');
+  }
+}
+async function importGuidesBackup(file){
+  showToast('Lese Reiseführer & Rezepte…');
+  try{
+    const text = await file.text();
+    const backup = JSON.parse(text);
+    if(!backup || !Array.isArray(backup.destinations) || !Array.isArray(backup.recipes)){
+      showToast('Diese Datei sieht nicht wie ein Reiseführer-Backup aus.');
+      return;
+    }
+    destinations = backup.destinations;
+    recipes = backup.recipes;
+    await sSet('destinations', destinations);
+    await sSet('recipes', recipes);
+    for(const [id, dd] of Object.entries(backup.destData || {})){
+      destDataCache[id] = dd;
+      await sSet('dest-data:'+id, dd);
+    }
+    for(const [id, p] of Object.entries(backup.photos || {})){
+      photoCache[id] = p;
+      await sSet('photo:'+id, p);
+    }
+    await sSet('migration-v2', true);
+    await sSet('migration-v3', true);
+    state.view = 'home';
+    showToast(`Eingelesen: ${destinations.length} Reiseziele, ${recipes.length} Rezepte. Reisen bleiben unverändert.`);
+    render();
+  }catch(e){
+    showToast('Datei konnte nicht gelesen werden (beschädigt oder falscher Typ?).');
+  }
+}
+async function importTripsBackup(file){
+  showToast('Lese Reisen…');
+  try{
+    const text = await file.text();
+    const backup = JSON.parse(text);
+    if(!backup || !Array.isArray(backup.trips)){
+      showToast('Diese Datei sieht nicht wie ein Reisen-Backup aus.');
+      return;
+    }
+    trips = backup.trips;
+    await sSet('trips', trips);
+    for(const [id, p] of Object.entries(backup.photos || {})){
+      photoCache[id] = p;
+      await sSet('photo:'+id, p);
+    }
+    state.view = 'home';
+    showToast(`Eingelesen: ${trips.length} Reisen. Reiseführer & Rezepte bleiben unverändert.`);
+    render();
+  }catch(e){
+    showToast('Datei konnte nicht gelesen werden (beschädigt oder falscher Typ?).');
+  }
+}
+async function switchTab(tab){
+  if(leafletMap && state.tab==='karte' && tab!=='karte'){ leafletMap.remove(); leafletMap=null; }
+  if(state.tab==='wanderrouten' && tab!=='wanderrouten'){
+    hikingMapInstances.forEach(m=>{ try{ m.remove(); }catch(e){} });
+    hikingMapInstances = [];
+  }
+  state.tab = tab;
+  state.addingList=null; state.addingDoc=null; state.pendingPoi=null;
+  state.addingHikingRoute=false; state.editingHikingRouteId=null;
+  render();
+}
+
+/* ---------- Render dispatcher ---------- */
+async function render(){
+  const app = document.getElementById('app');
+  if(state.view==='home'){
+    app.innerHTML = await renderHomeDashboard();
+    if(state.pendingMascotMood){
+      triggerMascotAnim(state.pendingMascotMood, 1600);
+      state.pendingMascotMood = null;
+    }
+    return;
+  }
+  if(state.view==='zielauswahl'){
+    app.innerHTML = renderZielauswahl();
+    return;
+  }
+  if(state.view==='kochbuch'){
+    app.innerHTML = renderKochbuch();
+    return;
+  }
+  if(state.view==='vergangene-reisen'){
+    app.innerHTML = renderVergangeneReisen();
+    return;
+  }
+  if(state.view==='recipe'){
+    app.innerHTML = renderRecipeDetail();
+    if(state.lightboxPhotoId){
+      const capInput = document.getElementById('lightbox-caption');
+      if(capInput) capInput.value = (photoCache[state.lightboxPhotoId]||{}).caption || '';
+    }
+    return;
+  }
+  if(state.view==='trip'){
+    app.innerHTML = renderTrip();
+    if(state.lightboxPhotoId){
+      const capInput = document.getElementById('lightbox-caption');
+      if(capInput) capInput.value = (photoCache[state.lightboxPhotoId]||{}).caption || '';
+    }
+    if(state.tripTab==='budget'){
+      const trip = trips.find(t=>t.id===state.tripId);
+      if(trip) computeBudgetGrandTotal(trip);
+    }
+    return;
+  }
+  app.innerHTML = renderDestination();
+  const dd = destDataCache[state.destId];
+  if(state.tab==='guide' && !dd.guide.imported){
+    const guideFieldIds = {overview:'ta-overview', bestTime:'ta-besttime', entryHealth:'ta-entryhealth', arrival:'ta-arrival', accommodation:'ta-accommodation', regions:'ta-regions', foodDrink:'ta-fooddrink', natureSafety:'ta-naturesafety', tips:'ta-tips'};
+    Object.keys(guideFieldIds).forEach(field=>{
+      const el = document.getElementById(guideFieldIds[field]);
+      if(el) el.value = dd.guide[field] || '';
+    });
+  }
+  if(state.tab==='karte') initMap(getCurrentDest(), dd);
+  if(state.tab==='wetter') loadWeather(getCurrentDest());
+  if(state.tab==='wanderrouten') initHikingMaps(dd);
+  if(state.lightboxPhotoId){
+    const capInput = document.getElementById('lightbox-caption');
+    if(capInput) capInput.value = (photoCache[state.lightboxPhotoId]||{}).caption || '';
+  }
+}
+
+/* ---------- Home dashboard ---------- */
+function tripTypeIcon(type){
+  const map = {'Städtetrip':'🏙️','Rundreise':'🚗','Strandurlaub':'🏖️','Schiffsreise':'🚢'};
+  return map[type] || '🧳';
+}
+function getNextTrip(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = trips.filter(t=>t.dateFrom && new Date(t.dateFrom+'T00:00:00') >= today);
+  upcoming.sort((a,b)=> a.dateFrom.localeCompare(b.dateFrom));
+  return upcoming[0] || null;
+}
+function getNextTripForDest(destId){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = trips.filter(t=> t.destIds.includes(destId) && t.dateFrom && new Date(t.dateFrom+'T00:00:00') >= today);
+  upcoming.sort((a,b)=> a.dateFrom.localeCompare(b.dateFrom));
+  return upcoming[0] || null;
+}
+function isTripPast(t){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const refDate = t.dateTo || t.dateFrom;
+  if(!refDate) return false;
+  return new Date(refDate+'T00:00:00') < today;
+}
+function getPastTrips(){
+  return trips.filter(isTripPast).sort((a,b)=> (b.dateTo||b.dateFrom).localeCompare(a.dateTo||a.dateFrom));
+}
+function getOtherTrips(nextTrip){
+  const rest = trips.filter(t=> (!nextTrip || t.id!==nextTrip.id) && !isTripPast(t));
+  const withDate = rest.filter(t=>t.dateFrom).sort((a,b)=>a.dateFrom.localeCompare(b.dateFrom));
+  const withoutDate = rest.filter(t=>!t.dateFrom);
+  return [...withDate, ...withoutDate];
+}
+function calcDurationDays(dateFrom, dateTo){
+  if(!dateFrom || !dateTo) return null;
+  const a = new Date(dateFrom+'T00:00:00');
+  const b = new Date(dateTo+'T00:00:00');
+  const diff = Math.round((b-a)/86400000);
+  return diff>=0 ? diff+1 : null;
+}
+function calcVacationDays(dateFrom, dateTo){
+  if(!dateFrom || !dateTo) return null;
+  const a = new Date(dateFrom+'T00:00:00');
+  const b = new Date(dateTo+'T00:00:00');
+  if(b<a) return null;
+  let count=0;
+  const cur = new Date(a);
+  while(cur<=b){
+    const day = cur.getDay();
+    if(day!==0 && day!==6) count++;
+    cur.setDate(cur.getDate()+1);
+  }
+  return count;
+}
+function formatDateRangeDe(dateFrom, dateTo){
+  if(!dateFrom && !dateTo) return 'Datum offen';
+  if(dateFrom && !dateTo) return formatDateDe(dateFrom);
+  if(!dateFrom && dateTo) return formatDateDe(dateTo);
+  return formatDateDe(dateFrom)+' – '+formatDateDe(dateTo);
+}
+function renderTripDurationInfo(trip){
+  const days = calcDurationDays(trip.dateFrom, trip.dateTo);
+  const vacation = calcVacationDays(trip.dateFrom, trip.dateTo);
+  if(days===null) return '<p class="hint-text">Bitte Von- und Bis-Datum angeben.</p>';
+  return `
+    <div class="duration-stats">
+      <div class="duration-stat"><div class="duration-stat-num">${days}</div><div class="duration-stat-label">Reisetage</div></div>
+      <div class="duration-stat"><div class="duration-stat-num">${vacation}</div><div class="duration-stat-label">Urlaubstage (Mo–Fr)</div></div>
+    </div>`;
+}
+async function loadCountdownImage(trip){
+  if(!trip || !trip.photoIds || !trip.photoIds.length) return null;
+  const photoId = trip.photoIds[0];
+  if(!photoCache[photoId]){
+    const p = await sGet('photo:'+photoId, null);
+    if(p) photoCache[photoId] = p;
+  }
+  return photoCache[photoId] ? photoCache[photoId].dataUrl : null;
+}
+function renderMascotSvg(sizeClass){
+  return `<svg class="mascot-svg ${sizeClass||''}" viewBox="25 -6 330 330" role="img" aria-label="Reisebärchi">
+    <g class="mascot-paw">
+      <ellipse cx="308" cy="66" rx="20" ry="27" fill="#F0932B" transform="rotate(18 308 66)"/>
+      <ellipse cx="298" cy="42" rx="6.5" ry="8" fill="#F0932B"/>
+      <ellipse cx="313" cy="38" rx="6.5" ry="8" fill="#F0932B"/>
+      <ellipse cx="325" cy="47" rx="6.5" ry="8" fill="#F0932B"/>
+    </g>
+    <circle cx="103" cy="82" r="42" fill="#F0932B"/>
+    <circle cx="103" cy="84" r="22" fill="#FBEFDD"/>
+    <circle cx="277" cy="82" r="42" fill="#F0932B"/>
+    <circle cx="277" cy="84" r="22" fill="#FBEFDD"/>
+    <circle cx="190" cy="170" r="118" fill="#F0932B"/>
+    <path d="M178,58 Q190,30 202,58 Q194,50 190,52 Q186,50 178,58 Z" fill="#F0932B"/>
+    <ellipse cx="190" cy="212" rx="70" ry="55" fill="#FBEFDD"/>
+    <path d="M136,136 Q152,122 170,130" fill="none" stroke="#3A2A1C" stroke-width="5" stroke-linecap="round"/>
+    <path d="M244,136 Q228,122 210,130" fill="none" stroke="#3A2A1C" stroke-width="5" stroke-linecap="round"/>
+    <g class="mascot-eyes-normal">
+      <circle cx="156" cy="163" r="13" fill="#3A2A1C"/>
+      <circle cx="160.5" cy="158.5" r="4.5" fill="#FFFFFF"/>
+      <circle cx="224" cy="163" r="13" fill="#3A2A1C"/>
+      <circle cx="228.5" cy="158.5" r="4.5" fill="#FFFFFF"/>
+    </g>
+    <g class="mascot-eyes-happy">
+      <path d="M143,163 Q156,148 169,163" fill="none" stroke="#3A2A1C" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M211,163 Q224,148 237,163" fill="none" stroke="#3A2A1C" stroke-width="5.5" stroke-linecap="round"/>
+    </g>
+    <g class="mascot-eyes-squint">
+      <path d="M144,163 L168,163" fill="none" stroke="#3A2A1C" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M212,163 L236,163" fill="none" stroke="#3A2A1C" stroke-width="5.5" stroke-linecap="round"/>
+    </g>
+    <ellipse cx="190" cy="192" rx="17" ry="12" fill="#3A2A1C"/>
+    <g class="mascot-mouth">
+      <path d="M190,204 L190,214" fill="none" stroke="#3A2A1C" stroke-width="4" stroke-linecap="round"/>
+      <path d="M190,214 Q190,228 172,234" fill="none" stroke="#3A2A1C" stroke-width="5" stroke-linecap="round"/>
+      <path d="M190,214 Q190,228 208,234" fill="none" stroke="#3A2A1C" stroke-width="5" stroke-linecap="round"/>
+    </g>
+  </svg>`;
+}
+function triggerMascotAnim(mood, duration){
+  document.querySelectorAll('.mascot-svg').forEach(el=>{
+    el.classList.remove('mood-happy','mood-giggle','mood-wave','mood-nom');
+    void el.offsetWidth;
+    el.classList.add('mood-'+mood);
+  });
+  clearTimeout(triggerMascotAnim._timer);
+  triggerMascotAnim._timer = setTimeout(()=>{
+    document.querySelectorAll('.mascot-svg').forEach(el=>{ el.classList.remove('mood-'+mood); });
+  }, duration);
+}
+async function renderHomeDashboard(){
+  const nextTrip = getNextTrip();
+  let cardInner = `
+    <div class="countdown-empty">
+      <div class="countdown-empty-icon">🧳</div>
+      <div>Noch keine Reise geplant.</div>
+    </div>`;
+  if(nextTrip){
+    const linkedDests = nextTrip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
+    const placeText = linkedDests.map(d=>d.name).join(' & ') || 'Neue Reise';
+    const days = daysUntil(nextTrip.dateFrom);
+    const countdownText = days===0 ? 'Reise beginnt heute!' : days+' Tage bis zur Reise';
+    const img = await loadCountdownImage(nextTrip);
+    const imageHtml = img
+      ? `<div class="countdown-image" style="background-image:url('${img}')"></div>`
+      : `<div class="countdown-image countdown-image-fallback">${linkedDests.map(d=>d.flag).join(' ') || '🧳'}</div>`;
+    const durationDays = calcDurationDays(nextTrip.dateFrom, nextTrip.dateTo);
+    let weatherHtml = '';
+    if(linkedDests.length){
+      const w = await loadQuickWeather(linkedDests[0]);
+      if(w) weatherHtml = `<div class="countdown-weather">${w.emoji} ${w.temp}°C gerade in ${escapeHtml(linkedDests[0].name)}</div>`;
+    }
+    cardInner = `
+      ${imageHtml}
+      <div class="countdown-info">
+        <div class="countdown-place">${escapeHtml(placeText)}</div>
+        <div class="countdown-meta"><span>${tripTypeIcon(nextTrip.type)} ${escapeHtml(nextTrip.type)}</span>${durationDays? `<span>${durationDays} Tage</span>`:''}</div>
+        <div class="countdown-days">⏳ ${countdownText}</div>
+        ${weatherHtml}
+      </div>`;
+  }
+
+  const otherTrips = getOtherTrips(nextTrip);
+  const otherTripsHtml = otherTrips.length ? `
+    <h3 class="section-title" style="margin:24px 16px 10px;">Weitere Reisen</h3>
+    <div style="padding:0 16px;">
+      ${otherTrips.map(renderTripRow).join('')}
+    </div>` : '';
+
+  return `
+    <div class="header-home">
+      <div class="logo-badge" data-action="pet-mascot">
+        ${renderMascotSvg()}
+      </div>
+      <div class="app-title">Reisebärchi on Tour</div>
+    </div>
+    <div class="countdown-card" ${nextTrip? `data-action="edit-trip" data-id="${nextTrip.id}" style="cursor:pointer;"` : ''}>${cardInner}</div>
+    <div class="home-actions">
+      <button type="button" class="btn-home" data-action="go-zielauswahl">🗺️ Reiseziele entdecken</button>
+      <button type="button" class="btn-home" data-action="go-kochbuch">🍲 Kulinarische Weltreise</button>
+      <button type="button" class="btn-home" data-action="new-trip">➕ Nächste Reise eintragen</button>
+      <button type="button" class="btn-home" data-action="go-vergangene-reisen">🗄️ Vergangene Reisen</button>
+    </div>
+    <div class="backup-group">
+      <div class="backup-group-label">📖 Reiseführer &amp; Rezepte</div>
+      <button type="button" class="btn-link-subtle" data-action="export-guides-backup">💾 Sichern</button>
+      <button type="button" class="btn-link-subtle" data-action="trigger-guides-import">📥 Einlesen</button>
+      <input type="file" id="guides-import-input" accept=".json,application/json" style="display:none">
+    </div>
+    <div class="backup-group">
+      <div class="backup-group-label">🧳 Meine Reisen</div>
+      <button type="button" class="btn-link-subtle" data-action="export-trips-backup">💾 Sichern</button>
+      <button type="button" class="btn-link-subtle" data-action="trigger-trips-import">📥 Einlesen</button>
+      <input type="file" id="trips-import-input" accept=".json,application/json" style="display:none">
+    </div>
+    ${otherTripsHtml}
+  `;
+}
+
+/* ---------- Zielauswahl (Liste der Reiseziele) ---------- */
+const CONTINENTS = ['Europa','Asien','Afrika','Südamerika','Nordamerika','Rest der Welt'];
+const RECIPE_CATEGORIES = ['Fleisch','Fisch','Vegetarisch','Pasta','Süß','Getränke'];
+function renderDestCard(d){
+  const confirming = state.confirmingDelete && state.confirmingDelete.type==='dest' && state.confirmingDelete.id===d.id;
+  if(confirming){
+    return `<div class="dest-card dest-card-confirm">
+      <div class="confirm-message">${d.flag} ${escapeHtml(d.name)} inkl. aller Inhalte wirklich löschen?</div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-danger" data-action="do-delete" data-type="dest" data-id="${d.id}">Ja, löschen</button>
+        <button type="button" class="btn" data-action="cancel-delete">Abbrechen</button>
+      </div>
+    </div>`;
+  }
+  const linkedTrip = getNextTripForDest(d.id);
+  let countdown = '';
+  if(linkedTrip){
+    const days = daysUntil(linkedTrip.dateFrom);
+    countdown = `<div class="dest-countdown">${days===0 ? 'Reise beginnt heute!' : days+' Tage bis zur Reise'}</div>`;
+  }
+  return `<div class="dest-card" data-action="open-dest" data-id="${d.id}">
+    <button type="button" class="dest-delete" data-action="ask-delete" data-type="dest" data-id="${d.id}" title="Ziel entfernen">✕</button>
+    <div class="dest-flag">${d.flag}</div>
+    <div>
+      <div class="dest-name">${escapeHtml(d.name)}</div>
+      <div class="dest-meta">${d.lat.toFixed(2)}°, ${d.lng.toFixed(2)}°</div>
+      ${countdown}
+    </div>
+  </div>`;
+}
+function renderTripRow(t){
+  const confirming = state.confirmingDelete && state.confirmingDelete.type==='trip' && state.confirmingDelete.id===t.id;
+  const linked = t.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
+  const names = linked.map(d=>d.name).join(' & ') || 'Neue Reise';
+  if(confirming){
+    return `<div class="trip-row trip-row-confirm">
+      <div class="confirm-message">${escapeHtml(names)} wirklich löschen?</div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-danger" data-action="do-delete" data-type="trip" data-id="${t.id}">Ja, löschen</button>
+        <button type="button" class="btn" data-action="cancel-delete">Abbrechen</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="trip-row" data-action="edit-trip" data-id="${t.id}">
+    <div>
+      <div class="trip-row-title">${escapeHtml(names)}</div>
+      <div class="trip-row-meta">${escapeHtml(formatDateRangeDe(t.dateFrom, t.dateTo))}</div>
+      <div class="trip-row-meta">${tripTypeIcon(t.type)} ${escapeHtml(t.type)}</div>
+    </div>
+    <button type="button" class="btn btn-danger" data-action="ask-delete" data-type="trip" data-id="${t.id}">🗑️</button>
+  </div>`;
+}
+function renderVergangeneReisen(){
+  const past = getPastTrips();
+  const list = past.length ? past.map(renderTripRow).join('') : '<p class="empty-state" style="padding:0 16px;">Noch keine vergangenen Reisen.</p>';
+  return `
+    <div class="dest-header">
+      <div class="dest-header-top" data-action="go-home">← Zurück</div>
+      <div class="dest-header-title">🗄️ Vergangene Reisen</div>
+    </div>
+    <div style="padding:16px 0;">${list}</div>
+  `;
+}
+function renderZielauswahl(){
+  const sorted = [...destinations].sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  const groups = {};
+  CONTINENTS.forEach(c=>groups[c]=[]);
+  sorted.forEach(d=>{
+    const c = CONTINENTS.includes(d.continent) ? d.continent : 'Rest der Welt';
+    groups[c].push(d);
+  });
+  const groupsHtml = CONTINENTS.map(continent=>{
+    const items = groups[continent];
+    if(!items.length) return '';
+    const collapsed = state.collapsedContinents.includes(continent);
+    const cards = items.map(renderDestCard).join('');
+    return `
+      <div class="continent-group">
+        <div class="continent-header" data-action="toggle-continent" data-continent="${continent}">
+          <span>${continent} (${items.length})</span>
+          <span class="continent-caret">${collapsed?'▸':'▾'}</span>
+        </div>
+        ${collapsed? '' : `<div class="continent-items">${cards}</div>`}
+      </div>`;
+  }).join('');
+
+  const addForm = state.showAddDest ? `
+    <div class="inline-form" style="margin:0 16px 14px;">
+      <div class="field-label">Neues Reiseziel</div>
+      <label class="field-label">Ort suchen (füllt die Koordinaten automatisch)</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="input" id="new-dest-search" placeholder="z.B. Malta">
+        <button type="button" class="btn" data-action="search-new-dest">Suchen</button>
+      </div>
+      <div id="new-dest-search-results"></div>
+      <input class="input" id="new-dest-name" placeholder="Name" style="margin-bottom:8px;">
+      <input class="input" id="new-dest-flag" placeholder="Emoji/Flagge (optional)" style="margin-bottom:8px;">
+      <select class="input" id="new-dest-continent" style="margin-bottom:8px;">
+        ${CONTINENTS.map(c=>`<option>${c}</option>`).join('')}
+      </select>
+      <label class="field-label">Koordinaten (automatisch befüllt, bei Bedarf anpassbar)</label>
+      <input class="input" id="new-dest-lat" type="number" step="0.0001" placeholder="Breitengrad" style="margin-bottom:8px;">
+      <input class="input" id="new-dest-lng" type="number" step="0.0001" placeholder="Längengrad" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-dest">Anlegen</button>
+        <button type="button" class="btn" data-action="cancel-add-dest">Abbrechen</button>
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="dest-header" style="display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;min-width:0;">
+        <div class="dest-header-top" data-action="go-home">← Zurück</div>
+        <div class="dest-header-title">Reiseziele</div>
+      </div>
+      <div class="logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</div>
+    </div>
+    <div class="dest-list">
+      ${groupsHtml}
+      ${addForm}
+      <div class="dest-card dest-card-add" data-action="show-add-dest" style="${state.showAddDest?'display:none;':''}">
+        <div class="dest-flag">➕</div>
+        <div class="dest-name">Neues Ziel</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- Kochbuch ---------- */
+function renderRecipeAddForm(){
+  const d = state.recipeImportDraft || {};
+  return `<div class="inline-form" style="margin:0 16px 14px;">
+    ${state.recipeImportDraft? `<p class="hint-text" style="margin-top:0;">Aus Datei eingelesen – bitte prüfen, ggf. korrigieren und speichern.</p>`:''}
+    <label class="field-label">Reiseführer</label>
+    <select class="input" id="new-recipe-dest" style="margin-bottom:8px;">
+      ${destinations.map(dd=>`<option value="${dd.id}">${dd.flag} ${escapeHtml(dd.name)}</option>`).join('')}
+    </select>
+    <label class="field-label">Kategorie</label>
+    <select class="input" id="new-recipe-category" style="margin-bottom:8px;">
+      ${RECIPE_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}
+    </select>
+    <label class="field-label">Name</label>
+    <input class="input" id="new-recipe-name" placeholder="Name (Landessprache)" value="${escapeHtml(d.nameNative||'')}" style="margin-bottom:8px;">
+    <label class="field-label">Deutscher Name</label>
+    <input class="input" id="new-recipe-namede" placeholder="Deutscher Name / Untertitel" value="${escapeHtml(d.nameGerman||'')}" style="margin-bottom:8px;">
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <input class="input" id="new-recipe-servings" placeholder="Portionen (z.B. 2 Personen)" value="${escapeHtml(d.servings||'')}">
+      <input class="input" id="new-recipe-time" placeholder="Zeit (z.B. 10 Minuten)" value="${escapeHtml(d.time||'')}">
+    </div>
+    <label class="field-label">Zutaten (eine Zeile pro Zutat)</label>
+    <textarea class="textarea" id="new-recipe-ingredients" style="margin-bottom:8px;">${escapeHtml(d.ingredients||'')}</textarea>
+    <label class="field-label">Zubereitung (ein Schritt pro Zeile)</label>
+    <textarea class="textarea" id="new-recipe-steps" style="margin-bottom:8px;">${escapeHtml(d.steps||'')}</textarea>
+    <div class="form-actions">
+      <button type="button" class="btn btn-add" data-action="confirm-add-recipe">Speichern</button>
+      <button type="button" class="btn" data-action="cancel-add-recipe">Abbrechen</button>
+    </div>
+  </div>`;
+}
+function renderRecipeCard(r){
+  const dest = destinations.find(d=>d.id===r.destId);
+  const flag = dest ? dest.flag : '🍽️';
+  const destName = dest ? dest.name : 'Unbekanntes Ziel';
+  return `<div class="recipe-card" data-action="open-recipe" data-id="${r.id}">
+    <div class="recipe-card-header">
+      <span class="recipe-flag">${flag}</span>
+      <div style="flex:1;">
+        <div class="recipe-name">${escapeHtml(r.nameNative)}</div>
+        <div class="recipe-subname">${escapeHtml(r.nameGerman)}</div>
+        <div class="recipe-dest-tag">${escapeHtml(destName)}</div>
+      </div>
+      <span class="continent-caret">›</span>
+    </div>
+  </div>`;
+}
+async function openRecipeDetail(id){
+  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+  const recipe = recipes.find(r=>r.id===id);
+  if(recipe && recipe.photoId && !photoCache[recipe.photoId]){
+    const p = await sGet('photo:'+recipe.photoId, null);
+    if(p) photoCache[recipe.photoId] = p;
+  }
+  state.view='recipe'; state.recipeId=id; state.editingRecipe=false;
+  state.lightboxPhotoId=null; state.lightboxContext=null;
+  await render();
+  triggerMascotAnim('nom', 1600);
+}
+function renderRecipeDetail(){
+  const r = recipes.find(x=>x.id===state.recipeId);
+  const dest = destinations.find(d=>d.id===r.destId);
+  const flag = dest ? dest.flag : '🍽️';
+  const destName = dest ? dest.name : 'Unbekanntes Ziel';
+  const confirming = state.confirmingDelete && state.confirmingDelete.type==='recipe' && state.confirmingDelete.id===r.id;
+
+  let photoHtml = '';
+  if(r.photoId && photoCache[r.photoId]){
+    photoHtml = `<div class="recipe-photo" style="background-image:url('${photoCache[r.photoId].dataUrl}')" data-action="view-recipe-photo" data-photo-id="${r.photoId}"></div>`;
+  }
+  if(state.editingRecipe){
+    photoHtml += `<button type="button" class="btn" data-action="trigger-recipe-photo-upload" style="margin-top:8px;">${r.photoId? 'Foto ändern':'+ Foto hinzufügen'}</button>
+      <input type="file" id="recipe-photo-input" accept="image/*" style="display:none">`;
+  }
+
+  let body;
+  if(state.editingRecipe){
+    body = `
+      ${photoHtml}
+      <div class="field-group" style="margin-top:14px;">
+        <label class="field-label">Reiseführer</label>
+        <select class="input" data-recipe-field="destId" data-recipe-id="${r.id}">
+          ${destinations.map(d=>`<option value="${d.id}" ${d.id===r.destId?'selected':''}>${d.flag} ${escapeHtml(d.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Kategorie</label>
+        <select class="input" data-recipe-field="category" data-recipe-id="${r.id}">
+          ${RECIPE_CATEGORIES.map(c=>`<option ${c===r.category?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Name</label>
+        <input class="input" data-recipe-field="nameNative" data-recipe-id="${r.id}" value="${escapeHtml(r.nameNative)}">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Deutscher Name</label>
+        <input class="input" data-recipe-field="nameGerman" data-recipe-id="${r.id}" value="${escapeHtml(r.nameGerman)}">
+      </div>
+      <div class="field-group" style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label class="field-label">Portionen</label>
+          <input class="input" data-recipe-field="servings" data-recipe-id="${r.id}" value="${escapeHtml(r.servings)}">
+        </div>
+        <div style="flex:1;">
+          <label class="field-label">Zeit</label>
+          <input class="input" data-recipe-field="time" data-recipe-id="${r.id}" value="${escapeHtml(r.time)}">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Zutaten (eine Zeile pro Zutat)</label>
+        <textarea class="textarea" data-recipe-field="ingredients" data-recipe-id="${r.id}">${escapeHtml(r.ingredients)}</textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Zubereitung (ein Schritt pro Zeile)</label>
+        <textarea class="textarea" data-recipe-field="steps" data-recipe-id="${r.id}">${escapeHtml(r.steps)}</textarea>
+      </div>
+      <button type="button" class="btn btn-primary" data-action="finish-edit-recipe">Fertig</button>
+    `;
+  } else {
+    const ingredientsList = (r.ingredients||'').split('\n').filter(l=>l.trim()).map(l=>`<li>${escapeHtml(l.trim())}</li>`).join('');
+    const stepsList = (r.steps||'').split('\n').filter(l=>l.trim()).map(l=>`<li>${escapeHtml(l.trim())}</li>`).join('');
+    body = `
+      ${photoHtml}
+      <div class="recipe-dest-tag" style="margin-top:14px;">${escapeHtml(destName)}</div>
+      <div class="recipe-meta">${r.servings? `<span>${escapeHtml(r.servings)}</span>`:''}${r.time? `<span>${escapeHtml(r.time)}</span>`:''}</div>
+      ${ingredientsList? `<div class="recipe-section-title">🍅 Zutaten</div><ul class="recipe-list">${ingredientsList}</ul>`:''}
+      ${stepsList? `<div class="recipe-section-title">👨‍🍳 Zubereitung</div><ol class="recipe-list">${stepsList}</ol>`:''}
+    `;
+  }
+
+  const actionsBlock = confirming ? `
+    <div class="confirm-inline-block">
+      <div class="confirm-message">${escapeHtml(r.nameNative)} wirklich löschen?</div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-danger" data-action="do-delete" data-type="recipe" data-id="${r.id}">Ja, löschen</button>
+        <button type="button" class="btn" data-action="cancel-delete">Abbrechen</button>
+      </div>
+    </div>` : `
+    <div class="form-actions" style="margin-top:20px;">
+      ${!state.editingRecipe ? `<button type="button" class="btn" data-action="start-edit-recipe">Rezept bearbeiten</button>` : ''}
+      <button type="button" class="btn btn-danger" data-action="ask-delete" data-type="recipe" data-id="${r.id}">Rezept löschen</button>
+    </div>`;
+
+  return `
+    <div class="dest-header" style="display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;min-width:0;">
+        <div class="dest-header-top" data-action="go-kochbuch">← Kulinarische Weltreise</div>
+        <div class="dest-header-title">${flag} ${escapeHtml(r.nameNative)}</div>
+        <div class="dest-header-coords">${escapeHtml(r.nameGerman||'')}</div>
+      </div>
+      <div class="logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</div>
+    </div>
+    <div class="panel">
+      ${body}
+      ${actionsBlock}
+    </div>
+    ${state.lightboxPhotoId ? renderLightbox() : ''}
+  `;
+}
+async function onRecipePhotoSelected(file){
+  try{
+    const dataUrl = await compressImage(file);
+    const photoId = genId();
+    const photo = {dataUrl, caption:'', date: todayStr()};
+    await sSet('photo:'+photoId, photo);
+    photoCache[photoId] = photo;
+    const recipe = recipes.find(r=>r.id===state.recipeId);
+    recipe.photoId = photoId;
+    await sSet('recipes', recipes);
+    render();
+  }catch(e){ showToast('Foto konnte nicht gespeichert werden.'); }
+}
+function parseRecipeText(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length);
+  let nameNative='', nameGerman='', servings='', time='';
+  const ingredients=[], steps=[];
+  let section = null;
+  lines.forEach(line=>{
+    const lower = line.toLowerCase();
+    if(!nameNative && !section && !/^für\s+\d/i.test(line) && !lower.includes('zutaten') && !lower.includes('zubereitung')){
+      const cleaned = line.replace(/^[^\p{L}\p{N}]+/u,'').trim();
+      const parts = cleaned.split(/✦+/).map(p=>p.trim()).filter(Boolean);
+      if(parts.length>=2){ nameNative=parts[0]; nameGerman=parts[1]; }
+      else { nameNative = cleaned; }
+      return;
+    }
+    if(!section && (/^für\s+\d/i.test(line) || lower.includes('minuten') || lower.includes('person'))){
+      const parts = line.split(/·/);
+      const m = parts[0].match(/für\s+(.+)/i);
+      servings = m ? m[1].trim() : parts[0].trim();
+      if(parts[1]) time = parts[1].trim();
+      return;
+    }
+    if(lower.includes('zutaten')){
+      section='ingredients';
+      const rest = line.replace(/^.*?zutaten/i,'').trim();
+      if(rest) ingredients.push(rest);
+      return;
+    }
+    if(lower.includes('zubereitung')){
+      section='steps';
+      const rest = line.replace(/^.*?zubereitung/i,'').trim();
+      if(rest) steps.push(rest.replace(/^\d+\.\s*/,''));
+      return;
+    }
+    if(section==='ingredients') ingredients.push(line);
+    else if(section==='steps') steps.push(line.replace(/^\d+\.\s*/,''));
+  });
+  return {nameNative, nameGerman, servings, time, ingredients: ingredients.join('\n'), steps: steps.join('\n')};
+}
+async function onRecipeFileSelected(file){
+  if(typeof mammoth === 'undefined'){
+    showToast('Der Datei-Import-Dienst konnte nicht geladen werden (keine Internetverbindung).');
+    return;
+  }
+  try{
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({arrayBuffer});
+    state.recipeImportDraft = parseRecipeText(result.value);
+    state.addingRecipe = true;
+    render();
+    showToast('Rezept eingelesen – bitte prüfen und speichern.');
+  }catch(e){
+    showToast('Datei konnte nicht gelesen werden. Bitte eine .docx-Datei verwenden.');
+  }
+}
+function renderKochbuch(){
+  const groups = {};
+  RECIPE_CATEGORIES.forEach(c=>groups[c]=[]);
+  const extra = [];
+  recipes.forEach(r=>{
+    if(RECIPE_CATEGORIES.includes(r.category)) groups[r.category].push(r);
+    else extra.push(r);
+  });
+  const catList = extra.length ? [...RECIPE_CATEGORIES,'Sonstiges'] : RECIPE_CATEGORIES;
+  if(extra.length) groups['Sonstiges'] = extra;
+
+  const groupsHtml = catList.map(cat=>{
+    const items = groups[cat] || [];
+    if(!items.length) return '';
+    const collapsed = state.collapsedRecipeCats.includes(cat);
+    const cards = items.map(renderRecipeCard).join('');
+    return `
+      <div class="continent-group">
+        <div class="continent-header" data-action="toggle-recipe-cat" data-cat="${cat}">
+          <span>${cat} (${items.length})</span>
+          <span class="continent-caret">${collapsed?'▸':'▾'}</span>
+        </div>
+        ${collapsed? '' : `<div class="continent-items">${cards}</div>`}
+      </div>`;
+  }).join('');
+
+  const addForm = state.addingRecipe ? renderRecipeAddForm() : `
+    <div style="display:flex;gap:8px;margin:0 16px 14px;flex-wrap:wrap;">
+      <button type="button" class="btn btn-add" data-action="show-add-recipe">+ Neues Rezept</button>
+      <button type="button" class="btn" data-action="trigger-recipe-file-upload">📄 Rezeptkarte importieren</button>
+    </div>
+    <input type="file" id="recipe-file-input" accept=".docx" style="display:none">`;
+
+  return `
+    <div class="dest-header" style="display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;min-width:0;">
+        <div class="dest-header-top" data-action="go-home">← Zurück</div>
+        <div class="dest-header-title">🍲 Kulinarische Weltreise</div>
+      </div>
+      <div class="logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</div>
+    </div>
+    <div class="dest-list">
+      ${recipes.length ? '' : '<p class="empty-state" style="padding:0 16px 14px;">Noch keine Rezepte hinterlegt.</p>'}
+      ${groupsHtml}
+      ${addForm}
+    </div>
+  `;
+}
+async function confirmAddRecipe(){
+  const destId = document.getElementById('new-recipe-dest').value;
+  const category = document.getElementById('new-recipe-category').value;
+  const nameNative = document.getElementById('new-recipe-name').value.trim();
+  const nameGerman = document.getElementById('new-recipe-namede').value.trim();
+  const servings = document.getElementById('new-recipe-servings').value.trim();
+  const time = document.getElementById('new-recipe-time').value.trim();
+  const ingredients = document.getElementById('new-recipe-ingredients').value.trim();
+  const steps = document.getElementById('new-recipe-steps').value.trim();
+  if(!nameNative){ showToast('Bitte einen Namen angeben.'); return; }
+  recipes.push({id:genId(), destId, category, nameNative, nameGerman, servings, time, ingredients, steps});
+  await sSet('recipes', recipes);
+  state.addingRecipe = false;
+  state.recipeImportDraft = null;
+  render();
+}
+async function deleteRecipe(id){
+  recipes = recipes.filter(r=>r.id!==id);
+  await sSet('recipes', recipes);
+  state.confirmingDelete = null;
+  goToKochbuch();
+}
+
+/* ---------- Reise (Detailansicht mit 4 Reitern) ---------- */
+async function createNewTrip(){
+  const trip = {id:genId(), dateFrom:null, dateTo:null, type:'Städtetrip', companions:'', destIds:[],
+    documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[]};
+  trips.push(trip);
+  state.isDraftTrip = true;
+  await openTripDetail(trip.id, 'reisedaten');
+}
+async function saveDraftTrip(){
+  state.isDraftTrip = false;
+  state.pendingMascotMood = 'happy';
+  await sSet('trips', trips);
+  showToast('Reise gespeichert.');
+  render();
+}
+function discardDraftTrip(){
+  trips = trips.filter(t=>t.id!==state.tripId);
+  state.isDraftTrip = false;
+  goHome();
+}
+const DEST_KEYWORDS = {
+  kapverde: ['Kap Verde','Kapverde','Cabo Verde','Sal','Praia','Santiago','Boa Vista','Mindelo'],
+  azoren: ['Azoren','Azores','Ponta Delgada','São Miguel','Sao Miguel','Terceira','Pico','Faial'],
+  madeira: ['Madeira','Funchal'],
+  norwegen: ['Norwegen','Norway','Oslo','Bergen','Norwegian'],
+  faeroeer: ['Färöer','Faröer','Faroe','Tórshavn','Torshavn'],
+  island: ['Island','Iceland','Reykjavik','Reykjavík'],
+  kanaren: ['Kanaren','Canary','Gran Canaria','Teneriffa','Tenerife','Lanzarote','Fuerteventura','Las Palmas'],
+  sardinien: ['Sardinien','Sardinia','Cagliari','Alghero','Olbia'],
+  kreta: ['Kreta','Crete','Heraklion','Chania']
+};
+const KNOWN_AIRLINES = ['Lufthansa','TAP Portugal','TAP Air','TAP','AIDA','Condor','Eurowings','Ryanair','easyJet','SAS','Norwegian Air','Icelandair','Swiss','Austrian Airlines','KLM','Air France','Vueling','Binter Canarias'];
+async function extractPdfText(file){
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  let text = '';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(it=>it.str).join(' ') + '\n';
+  }
+  return text;
+}
+function parseBookingText(text){
+  const result = {dateFrom:null, dateTo:null, matchedDestIds:[], ticket:null};
+  const dateMatches = [];
+  let m;
+  const reDMY = /\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b/g;
+  while((m = reDMY.exec(text))){ dateMatches.push(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`); }
+  const reISO = /\b(\d{4})-(\d{2})-(\d{2})\b/g;
+  while((m = reISO.exec(text))){ dateMatches.push(`${m[1]}-${m[2]}-${m[3]}`); }
+  if(dateMatches.length){
+    dateMatches.sort();
+    result.dateFrom = dateMatches[0];
+    result.dateTo = dateMatches[dateMatches.length-1];
+  }
+  Object.keys(DEST_KEYWORDS).forEach(id=>{
+    if(DEST_KEYWORDS[id].some(kw=>text.toLowerCase().includes(kw.toLowerCase())) && destinations.find(d=>d.id===id)){
+      result.matchedDestIds.push(id);
+    }
+  });
+  result.matchedDestIds = result.matchedDestIds.slice(0,3);
+  const flightMatch = text.match(/\b([A-Z]{2})\s?(\d{2,4})\b/);
+  const airlineMatch = KNOWN_AIRLINES.find(a=>text.toLowerCase().includes(a.toLowerCase()));
+  const codeMatch = text.match(/(?:Buchungscode|Booking\s*(?:reference|code)|PNR|Bestätigungsnummer|Confirmation(?:\s*number)?)[:\s]+([A-Z0-9]{5,8})/i);
+  const timeMatches = [...text.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)].map(mm=>mm[0]);
+  if(flightMatch || airlineMatch || codeMatch){
+    result.ticket = {
+      id: genId(), airline: airlineMatch||'', flightNumber: flightMatch? flightMatch[1]+flightMatch[2] : '',
+      date: result.dateFrom||'', from:'', to:'',
+      departTime: timeMatches[0]||'', arriveTime: timeMatches[1]||'', bookingCode: codeMatch? codeMatch[1] : ''
+    };
+  }
+  return result;
+}
+async function onBookingFileSelected(file){
+  const trip = trips.find(t=>t.id===state.tripId);
+  if(!trip){ showToast('Keine aktive Reise gefunden.'); return; }
+  showToast('Lese Buchungsunterlagen…');
+  try{
+    const name = file.name.toLowerCase();
+    let text = '';
+    if(name.endsWith('.pdf')){
+      if(typeof pdfjsLib==='undefined'){ showToast('PDF-Dienst nicht verfügbar (keine Internetverbindung).'); return; }
+      text = await extractPdfText(file);
+    } else {
+      if(typeof mammoth==='undefined'){ showToast('Datei-Import-Dienst nicht verfügbar.'); return; }
+      const arrayBuffer = await file.arrayBuffer();
+      const res = await mammoth.extractRawText({arrayBuffer});
+      text = res.value;
+    }
+    const parsed = parseBookingText(text);
+    if(parsed.dateFrom && !trip.dateFrom) trip.dateFrom = parsed.dateFrom;
+    if(parsed.dateTo && !trip.dateTo) trip.dateTo = parsed.dateTo;
+    parsed.matchedDestIds.forEach(id=>{
+      if(trip.destIds.length<3 && !trip.destIds.includes(id)) trip.destIds.push(id);
+    });
+    if(parsed.ticket) trip.tickets.push(parsed.ticket);
+    await saveTrips();
+    await ensureLinkedGuidesLoaded(trip);
+    showToast(parsed.dateFrom || parsed.ticket ? 'Buchungsunterlagen eingelesen – bitte prüfen.' : 'Es wurde wenig erkannt – bitte manuell ergänzen.');
+    render();
+  }catch(e){
+    showToast('Datei konnte nicht gelesen werden.');
+  }
+}
+async function openTripDetail(tripId, tab){
+  state.view='trip'; state.tripId=tripId; state.tripTab=tab||'reisedaten';
+  state.addingTicket=false; state.addingTripDoc=false; state.addingDiary=false;
+  state.addingActivityTicket=false; state.lightboxPhotoId=null; state.lightboxContext=null;
+  state.showDayImport=false; state.dayImportDestId=null; state.dayImportRouteId=null;
+  const trip = trips.find(t=>t.id===tripId);
+  if(trip) await ensureLinkedGuidesLoaded(trip);
+  render();
+}
+async function switchTripTab(tab){
+  state.tripTab = tab;
+  state.addingTicket=false; state.addingTripDoc=false; state.addingDiary=false; state.addingActivityTicket=false;
+  state.showDayImport=false; state.dayImportDestId=null; state.dayImportRouteId=null; state.addingBudget=false;
+  const trip = trips.find(t=>t.id===state.tripId);
+  if(tab==='bilder'){
+    await ensurePhotosLoaded(trip.photoIds);
+  }
+  if(tab==='reisedaten' || tab==='tagesplaner' || tab==='budget'){
+    await ensureLinkedGuidesLoaded(trip);
+  }
+  render();
+}
+async function deleteTrip(id){
+  trips = trips.filter(t=>t.id!==id);
+  await saveTrips();
+  state.confirmingDelete = null;
+  goHome();
+}
+function renderTrip(){
+  const trip = trips.find(t=>t.id===state.tripId);
+  const linkedDests = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
+  const title = linkedDests.length ? linkedDests.map(d=>d.name).join(' & ') : 'Neue Reise';
+  const flags = linkedDests.map(d=>d.flag).join(' ');
+  const dateRange = formatDateRangeDe(trip.dateFrom, trip.dateTo);
+
+  const tabs = [
+    ['reisedaten','📅','Reisedaten'],['tagesplaner','🗓️','Tagesplaner'],['unterlagen','🎫','Unterlagen'],
+    ['budget','💶','Budget'],['tagebuch','📔','Tagebuch'],['bilder','📷','Bilder']
+  ];
+  const tabbar = tabs.map(([key,icon,label])=>
+    `<div class="tab ${state.tripTab===key?'active':''}" data-action="switch-trip-tab" data-tab="${key}">${icon} ${label}</div>`
+  ).join('');
+
+  let content = '';
+  if(state.tripTab==='reisedaten') content = renderTripReisedatenTab(trip);
+  else if(state.tripTab==='tagesplaner') content = renderTripTagesplanerTab(trip);
+  else if(state.tripTab==='unterlagen') content = renderTripUnterlagenTab(trip);
+  else if(state.tripTab==='budget') content = renderBudgetTab(trip);
+  else if(state.tripTab==='tagebuch') content = renderTripTagebuchTab(trip);
+  else if(state.tripTab==='bilder') content = renderTripBilderTab(trip);
+
+  const draftBanner = state.isDraftTrip ? `
+    <div class="draft-banner">
+      <span>📝 Noch nicht gespeichert</span>
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="save-draft-trip">💾 Speichern</button>
+        <button type="button" class="btn btn-danger" data-action="discard-draft-trip">Verwerfen</button>
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="dest-header" style="display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;min-width:0;">
+        <div class="dest-header-top" data-action="go-home">← Übersicht</div>
+        <div class="dest-header-title">${flags} ${escapeHtml(title)}</div>
+        <div class="dest-header-coords">${escapeHtml(dateRange)}</div>
+      </div>
+      ${state.isDraftTrip ? `<div class="logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</div>` : ''}
+    </div>
+    ${draftBanner}
+    <div class="tabbar">${tabbar}</div>
+    <div class="panel">${content}</div>
+    ${state.lightboxPhotoId ? renderLightbox() : ''}
+  `;
+}
+
+/* --- Reisedaten tab --- */
+function renderTripReisedatenTab(trip){
+  const tripTypes = ['Städtetrip','Rundreise','Strandurlaub','Schiffsreise'];
+  const dropdownsHtml = renderGuideDropdowns(trip);
+  const bucketlistHtml = renderTripBucketlistSection(trip);
+
+  return `
+    <button type="button" class="btn" data-action="trigger-booking-upload" style="margin-bottom:18px;">📄 Aus Buchungsunterlagen befüllen</button>
+    <input type="file" id="booking-file-input" accept=".pdf,.docx" style="display:none">
+    <div class="field-group">
+      <label class="field-label">Von</label>
+      <input type="date" class="input" data-trip-field="dateFrom" value="${trip.dateFrom||''}">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Bis</label>
+      <input type="date" class="input" data-trip-field="dateTo" value="${trip.dateTo||''}">
+    </div>
+    <div id="trip-duration-display">${renderTripDurationInfo(trip)}</div>
+    <div class="field-group" style="margin-top:22px;">
+      <label class="field-label">Art der Reise</label>
+      <select class="input" data-trip-field="type">
+        ${tripTypes.map(t=>`<option ${trip.type===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Mit wem</label>
+      <input class="input" data-trip-field="companions" placeholder="z.B. Partner, Familie" value="${escapeHtml(trip.companions||'')}">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Passende Reiseführer (bis zu 3)</label>
+      ${dropdownsHtml}
+    </div>
+    ${renderDestDistances(trip)}
+    <div class="field-group">
+      <label class="field-label">Bucketliste (synchron mit dem Reiseführer)</label>
+      ${bucketlistHtml}
+    </div>
+    ${state.confirmingDelete && state.confirmingDelete.type==='trip' && state.confirmingDelete.id===trip.id ? `
+      <div class="confirm-inline-block">
+        <div class="confirm-message">Diese Reise inkl. aller Unterlagen, Tickets, Tagebuch und Fotos wirklich löschen?</div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-danger" data-action="do-delete" data-type="trip" data-id="${trip.id}">Ja, löschen</button>
+          <button type="button" class="btn" data-action="cancel-delete">Abbrechen</button>
+        </div>
+      </div>` : `
+      <button type="button" class="btn btn-danger" data-action="ask-delete" data-type="trip" data-id="${trip.id}" style="margin-top:10px;">Reise löschen</button>`}
+  `;
+}
+function renderGuideDropdowns(trip){
+  const numDropdowns = Math.min(trip.destIds.length + 1, 3);
+  let rows = '';
+  for(let i=0;i<numDropdowns;i++){
+    const selectedId = trip.destIds[i] || '';
+    const usedElsewhere = trip.destIds.filter((id,idx)=>idx!==i);
+    const options = destinations.filter(d=> d.id===selectedId || !usedElsewhere.includes(d.id));
+    const optionsHtml = `<option value="">– Reiseführer wählen –</option>` +
+      options.map(d=>`<option value="${d.id}" ${d.id===selectedId?'selected':''}>${d.flag} ${escapeHtml(d.name)}</option>`).join('');
+    rows += `
+      <div class="guide-picker-row">
+        <select class="input trip-guide-select" data-slot="${i}">${optionsHtml}</select>
+        ${selectedId ? `<button type="button" class="btn btn-jump" data-action="open-dest-from-trip" data-id="${selectedId}">→ Öffnen</button>` : ''}
+      </div>`;
+  }
+  return rows;
+}
+async function ensureLinkedGuidesLoaded(trip){
+  for(const destId of trip.destIds){ await loadDestData(destId); }
+}
+function haversineKm(lat1,lng1,lat2,lng2){
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+function renderDestDistances(trip){
+  const linked = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
+  if(linked.length<2) return '';
+  let rows = '';
+  for(let i=0;i<linked.length-1;i++){
+    for(let j=i+1;j<linked.length;j++){
+      const km = haversineKm(linked[i].lat,linked[i].lng,linked[j].lat,linked[j].lng);
+      rows += `<div class="distance-row">
+        <span>${linked[i].flag} ${escapeHtml(linked[i].name)}</span>
+        <span class="distance-arrow">↔</span>
+        <span>${linked[j].flag} ${escapeHtml(linked[j].name)}</span>
+        <span class="distance-value">${km.toLocaleString('de-DE')} km</span>
+      </div>`;
+    }
+  }
+  return `<div class="field-group"><label class="field-label">Entfernung zwischen den Zielen</label>${rows}</div>`;
+}
+function renderTripBucketlistSection(trip){
+  if(!trip.destIds.length){
+    return '<p class="empty-state">Wähle oben einen Reiseführer aus, um dessen Bucketliste hier zu sehen und zu bearbeiten.</p>';
+  }
+  return trip.destIds.map(destId=>{
+    const dest = destinations.find(d=>d.id===destId);
+    const dd = destDataCache[destId];
+    if(!dest || !dd) return '';
+    const items = dd.bucketlist || [];
+    const listHtml = items.length ? items.map(it=>`
+      <div class="list-item ${it.checked?'checked':''}">
+        <div class="checkbox ${it.checked?'checked':''}" data-action="toggle-guide-bucket-item" data-dest-id="${destId}" data-id="${it.id}">${it.checked?'✓':''}</div>
+        <div class="list-item-text">${escapeHtml(it.text)}</div>
+        <button type="button" class="btn btn-danger" data-action="delete-guide-bucket-item" data-dest-id="${destId}" data-id="${it.id}">🗑️</button>
+      </div>`).join('') : '<p class="empty-state">Noch keine Einträge.</p>';
+    const addForm = state.addingList===('bucket:'+destId) ? `
+      <div class="inline-form">
+        <input class="input" id="new-item-input" placeholder="Eintrag hinzufügen">
+        <div class="form-actions">
+          <button type="button" class="btn btn-add" data-action="confirm-add-guide-bucket-item" data-dest-id="${destId}">Hinzufügen</button>
+          <button type="button" class="btn" data-action="cancel-add-item">Abbrechen</button>
+        </div>
+      </div>` : `<button type="button" class="btn" data-action="show-add-guide-bucket-item" data-dest-id="${destId}">+ Eintrag hinzufügen</button>`;
+    return `
+      <div class="bucket-group">
+        <div class="bucket-group-title">${dest.flag} ${escapeHtml(dest.name)}</div>
+        ${listHtml}
+        ${addForm}
+      </div>`;
+  }).join('');
+}
+async function toggleGuideBucketItem(destId, itemId){
+  const dd = destDataCache[destId];
+  const item = dd.bucketlist.find(i=>i.id===itemId);
+  if(item){ item.checked=!item.checked; await saveDestData(destId); render(); }
+}
+async function deleteGuideBucketItem(destId, itemId){
+  const dd = destDataCache[destId];
+  dd.bucketlist = dd.bucketlist.filter(i=>i.id!==itemId);
+  await saveDestData(destId);
+  render();
+}
+async function confirmAddGuideBucketItem(destId){
+  const input = document.getElementById('new-item-input');
+  const text = input.value.trim();
+  if(!text) return;
+  const dd = destDataCache[destId];
+  dd.bucketlist.push({id:genId(), text, checked:false});
+  await saveDestData(destId);
+  state.addingList = null;
+  render();
+}
+
+/* --- Unterlagen tab (inkl. Flugticket- und Ausflugsticket-Wallet) --- */
+function renderTicketPhotoLink(t, listKey){
+  return t.photoId
+    ? `<div class="ticket-photo-link" data-action="view-ticket-photo" data-photo-id="${t.photoId}" data-list="${listKey}" data-id="${t.id}">📎 Ticket-Foto ansehen</div>`
+    : `<div class="ticket-photo-link" data-action="add-ticket-photo" data-list="${listKey}" data-id="${t.id}">+ Foto/Screenshot hinzufügen</div>`;
+}
+function renderTicketCard(t){
+  const timesParts = [];
+  if(t.departTime) timesParts.push('Abflug '+t.departTime);
+  if(t.arriveTime) timesParts.push('Ankunft '+t.arriveTime);
+  const timesHtml = timesParts.length ? `<div class="ticket-times">${timesParts.map(p=>`<span>${escapeHtml(p)}</span>`).join('')}</div>` : '';
+  const subLine = [t.airline,t.flightNumber].filter(Boolean).map(s=>escapeHtml(s)).join(' ');
+  return `<div class="ticket-card">
+    <div class="ticket-main">
+      <div class="ticket-route">${escapeHtml(t.from||'?')} → ${escapeHtml(t.to||'?')}</div>
+      ${subLine? `<div class="ticket-sub">${subLine}</div>`:''}
+      ${t.date? `<div class="ticket-sub">${formatDateDe(t.date)}</div>` : ''}
+      ${timesHtml}
+      ${renderTicketPhotoLink(t,'tickets')}
+    </div>
+    <div class="ticket-stub">${t.bookingCode? escapeHtml(t.bookingCode) : '—'}</div>
+    <button type="button" class="ticket-delete" data-action="delete-ticket" data-id="${t.id}">✕</button>
+  </div>`;
+}
+function renderActivityTicketCard(t){
+  const timeParts = [];
+  if(t.date) timeParts.push(formatDateDe(t.date));
+  if(t.time) timeParts.push(t.time+' Uhr');
+  return `<div class="ticket-card">
+    <div class="ticket-main">
+      <div class="ticket-route">${escapeHtml(t.title||'Ausflugsticket')}</div>
+      ${t.location? `<div class="ticket-sub">${escapeHtml(t.location)}</div>`:''}
+      ${timeParts.length? `<div class="ticket-times">${timeParts.map(p=>`<span>${escapeHtml(p)}</span>`).join('')}</div>`:''}
+      ${renderTicketPhotoLink(t,'activityTickets')}
+    </div>
+    <div class="ticket-stub">${t.bookingCode? escapeHtml(t.bookingCode) : '—'}</div>
+    <button type="button" class="ticket-delete" data-action="delete-activity-ticket" data-id="${t.id}">✕</button>
+  </div>`;
+}
+/* --- Tagesplaner tab --- */
+function syncDayPlan(trip){
+  if(!trip.dayPlan) trip.dayPlan = [];
+  const days = calcDurationDays(trip.dateFrom, trip.dateTo);
+  if(!days) return;
+  while(trip.dayPlan.length < days){ trip.dayPlan.push({id:genId(), ort:'', plan:''}); }
+  if(trip.dayPlan.length > days){ trip.dayPlan = trip.dayPlan.slice(0, days); }
+}
+function renderDayImportPanel(trip){
+  if(!state.showDayImport){
+    return `<button type="button" class="btn" data-action="toggle-day-import">📥 Aus Reiseführer importieren</button>`;
+  }
+  const linkedDests = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
+  if(!linkedDests.length){
+    return `<div class="inline-form"><p class="hint-text" style="margin-top:0;">Verknüpfe zuerst einen Reiseführer im Tab "Reisedaten".</p><button type="button" class="btn" data-action="toggle-day-import">Schließen</button></div>`;
+  }
+  const destId = state.dayImportDestId && linkedDests.find(d=>d.id===state.dayImportDestId) ? state.dayImportDestId : linkedDests[0].id;
+  const dd = destDataCache[destId];
+  const routes = (dd && dd.routes) || [];
+  const routeId = state.dayImportRouteId;
+  const route = routes.find(r=>r.id===routeId);
+  const destOptions = linkedDests.map(d=>`<option value="${d.id}" ${d.id===destId?'selected':''}>${d.flag} ${escapeHtml(d.name)}</option>`).join('');
+  const routeOptions = `<option value="">– Route wählen –</option>` + routes.map(r=>`<option value="${r.id}" ${r.id===routeId?'selected':''}>${escapeHtml(r.title)}</option>`).join('');
+  const dayOptions = trip.dayPlan.map((d,idx)=>`<option value="${idx}">Tag ${idx+1}</option>`).join('');
+
+  let routeDetail = '';
+  if(!routes.length){
+    routeDetail = `<p class="hint-text">Dieser Reiseführer hat noch keine Routen im Tab "Routen".</p>`;
+  } else if(route){
+    const lines = route.text.split('\n').map(l=>l.trim()).filter(Boolean);
+    routeDetail = `
+      <button type="button" class="btn btn-add" data-action="import-whole-route" data-dest-id="${destId}" data-route-id="${routeId}" style="margin-top:6px;">Ganze Route ab Tag 1 einfügen</button>
+      <div class="field-label" style="margin-top:16px;">Oder einzelne Zeilen übernehmen:</div>
+      ${lines.map((line,i)=>`
+        <div class="day-import-line">
+          <div class="day-import-text">${escapeHtml(line)}</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select class="input day-import-target" data-line-index="${i}" style="max-width:100px;">${dayOptions}</select>
+            <button type="button" class="btn" data-action="import-single-line" data-dest-id="${destId}" data-route-id="${routeId}" data-line-index="${i}" style="padding:7px 10px;font-size:12px;">Übernehmen</button>
+          </div>
+        </div>`).join('')}
+    `;
+  }
+
+  return `
+    <div class="inline-form">
+      <label class="field-label">Reiseführer</label>
+      <select class="input" id="day-import-dest" style="margin-bottom:8px;">${destOptions}</select>
+      <label class="field-label">Route</label>
+      <select class="input" id="day-import-route" style="margin-bottom:8px;">${routeOptions}</select>
+      ${routeDetail}
+      <button type="button" class="btn" data-action="toggle-day-import" style="margin-top:16px;">Schließen</button>
+    </div>`;
+}
+function renderTripTagesplanerTab(trip){
+  if(!trip.dateFrom || !trip.dateTo){
+    return '<p class="empty-state">Bitte zuerst Von- und Bis-Datum im Tab "Reisedaten" festlegen, damit die Tage angelegt werden können.</p>';
+  }
+  syncDayPlan(trip);
+  const importPanel = renderDayImportPanel(trip);
+  const daysHtml = trip.dayPlan.map((day,idx)=>{
+    const date = new Date(trip.dateFrom+'T00:00:00');
+    date.setDate(date.getDate()+idx);
+    const dateLabel = date.toLocaleDateString('de-DE',{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
+    return `
+      <div class="day-card">
+        <div class="day-card-title">Tag ${idx+1} – ${dateLabel}</div>
+        <div class="field-group">
+          <label class="field-label">Ort</label>
+          <input class="input" data-day-field="ort" data-day-id="${day.id}" value="${escapeHtml(day.ort)}" placeholder="z.B. Chania">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Tagesplan</label>
+          <textarea class="textarea" data-day-field="plan" data-day-id="${day.id}">${escapeHtml(day.plan)}</textarea>
+        </div>
+      </div>`;
+  }).join('');
+  return `${importPanel}<div style="margin-top:16px;">${daysHtml}</div>`;
+}
+async function importWholeRoute(destId, routeId){
+  const trip = trips.find(t=>t.id===state.tripId);
+  const dd = destDataCache[destId];
+  const route = dd.routes.find(r=>r.id===routeId);
+  if(!route) return;
+  const lines = route.text.split('\n').map(l=>l.trim()).filter(Boolean);
+  syncDayPlan(trip);
+  lines.forEach((line,i)=>{
+    if(trip.dayPlan[i]){
+      trip.dayPlan[i].plan = trip.dayPlan[i].plan ? trip.dayPlan[i].plan+'\n'+line : line;
+      if(!trip.dayPlan[i].ort) trip.dayPlan[i].ort = route.title;
+    }
+  });
+  await saveTrips();
+  showToast('Route übernommen.');
+  render();
+}
+async function importSingleLine(destId, routeId, lineIndex){
+  const trip = trips.find(t=>t.id===state.tripId);
+  const dd = destDataCache[destId];
+  const route = dd.routes.find(r=>r.id===routeId);
+  if(!route) return;
+  const lines = route.text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const line = lines[lineIndex];
+  if(line===undefined) return;
+  const selectEl = document.querySelector(`.day-import-target[data-line-index="${lineIndex}"]`);
+  const targetIdx = selectEl ? parseInt(selectEl.value,10) : 0;
+  syncDayPlan(trip);
+  if(trip.dayPlan[targetIdx]){
+    trip.dayPlan[targetIdx].plan = trip.dayPlan[targetIdx].plan ? trip.dayPlan[targetIdx].plan+'\n'+line : line;
+  }
+  await saveTrips();
+  showToast('Tag übernommen.');
+  render();
+}
+
+function renderTripUnterlagenTab(trip){
+  const ticketsHtml = trip.tickets.length ? trip.tickets.map(renderTicketCard).join('') : '<p class="empty-state">Noch keine Tickets hinterlegt.</p>';
+  const ticketForm = state.addingTicket ? `
+    <div class="inline-form">
+      <input class="input" id="new-ticket-airline" placeholder="Fluggesellschaft" style="margin-bottom:8px;">
+      <input class="input" id="new-ticket-flightnum" placeholder="Flugnummer" style="margin-bottom:8px;">
+      <input type="date" class="input" id="new-ticket-date" style="margin-bottom:8px;">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="input" id="new-ticket-from" placeholder="Von (Flughafen)">
+        <input class="input" id="new-ticket-to" placeholder="Nach (Flughafen)">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="time" class="input" id="new-ticket-depart" placeholder="Abflugzeit">
+        <input type="time" class="input" id="new-ticket-arrive" placeholder="Ankunftszeit">
+      </div>
+      <input class="input" id="new-ticket-code" placeholder="Buchungscode" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-ticket">Hinzufügen</button>
+        <button type="button" class="btn" data-action="cancel-add-ticket">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn btn-add" data-action="show-add-ticket">+ Ticket hinzufügen</button>`;
+
+  const activityHtml = trip.activityTickets.length ? trip.activityTickets.map(renderActivityTicketCard).join('') : '<p class="empty-state">Noch keine Ausflugstickets hinterlegt.</p>';
+  const activityForm = state.addingActivityTicket ? `
+    <div class="inline-form">
+      <input class="input" id="new-activity-title" placeholder="Bezeichnung (z.B. Vulkan-Tour Fogo)" style="margin-bottom:8px;">
+      <input type="date" class="input" id="new-activity-date" style="margin-bottom:8px;">
+      <input type="time" class="input" id="new-activity-time" style="margin-bottom:8px;">
+      <input class="input" id="new-activity-location" placeholder="Ort" style="margin-bottom:8px;">
+      <input class="input" id="new-activity-code" placeholder="Buchungscode (optional)" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-activity-ticket">Hinzufügen</button>
+        <button type="button" class="btn" data-action="cancel-add-activity-ticket">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn btn-add" data-action="show-add-activity-ticket">+ Ausflugsticket hinzufügen</button>`;
+
+  const docsHtml = trip.documents.length ? trip.documents.map(d=>`
+    <div class="doc-row">
+      <div><div class="doc-label">${escapeHtml(d.label)}</div><div class="doc-value">${escapeHtml(d.value)}</div></div>
+      <button type="button" class="btn btn-danger" data-action="delete-trip-doc" data-id="${d.id}">🗑️</button>
+    </div>`).join('') : '<p class="empty-state">Noch keine Unterlagen hinterlegt.</p>';
+  const docForm = state.addingTripDoc ? `
+    <div class="inline-form">
+      <input class="input" id="new-tripdoc-label" placeholder="Bezeichnung (z.B. Hotel-Buchungsnummer)" style="margin-bottom:8px;">
+      <input class="input" id="new-tripdoc-value" placeholder="Wert" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-trip-doc">Hinzufügen</button>
+        <button type="button" class="btn" data-action="cancel-add-trip-doc">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn" data-action="show-add-trip-doc">+ Info hinzufügen</button>`;
+
+  return `
+    <h3 class="section-title">Flugtickets</h3>
+    ${ticketsHtml}
+    ${ticketForm}
+    <h3 class="section-title" style="margin-top:28px;">Ausflugstickets</h3>
+    ${activityHtml}
+    ${activityForm}
+    <h3 class="section-title" style="margin-top:28px;">Weitere Unterlagen</h3>
+    ${docsHtml}
+    ${docForm}
+    <input type="file" id="ticket-photo-input" accept="image/*" style="display:none">
+  `;
+}
+async function confirmAddTicket(){
+  const airline = document.getElementById('new-ticket-airline').value.trim();
+  const flightNumber = document.getElementById('new-ticket-flightnum').value.trim();
+  const date = document.getElementById('new-ticket-date').value;
+  const from = document.getElementById('new-ticket-from').value.trim();
+  const to = document.getElementById('new-ticket-to').value.trim();
+  const departTime = document.getElementById('new-ticket-depart').value;
+  const arriveTime = document.getElementById('new-ticket-arrive').value;
+  const bookingCode = document.getElementById('new-ticket-code').value.trim();
+  if(!airline && !flightNumber && !from && !to){ showToast('Bitte mindestens Fluggesellschaft/Flugnummer oder Strecke angeben.'); return; }
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.tickets.push({id:genId(), airline, flightNumber, date, from, to, departTime, arriveTime, bookingCode});
+  await saveTrips();
+  state.addingTicket = false;
+  render();
+}
+async function deleteTicket(id){
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.tickets = trip.tickets.filter(t=>t.id!==id);
+  await saveTrips();
+  render();
+}
+async function confirmAddActivityTicket(){
+  const title = document.getElementById('new-activity-title').value.trim();
+  const date = document.getElementById('new-activity-date').value;
+  const time = document.getElementById('new-activity-time').value;
+  const location = document.getElementById('new-activity-location').value.trim();
+  const bookingCode = document.getElementById('new-activity-code').value.trim();
+  if(!title){ showToast('Bitte eine Bezeichnung angeben.'); return; }
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.activityTickets.push({id:genId(), title, date, time, location, bookingCode});
+  await saveTrips();
+  state.addingActivityTicket = false;
+  render();
+}
+async function deleteActivityTicket(id){
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.activityTickets = trip.activityTickets.filter(t=>t.id!==id);
+  await saveTrips();
+  render();
+}
+async function onTicketPhotoSelected(file, listKey, ticketId){
+  try{
+    const dataUrl = await compressImage(file);
+    const photoId = genId();
+    const photo = {dataUrl, caption:'', date: todayStr()};
+    await sSet('photo:'+photoId, photo);
+    photoCache[photoId] = photo;
+    const trip = trips.find(t=>t.id===state.tripId);
+    const ticket = trip[listKey].find(x=>x.id===ticketId);
+    if(ticket){
+      ticket.photoId = photoId;
+      await saveTrips();
+    }
+    render();
+  }catch(e){ showToast('Foto konnte nicht gespeichert werden.'); }
+}
+async function confirmAddTripDoc(){
+  const label = document.getElementById('new-tripdoc-label').value.trim();
+  const value = document.getElementById('new-tripdoc-value').value.trim();
+  if(!label || !value) return;
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.documents.push({id:genId(), label, value});
+  await saveTrips();
+  state.addingTripDoc = false;
+  render();
+}
+async function deleteTripDoc(id){
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.documents = trip.documents.filter(d=>d.id!==id);
+  await saveTrips();
+  render();
+}
+
+/* --- Tagebuch tab (Reise) --- */
+function renderTripTagebuchTab(trip){
+  const entries = [...trip.diary].sort((a,b)=> b.date.localeCompare(a.date));
+  const list = entries.length ? entries.map(e=>`
+    <div class="diary-entry">
+      <div class="diary-date">${formatDateDe(e.date)}</div>
+      ${e.place? `<div class="diary-place">📍 ${escapeHtml(e.place)}</div>` : ''}
+      <div class="diary-text">${escapeHtml(e.text)}</div>
+      <button type="button" class="btn btn-danger" data-action="delete-diary" data-id="${e.id}">Eintrag löschen</button>
+    </div>`).join('') : '<p class="empty-state">Noch keine Einträge. Halte deine Reise-Erlebnisse fest.</p>';
+
+  const addForm = state.addingDiary ? `
+    <div class="inline-form">
+      <label class="field-label">Datum</label>
+      <input type="date" class="input" id="new-diary-date" value="${todayStr()}" style="margin-bottom:8px;">
+      <label class="field-label">Ort</label>
+      <input class="input" id="new-diary-place" placeholder="z.B. Praia, Santiago" style="margin-bottom:8px;">
+      <label class="field-label">Eintrag</label>
+      <textarea class="textarea" id="new-diary-text" placeholder="Was hast du heute erlebt?"></textarea>
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-diary">Speichern</button>
+        <button type="button" class="btn" data-action="cancel-add-diary">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn" data-action="show-add-diary">+ Neuer Eintrag</button>`;
+
+  return `${addForm}<div style="margin-top:16px;">${list}</div>`;
+}
+async function confirmAddDiary(){
+  const date = document.getElementById('new-diary-date').value || todayStr();
+  const place = document.getElementById('new-diary-place').value.trim();
+  const text = document.getElementById('new-diary-text').value.trim();
+  if(!text) return;
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.diary.push({id:genId(), date, place, text});
+  await saveTrips();
+  state.addingDiary = false;
+  render();
+}
+async function deleteDiary(id){
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.diary = trip.diary.filter(e=>e.id!==id);
+  await saveTrips();
+  render();
+}
+
+/* --- Bilder tab (Reise) --- */
+function renderTripBilderTab(trip){
+  const grid = trip.photoIds.length ? trip.photoIds.map(id=>{
+    const p = photoCache[id];
+    if(!p) return '';
+    return `<div class="photo-thumb" data-action="view-photo" data-id="${id}" style="background-image:url('${p.dataUrl}')"></div>`;
+  }).join('') : '<p class="empty-state">Noch keine Fotos abgelegt.</p>';
+  return `
+    <button type="button" class="btn btn-add" data-action="trigger-photo-upload">+ Foto hinzufügen</button>
+    <input type="file" id="photo-input" accept="image/*" style="display:none">
+    <div class="photo-grid" style="margin-top:14px;">${grid}</div>
+  `;
+}
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const img = new Image();
+      img.onload = function(){
+        const maxDim = 1024;
+        let w=img.width, h=img.height;
+        if(w>maxDim || h>maxDim){
+          if(w>h){ h=Math.round(h*maxDim/w); w=maxDim; } else { w=Math.round(w*maxDim/h); h=maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',0.72));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function onPhotoSelected(file){
+  try{
+    const dataUrl = await compressImage(file);
+    const photoId = genId();
+    const photo = {dataUrl, caption:'', date: todayStr()};
+    await sSet('photo:'+photoId, photo);
+    photoCache[photoId] = photo;
+    const trip = trips.find(t=>t.id===state.tripId);
+    trip.photoIds.push(photoId);
+    await saveTrips();
+    render();
+  }catch(e){ showToast('Foto konnte nicht gespeichert werden.'); }
+}
+function renderLightbox(){
+  const p = photoCache[state.lightboxPhotoId];
+  if(!p) return '';
+  return `
+    <div class="lightbox-overlay" data-action="close-lightbox">
+      <div class="lightbox-content" onclick="event.stopPropagation()">
+        <img src="${p.dataUrl}" class="lightbox-img">
+        <input class="input" id="lightbox-caption" data-photo-caption="${state.lightboxPhotoId}" placeholder="Bildunterschrift hinzufügen…" style="margin-top:10px;">
+        <div class="form-actions" style="margin-top:10px;">
+          <button type="button" class="btn btn-danger" data-action="delete-lightbox-photo">Foto löschen</button>
+          <button type="button" class="btn" data-action="close-lightbox">Schließen</button>
+        </div>
+      </div>
+    </div>`;
+}
+async function openLightbox(id, context){
+  state.lightboxPhotoId = id;
+  state.lightboxContext = context || {type:'gallery'};
+  render();
+}
+function closeLightbox(){ state.lightboxPhotoId=null; state.lightboxContext=null; render(); }
+async function deleteLightboxPhoto(){
+  const id = state.lightboxPhotoId;
+  const ctx = state.lightboxContext || {type:'gallery'};
+  if(ctx.type==='ticket'){
+    const trip = trips.find(t=>t.id===state.tripId);
+    const ticket = trip[ctx.listKey].find(x=>x.id===ctx.ticketId);
+    if(ticket) ticket.photoId = null;
+    await saveTrips();
+  } else if(ctx.type==='recipe'){
+    const recipe = recipes.find(r=>r.id===ctx.recipeId);
+    if(recipe) recipe.photoId = null;
+    await sSet('recipes', recipes);
+  } else {
+    const trip = trips.find(t=>t.id===state.tripId);
+    trip.photoIds = trip.photoIds.filter(pid=>pid!==id);
+    await saveTrips();
+  }
+  await sDelete('photo:'+id);
+  delete photoCache[id];
+  state.lightboxPhotoId=null;
+  state.lightboxContext=null;
+  render();
+}
+
+/* ---------- Destination shell ---------- */
+function renderDestination(){
+  const dest = getCurrentDest();
+  const dd = destDataCache[state.destId];
+  const linkedTrip = getNextTripForDest(dest.id);
+  const countdownBanner = linkedTrip ? `
+    <div class="countdown-banner">
+      <span>⏳ ${daysUntil(linkedTrip.dateFrom)===0 ? 'Reise beginnt heute!' : daysUntil(linkedTrip.dateFrom)+' Tage bis zur Reise'} (${escapeHtml(formatDateRangeDe(linkedTrip.dateFrom, linkedTrip.dateTo))})</span>
+      <button type="button" class="btn btn-jump" data-action="open-trip-from-dest" data-id="${linkedTrip.id}">→ Reise</button>
+    </div>` : `
+    <div class="countdown-banner">
+      <span>Noch keine Reise für dieses Ziel eingetragen.</span>
+    </div>`;
+
+  const tabs = [
+    ['guide','📖','Reiseführer'],['karte','🗺️','Karte'],['routen','🧭','Routen'],['wanderrouten','🥾','Wanderrouten'],['wetter','⛅','Wetter'],
+    ['listen','✅','Listen'],['sprache','🗣️','Sprachführer'],['faq','❓','FAQ'],['dokumente','🛂','Dokumente']
+  ];
+  const tabbar = tabs.map(([key,icon,label])=>
+    `<div class="tab ${state.tab===key?'active':''}" data-action="switch-tab" data-tab="${key}">${icon} ${label}</div>`
+  ).join('');
+
+  let content = '';
+  if(state.tab==='guide') content = renderGuideTab(dd);
+  else if(state.tab==='karte') content = renderKarteTab(dd);
+  else if(state.tab==='routen') content = renderRoutenTab(dd);
+  else if(state.tab==='wanderrouten') content = renderWanderroutenTab(dd);
+  else if(state.tab==='wetter') content = renderWetterTab();
+  else if(state.tab==='listen') content = renderListenTab(dd);
+  else if(state.tab==='sprache') content = renderPhrasesTab(dd);
+  else if(state.tab==='faq') content = renderFaqTab(dd);
+  else if(state.tab==='dokumente') content = renderDokumenteTab(dd);
+
+  return `
+    <div class="dest-header">
+      <div class="dest-header-top" data-action="go-zielauswahl">← Alle Ziele</div>
+      <div class="dest-header-title">${dest.flag} ${escapeHtml(dest.name)}</div>
+      <div class="dest-header-coords">${dest.lat.toFixed(2)}°, ${dest.lng.toFixed(2)}°</div>
+    </div>
+    ${countdownBanner}
+    <div class="tabbar">${tabbar}</div>
+    <div class="panel">${content}</div>
+    ${state.lightboxPhotoId ? renderLightbox() : ''}
+  `;
+}
+
+/* ---------- Guide tab ---------- */
+function renderGuideTab(dd){
+  if(dd.guide.imported){
+    const confirming = state.confirmingRevertGuide;
+    return `
+      <div class="imported-guide-meta">📄 Importiert aus <strong>${escapeHtml(dd.guide.importedFileName||'Datei')}</strong> – Text ist automatisch übernommen und hier nicht bearbeitbar.</div>
+      <div class="imported-guide-text">${escapeHtml(dd.guide.importedText)}</div>
+      ${confirming ? `
+        <div class="confirm-inline-block">
+          <div class="confirm-message">Zurück zur manuellen Bearbeitung? Der importierte Text wird ins Feld "Überblick" übernommen.</div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-danger" data-action="do-revert-guide">Ja, wechseln</button>
+            <button type="button" class="btn" data-action="cancel-revert-guide">Abbrechen</button>
+          </div>
+        </div>` : `
+        <div class="form-actions" style="margin-top:16px;">
+          <button type="button" class="btn" data-action="trigger-guide-file-upload">Datei ersetzen</button>
+          <button type="button" class="btn btn-danger" data-action="ask-revert-guide">Manuell bearbeiten</button>
+        </div>`}
+      <input type="file" id="guide-file-input" accept=".docx" style="display:none">
+    `;
+  }
+  return `
+    <div class="field-group">
+      <label class="field-label">Überblick</label>
+      <textarea class="textarea" id="ta-overview" data-guide-field="overview"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Beste Reisezeit</label>
+      <textarea class="textarea" id="ta-besttime" data-guide-field="bestTime" style="min-height:56px;"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Einreise, Formalitäten & Gesundheit</label>
+      <textarea class="textarea" id="ta-entryhealth" data-guide-field="entryHealth" style="min-height:56px;"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Anreise & Fortbewegung vor Ort</label>
+      <textarea class="textarea" id="ta-arrival" data-guide-field="arrival" style="min-height:56px;"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Unterkunft</label>
+      <textarea class="textarea" id="ta-accommodation" data-guide-field="accommodation" style="min-height:56px;"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Regionen</label>
+      <textarea class="textarea" id="ta-regions" data-guide-field="regions" placeholder="Kurzcharakteristik je Region – die einzelnen Orte dazu findest du mit Region-Tag im Tab „Karte“."></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Essen & Trinken</label>
+      <textarea class="textarea" id="ta-fooddrink" data-guide-field="foodDrink" style="min-height:56px;"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Natur, Sicherheit & Wanderregeln</label>
+      <textarea class="textarea" id="ta-naturesafety" data-guide-field="natureSafety" style="min-height:56px;"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Praktisches A–Z</label>
+      <textarea class="textarea" id="ta-tips" data-guide-field="tips" placeholder="Sprache, Währung, Steckdosen, Besonderheiten…"></textarea>
+    </div>
+    <p class="hint-text">Fertige Routen findest du im Tab „Routen“, häufige Fragen im Tab „FAQ“, Top-Erlebnisse in der Bucketliste (Tab „Listen“), Budget-Infos im Tab „Budget“ und die Packliste ebenfalls im Tab „Listen“.</p>
+    <button type="button" class="btn" data-action="trigger-guide-file-upload">📄 Reiseführer-Datei importieren (.docx)</button>
+    <input type="file" id="guide-file-input" accept=".docx" style="display:none">
+  `;
+}
+
+/* ---------- Karte tab ---------- */
+function renderKarteTab(dd){
+  const poiList = dd.pois.length ? dd.pois.map(p=>`
+    <div class="poi-row">
+      <div>
+        <div class="poi-name">
+          <span class="poi-geheimtipp-toggle ${p.geheimtipp?'active':''}" data-action="toggle-poi-geheimtipp" data-id="${p.id}" title="Als Geheimtipp markieren">🤫</span>
+          📍 ${escapeHtml(p.name)}
+        </div>
+        ${p.region? `<div class="poi-region">${escapeHtml(p.region)}</div>`:''}
+        <div class="poi-desc">${escapeHtml(p.desc||'')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <button type="button" class="btn btn-danger" data-action="delete-poi" data-id="${p.id}">Entfernen</button>
+        <button type="button" class="btn" data-action="show-route" data-id="${p.id}" style="padding:6px 12px;font-size:12px;">🧭 Route</button>
+      </div>
+    </div>`).join('') : '<p class="empty-state">Noch keine Sehenswürdigkeiten eingetragen.</p>';
+
+  const routeInfo = state.currentRoute ? `
+    <div class="route-info-banner">
+      <span><span>🧭 ${state.currentRoute.distanceKm} km</span><span>ca. ${state.currentRoute.durationMin} Min.</span></span>
+      <button type="button" class="btn" data-action="clear-route" style="padding:6px 12px;font-size:12px;">Zurücksetzen</button>
+    </div>` : '';
+
+  return `
+    <div id="leaflet-map" class="map-container"></div>
+    <div class="map-tools-row">
+      <button type="button" class="btn" data-action="locate-me">📍 Mein Standort</button>
+      ${state.userLocation ? '<span class="hint-text" style="margin:0;">Standort aktiv</span>' : ''}
+    </div>
+    ${routeInfo}
+    <p class="hint-text">Tippe auf die Karte, um einen neuen Punkt zu markieren, oder suche gezielt:</p>
+    <div class="poi-search-row">
+      <input class="input" id="poi-search-input" placeholder="Ort suchen (Name, Adresse)…">
+      <button type="button" class="btn" data-action="search-poi">Suchen</button>
+    </div>
+    <div id="poi-search-results"></div>
+    <button type="button" class="btn" data-action="discover-nearby" style="margin:4px 0 8px;">🔍 In der Nähe entdecken</button>
+    <div id="nearby-results"></div>
+    <div id="poi-pending-container"></div>
+    <div class="csv-upload-row">
+      <button type="button" class="btn" data-action="trigger-poi-csv-upload">📄 CSV importieren</button>
+      <input type="file" id="poi-csv-input" accept=".csv,text/csv" style="display:none">
+    </div>
+    <p class="hint-text">CSV-Format: Name, Breitengrad, Längengrad, Region, Beschreibung, Geheimtipp ja/nein (beides optional) – eine Zeile pro Ort.</p>
+    <h3 class="section-title">Sehenswürdigkeiten</h3>
+    ${poiList}
+  `;
+}
+async function searchNewDest(){
+  const query = document.getElementById('new-dest-search').value.trim();
+  if(!query) return;
+  const resultsEl = document.getElementById('new-dest-search-results');
+  resultsEl.innerHTML = '<p class="hint-text">Suche läuft…</p>';
+  try{
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('search failed');
+    const results = await res.json();
+    if(!results.length){ resultsEl.innerHTML = '<p class="hint-text">Keine Ergebnisse gefunden.</p>'; return; }
+    resultsEl.innerHTML = results.map(r=>{
+      const shortName = r.display_name.split(',')[0];
+      return `<div class="poi-search-result">
+        <div class="poi-search-name">${escapeHtml(r.display_name)}</div>
+        <button type="button" class="btn btn-add" data-action="apply-new-dest-search" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${escapeHtml(shortName)}" style="padding:6px 12px;font-size:12px;">Übernehmen</button>
+      </div>`;
+    }).join('');
+  }catch(e){
+    resultsEl.innerHTML = '<p class="hint-text">Suche fehlgeschlagen (keine Verbindung zum Kartendienst).</p>';
+  }
+}
+async function searchPoi(){
+  const query = document.getElementById('poi-search-input').value.trim();
+  if(!query) return;
+  const resultsEl = document.getElementById('poi-search-results');
+  resultsEl.innerHTML = '<p class="hint-text">Suche läuft…</p>';
+  try{
+    const dest = getCurrentDest();
+    const d = 2;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}&viewbox=${dest.lng-d},${dest.lat+d},${dest.lng+d},${dest.lat-d}&bounded=0`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('search failed');
+    const results = await res.json();
+    if(!results.length){ resultsEl.innerHTML = '<p class="hint-text">Keine Ergebnisse gefunden.</p>'; return; }
+    resultsEl.innerHTML = results.map(r=>{
+      const shortName = r.display_name.split(',')[0];
+      return `<div class="poi-search-result">
+        <div class="poi-search-name">${escapeHtml(r.display_name)}</div>
+        <button type="button" class="btn btn-add" data-action="add-searched-poi" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${escapeHtml(shortName)}" style="padding:6px 12px;font-size:12px;">+ Hinzufügen</button>
+      </div>`;
+    }).join('');
+  }catch(e){
+    resultsEl.innerHTML = '<p class="hint-text">Suche fehlgeschlagen (keine Verbindung zum Kartendienst).</p>';
+  }
+}
+async function discoverNearby(){
+  const resultsEl = document.getElementById('nearby-results');
+  if(!resultsEl) return;
+  const dest = getCurrentDest();
+  const center = state.userLocation || {lat:dest.lat, lng:dest.lng};
+  resultsEl.innerHTML = '<p class="hint-text">Suche in der Nähe…</p>';
+  try{
+    const radius = 5000;
+    const query = `[out:json][timeout:15];(node["tourism"="attraction"](around:${radius},${center.lat},${center.lng});node["amenity"="restaurant"](around:${radius},${center.lat},${center.lng});node["tourism"="viewpoint"](around:${radius},${center.lat},${center.lng}););out body 15;`;
+    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('failed');
+    const data = await res.json();
+    const items = (data.elements||[]).filter(el=>el.tags && el.tags.name);
+    if(!items.length){ resultsEl.innerHTML = '<p class="hint-text">Nichts in der Nähe gefunden.</p>'; return; }
+    resultsEl.innerHTML = items.slice(0,15).map(el=>{
+      const category = el.tags.amenity==='restaurant' ? '🍴' : (el.tags.tourism==='viewpoint' ? '🌄' : '📍');
+      return `<div class="poi-search-result">
+        <div class="poi-search-name">${category} ${escapeHtml(el.tags.name)}</div>
+        <button type="button" class="btn btn-add" data-action="add-searched-poi" data-lat="${el.lat}" data-lon="${el.lon}" data-name="${escapeHtml(el.tags.name)}" style="padding:6px 12px;font-size:12px;">+ Hinzufügen</button>
+      </div>`;
+    }).join('');
+  }catch(e){
+    resultsEl.innerHTML = '<p class="hint-text">Suche fehlgeschlagen (Dienst gerade nicht erreichbar).</p>';
+  }
+}
+async function locateMe(){
+  if(!navigator.geolocation){
+    showToast('Standortbestimmung wird von diesem Browser nicht unterstützt.');
+    return;
+  }
+  showToast('Suche deinen Standort…');
+  try{
+    const pos = await new Promise((resolve,reject)=>{
+      navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:10000});
+    });
+    state.userLocation = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+    showToast('Standort gefunden.');
+    render();
+  }catch(err){
+    showToast('Standort nicht verfügbar (Berechtigung verweigert oder in dieser Umgebung nicht unterstützt).');
+  }
+}
+async function showRouteTo(poiId){
+  if(!state.userLocation){ showToast('Bitte zuerst deinen Standort abrufen.'); return; }
+  const dd = destDataCache[state.destId];
+  const poi = dd.pois.find(p=>p.id===poiId);
+  if(!poi) return;
+  showToast('Route wird berechnet…');
+  try{
+    const url = `https://router.project-osrm.org/route/v1/driving/${state.userLocation.lng},${state.userLocation.lat};${poi.lng},${poi.lat}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('route failed');
+    const data = await res.json();
+    if(!data.routes || !data.routes.length) throw new Error('no route');
+    const route = data.routes[0];
+    state.currentRoute = {
+      coords: route.geometry.coordinates.map(c=>[c[1],c[0]]),
+      distanceKm: (route.distance/1000).toFixed(1),
+      durationMin: Math.round(route.duration/60)
+    };
+    render();
+  }catch(e){
+    showToast('Route konnte nicht berechnet werden (evtl. keine Verbindung zum Routendienst).');
+  }
+}
+function parseCsvLine(line){
+  const result = [];
+  let cur = '', inQuotes = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(inQuotes){
+      if(ch==='"'){
+        if(line[i+1]==='"'){ cur+='"'; i++; } else { inQuotes=false; }
+      } else { cur+=ch; }
+    } else {
+      if(ch==='"'){ inQuotes=true; }
+      else if(ch===','){ result.push(cur); cur=''; }
+      else { cur+=ch; }
+    }
+  }
+  result.push(cur);
+  return result.map(s=>s.trim());
+}
+async function onPoiCsvSelected(file){
+  try{
+    const text = await file.text();
+    const lines = text.split(/\r\n|\n|\r/).filter(l=>l.trim().length);
+    if(!lines.length){ showToast('Die Datei enthält keine Zeilen.'); return; }
+    const firstRow = parseCsvLine(lines[0]);
+    const looksLikeHeader = firstRow.length<2 || isNaN(parseFloat(firstRow[1])) || isNaN(parseFloat(firstRow[2]));
+    const startIdx = looksLikeHeader ? 1 : 0;
+    const dd = destDataCache[state.destId];
+    let added = 0, skipped = 0;
+    for(let i=startIdx;i<lines.length;i++){
+      const cols = parseCsvLine(lines[i]);
+      if(cols.length<3){ skipped++; continue; }
+      const name = cols[0];
+      const lat = parseFloat(cols[1]);
+      const lng = parseFloat(cols[2]);
+      const region = cols[3] || '';
+      const desc = cols[4] || '';
+      const geheimtipp = cols[5] ? /^(ja|true|1|yes)$/i.test(cols[5].trim()) : false;
+      if(!name || isNaN(lat) || isNaN(lng)){ skipped++; continue; }
+      dd.pois.push({id:genId(), name, lat, lng, region, desc, geheimtipp});
+      added++;
+    }
+    await saveDestData(state.destId);
+    render();
+    showToast(`${added} Orte hinzugefügt${skipped? ', '+skipped+' Zeile(n) übersprungen':''}.`);
+  }catch(e){ showToast('CSV-Datei konnte nicht gelesen werden.'); }
+}
+function initMap(dest, dd){
+  const container = document.getElementById('leaflet-map');
+  if(!container) return;
+  if(typeof L === 'undefined'){
+    container.innerHTML = '<p class="empty-state">Karte konnte nicht geladen werden (kein Zugriff auf den Kartendienst).</p>';
+    return;
+  }
+  try{
+    if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png'
+    });
+    leafletMap = L.map(container).setView([dest.lat, dest.lng], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:18, attribution:'&copy; OpenStreetMap-Mitwirkende'
+    }).addTo(leafletMap);
+    const markers = [];
+    dd.pois.forEach(p=>{
+      const m = L.marker([p.lat,p.lng]).addTo(leafletMap);
+      const regionLine = p.region? `<br><em>${escapeHtml(p.region)}</em>` : '';
+      const tipLine = p.geheimtipp? '<br>🤫 Geheimtipp' : '';
+      m.bindPopup(`<strong>${escapeHtml(p.name)}</strong>${regionLine}${tipLine}<br>${escapeHtml(p.desc||'')}`);
+      markers.push(m);
+    });
+    if(state.userLocation){
+      const um = L.circleMarker([state.userLocation.lat, state.userLocation.lng], {
+        radius:8, color:'#3F9C97', fillColor:'#3F9C97', fillOpacity:0.9, weight:2
+      }).addTo(leafletMap).bindPopup('📍 Dein Standort');
+      markers.push(um);
+    }
+    const boundsLayers = [...markers];
+    if(state.currentRoute && state.currentRoute.coords.length){
+      const line = L.polyline(state.currentRoute.coords, {color:'#C99A3E', weight:4, opacity:0.85}).addTo(leafletMap);
+      boundsLayers.push(line);
+    }
+    if(boundsLayers.length){
+      leafletMap.fitBounds(L.featureGroup(boundsLayers).getBounds().pad(0.3));
+    }
+    leafletMap.on('click', e=> showPendingPoiForm(e.latlng.lat, e.latlng.lng));
+  }catch(err){
+    container.innerHTML = '<p class="empty-state">Karte konnte nicht geladen werden.</p>';
+  }
+}
+function showPendingPoiForm(lat,lng,presetName){
+  state.pendingPoi = {lat,lng};
+  const container = document.getElementById('poi-pending-container');
+  if(!container) return;
+  container.innerHTML = `
+    <div class="inline-form">
+      <div class="field-label">Neuer Punkt (${lat.toFixed(4)}°, ${lng.toFixed(4)}°)</div>
+      <input class="input" id="pending-poi-name" placeholder="Name" value="${presetName? escapeHtml(presetName):''}" style="margin-bottom:8px;">
+      <input class="input" id="pending-poi-region" placeholder="Region (optional)" style="margin-bottom:8px;">
+      <input class="input" id="pending-poi-desc" placeholder="Kurzbeschreibung (optional)" style="margin-bottom:8px;">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;">
+        <input type="checkbox" id="pending-poi-geheimtipp"> 🤫 Als Geheimtipp markieren
+      </label>
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="save-pending-poi">Speichern</button>
+        <button type="button" class="btn" data-action="cancel-pending-poi">Abbrechen</button>
+      </div>
+    </div>`;
+}
+async function savePendingPoi(){
+  const name = document.getElementById('pending-poi-name').value.trim();
+  if(!name){ showToast('Bitte einen Namen eingeben.'); return; }
+  const region = document.getElementById('pending-poi-region').value.trim();
+  const desc = document.getElementById('pending-poi-desc').value.trim();
+  const geheimtipp = document.getElementById('pending-poi-geheimtipp').checked;
+  const dd = destDataCache[state.destId];
+  dd.pois.push({id:genId(), name, lat:state.pendingPoi.lat, lng:state.pendingPoi.lng, region, desc, geheimtipp});
+  await saveDestData(state.destId);
+  state.pendingPoi = null;
+  render();
+}
+async function togglePoiGeheimtipp(id){
+  const dd = destDataCache[state.destId];
+  const poi = dd.pois.find(p=>p.id===id);
+  if(poi){ poi.geheimtipp = !poi.geheimtipp; await saveDestData(state.destId); render(); }
+}
+async function deletePoi(id){
+  const dd = destDataCache[state.destId];
+  dd.pois = dd.pois.filter(p=>p.id!==id);
+  await saveDestData(state.destId);
+  render();
+}
+
+/* ---------- Routen tab (Kapitel 9: Fertige Routen) ---------- */
+function renderRoutenTab(dd){
+  const routes = dd.routes || [];
+  const list = routes.length ? routes.map(r=>`
+    <div class="diary-entry">
+      <div class="diary-date">${escapeHtml(r.title)}</div>
+      <div class="diary-text">${escapeHtml(r.text)}</div>
+      <button type="button" class="btn btn-danger" data-action="delete-route" data-id="${r.id}">Route löschen</button>
+    </div>`).join('') : '<p class="empty-state">Noch keine Routen eingetragen.</p>';
+  const addForm = state.addingRoute ? `
+    <div class="inline-form">
+      <label class="field-label">Titel</label>
+      <input class="input" id="new-route-title" placeholder="z.B. Route 1: Westküste in 3 Tagen" style="margin-bottom:8px;">
+      <label class="field-label">Ablauf</label>
+      <textarea class="textarea" id="new-route-text" placeholder="Gerne in Ich-Form, Tag für Tag: Ich würde am ersten Tag…"></textarea>
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-route">Speichern</button>
+        <button type="button" class="btn" data-action="cancel-add-route">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn btn-add" data-action="show-add-route">+ Neue Route</button>`;
+  return `${addForm}<div style="margin-top:16px;">${list}</div>`;
+}
+async function confirmAddRoute(){
+  const title = document.getElementById('new-route-title').value.trim();
+  const text = document.getElementById('new-route-text').value.trim();
+  if(!title || !text) return;
+  const dd = destDataCache[state.destId];
+  dd.routes.push({id:genId(), title, text});
+  await saveDestData(state.destId);
+  state.addingRoute = false;
+  render();
+}
+async function deleteRoute(id){
+  const dd = destDataCache[state.destId];
+  dd.routes = dd.routes.filter(r=>r.id!==id);
+  await saveDestData(state.destId);
+  render();
+}
+
+/* ---------- Wanderrouten tab ---------- */
+let hikingMapInstances = [];
+function haversineKmSimple(lat1,lng1,lat2,lng2){ return haversineKm(lat1,lng1,lat2,lng2); }
+function parseGpxPoints(xmlText){
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  let pts = [...doc.getElementsByTagName('trkpt')];
+  if(!pts.length) pts = [...doc.getElementsByTagName('rtept')];
+  return pts.map(pt=>{
+    const lat = parseFloat(pt.getAttribute('lat'));
+    const lng = parseFloat(pt.getAttribute('lon'));
+    const eleEl = pt.getElementsByTagName('ele')[0];
+    const ele = eleEl ? parseFloat(eleEl.textContent) : null;
+    return {lat, lng, ele};
+  }).filter(p=>!isNaN(p.lat) && !isNaN(p.lng));
+}
+function calcTrackDistanceKm(points){
+  let total = 0;
+  for(let i=1;i<points.length;i++){ total += haversineKmSimple(points[i-1].lat,points[i-1].lng,points[i].lat,points[i].lng); }
+  return Math.round(total*10)/10;
+}
+function calcElevationGain(points){
+  let gain = 0;
+  for(let i=1;i<points.length;i++){
+    if(points[i].ele!=null && points[i-1].ele!=null){
+      const diff = points[i].ele - points[i-1].ele;
+      if(diff>0) gain += diff;
+    }
+  }
+  return Math.round(gain);
+}
+function renderHikingRouteForm(r){
+  const isEdit = !!r;
+  return `
+    <div class="inline-form">
+      <label class="field-label">Titel</label>
+      <input class="input" id="hr-title" value="${isEdit?escapeHtml(r.title):''}" placeholder="z.B. Samaria-Schlucht" style="margin-bottom:8px;">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="input" id="hr-distance" value="${isEdit&&r.distanceKm?escapeHtml(String(r.distanceKm)):''}" placeholder="Distanz (km)">
+        <input class="input" id="hr-duration" value="${isEdit?escapeHtml(r.durationText||''):''}" placeholder="Dauer">
+      </div>
+      <select class="input" id="hr-difficulty" style="margin-bottom:8px;">
+        <option value="">Schwierigkeitsgrad</option>
+        ${['Leicht','Mittel','Schwer'].map(d=>`<option ${isEdit&&r.difficulty===d?'selected':''}>${d}</option>`).join('')}
+      </select>
+      <label class="field-label">Beschreibung</label>
+      <textarea class="textarea" id="hr-description">${isEdit?escapeHtml(r.description||''):''}</textarea>
+      ${isEdit && r.gpxTrack && r.gpxTrack.length ? `<p class="hint-text">📍 GPX-Track vorhanden (${r.gpxTrack.length} Punkte)${r.elevationGain?', ca. '+r.elevationGain+' Hm Anstieg':''}.</p>` : ''}
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="${isEdit?'confirm-edit-hiking-route':'confirm-add-hiking-route'}" data-id="${isEdit?r.id:''}">Speichern</button>
+        <button type="button" class="btn" data-action="${isEdit?'cancel-edit-hiking-route':'cancel-add-hiking-route'}">Abbrechen</button>
+      </div>
+    </div>`;
+}
+function renderHikingRouteCard(r){
+  if(state.editingHikingRouteId===r.id) return renderHikingRouteForm(r);
+  return `
+    <div class="diary-entry">
+      <div class="diary-date">${escapeHtml(r.title)}</div>
+      ${(r.distanceKm || r.durationText || r.difficulty || r.elevationGain) ? `
+        <div class="route-meta">
+          ${r.distanceKm? `<span>📏 ${escapeHtml(String(r.distanceKm))} km</span>`:''}
+          ${r.durationText? `<span>⏱️ ${escapeHtml(r.durationText)}</span>`:''}
+          ${r.difficulty? `<span>⛰️ ${escapeHtml(r.difficulty)}</span>`:''}
+          ${r.elevationGain? `<span>📈 ${r.elevationGain} Hm</span>`:''}
+        </div>` : ''}
+      ${r.description? `<div class="diary-text">${escapeHtml(r.description)}</div>`:''}
+      ${r.gpxTrack && r.gpxTrack.length ? `<div id="hiking-map-${r.id}" class="map-container" style="height:200px;margin-bottom:10px;"></div>`:''}
+      <div class="form-actions">
+        <button type="button" class="btn" data-action="edit-hiking-route" data-id="${r.id}">Bearbeiten</button>
+        <button type="button" class="btn btn-danger" data-action="delete-hiking-route" data-id="${r.id}">Löschen</button>
+      </div>
+    </div>`;
+}
+function renderWanderroutenTab(dd){
+  const routes = dd.hikingRoutes || [];
+  const list = routes.length ? routes.map(renderHikingRouteCard).join('') : '<p class="empty-state">Noch keine Wanderrouten eingetragen.</p>';
+  const addForm = state.addingHikingRoute ? renderHikingRouteForm(null) : `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+      <button type="button" class="btn btn-add" data-action="show-add-hiking-route">+ Neue Wanderroute</button>
+      <button type="button" class="btn" data-action="trigger-gpx-upload">📍 GPX-Datei importieren</button>
+      <input type="file" id="gpx-file-input" accept=".gpx" style="display:none">
+    </div>`;
+  return `${addForm}<div style="margin-top:16px;">${list}</div>`;
+}
+function initHikingMaps(dd){
+  hikingMapInstances.forEach(m=>{ try{ m.remove(); }catch(e){} });
+  hikingMapInstances = [];
+  if(typeof L==='undefined') return;
+  (dd.hikingRoutes||[]).forEach(r=>{
+    if(!r.gpxTrack || !r.gpxTrack.length || state.editingHikingRouteId===r.id) return;
+    const container = document.getElementById('hiking-map-'+r.id);
+    if(!container) return;
+    try{
+      const map = L.map(container, {zoomControl:false, attributionControl:false, dragging:false, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:false});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18}).addTo(map);
+      const line = L.polyline(r.gpxTrack, {color:'#C99A3E', weight:4}).addTo(map);
+      map.fitBounds(line.getBounds().pad(0.15));
+      hikingMapInstances.push(map);
+    }catch(e){}
+  });
+}
+async function confirmAddHikingRoute(){
+  const title = document.getElementById('hr-title').value.trim();
+  if(!title){ showToast('Bitte einen Titel angeben.'); return; }
+  const distanceKm = document.getElementById('hr-distance').value.trim();
+  const durationText = document.getElementById('hr-duration').value.trim();
+  const difficulty = document.getElementById('hr-difficulty').value;
+  const description = document.getElementById('hr-description').value.trim();
+  const dd = destDataCache[state.destId];
+  dd.hikingRoutes.push({id:genId(), title, distanceKm, durationText, difficulty, description, gpxTrack:null, elevationGain:null});
+  await saveDestData(state.destId);
+  state.addingHikingRoute = false;
+  render();
+}
+async function confirmEditHikingRoute(id){
+  const dd = destDataCache[state.destId];
+  const r = dd.hikingRoutes.find(x=>x.id===id);
+  if(!r) return;
+  r.title = document.getElementById('hr-title').value.trim() || r.title;
+  r.distanceKm = document.getElementById('hr-distance').value.trim();
+  r.durationText = document.getElementById('hr-duration').value.trim();
+  r.difficulty = document.getElementById('hr-difficulty').value;
+  r.description = document.getElementById('hr-description').value.trim();
+  await saveDestData(state.destId);
+  state.editingHikingRouteId = null;
+  render();
+}
+async function deleteHikingRoute(id){
+  const dd = destDataCache[state.destId];
+  dd.hikingRoutes = dd.hikingRoutes.filter(r=>r.id!==id);
+  await saveDestData(state.destId);
+  render();
+}
+async function onGpxFileSelected(file){
+  showToast('Lese GPX-Datei…');
+  try{
+    const text = await file.text();
+    const points = parseGpxPoints(text);
+    if(!points.length){ showToast('Keine Track-Punkte in der Datei gefunden.'); return; }
+    const distanceKm = calcTrackDistanceKm(points);
+    const elevationGain = calcElevationGain(points);
+    const gpxTrack = points.map(p=>[p.lat,p.lng]);
+    const dd = destDataCache[state.destId];
+    const title = file.name.replace(/\.gpx$/i,'');
+    dd.hikingRoutes.push({id:genId(), title, distanceKm:String(distanceKm), durationText:'', difficulty:'', description:'', gpxTrack, elevationGain});
+    await saveDestData(state.destId);
+    showToast(`Route importiert: ${distanceKm} km${elevationGain?', ca. '+elevationGain+' Hm Anstieg':''}.`);
+    render();
+  }catch(e){
+    showToast('GPX-Datei konnte nicht gelesen werden.');
+  }
+}
+
+/* ---------- FAQ tab ---------- */
+function renderFaqTab(dd){
+  const faqs = dd.faq || [];
+  const list = faqs.length ? faqs.map(f=>`
+    <div class="diary-entry">
+      <div class="diary-date">${escapeHtml(f.question)}</div>
+      <div class="diary-text">${escapeHtml(f.answer)}</div>
+      <button type="button" class="btn btn-danger" data-action="delete-faq" data-id="${f.id}">Frage löschen</button>
+    </div>`).join('') : '<p class="empty-state">Noch keine Fragen eingetragen.</p>';
+  const addForm = state.addingFaq ? `
+    <div class="inline-form">
+      <label class="field-label">Frage</label>
+      <input class="input" id="new-faq-question" placeholder="z.B. Braucht man ein Visum?" style="margin-bottom:8px;">
+      <label class="field-label">Antwort</label>
+      <textarea class="textarea" id="new-faq-answer"></textarea>
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-faq">Speichern</button>
+        <button type="button" class="btn" data-action="cancel-add-faq">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn" data-action="show-add-faq">+ Neue Frage</button>`;
+  return `${addForm}<div style="margin-top:16px;">${list}</div>`;
+}
+async function confirmAddFaq(){
+  const question = document.getElementById('new-faq-question').value.trim();
+  const answer = document.getElementById('new-faq-answer').value.trim();
+  if(!question || !answer) return;
+  const dd = destDataCache[state.destId];
+  dd.faq.push({id:genId(), question, answer});
+  await saveDestData(state.destId);
+  state.addingFaq = false;
+  render();
+}
+async function deleteFaq(id){
+  const dd = destDataCache[state.destId];
+  dd.faq = dd.faq.filter(f=>f.id!==id);
+  await saveDestData(state.destId);
+  render();
+}
+
+/* ---------- Sprachführer tab ---------- */
+function renderPhrasesTab(dd){
+  const phrases = dd.phrases || [];
+  const list = phrases.length ? phrases.map(p=>`
+    <div class="diary-entry">
+      <div class="diary-date">${escapeHtml(p.german)}</div>
+      <div class="diary-text">${escapeHtml(p.local)}</div>
+      <button type="button" class="btn btn-danger" data-action="delete-phrase" data-id="${p.id}">Löschen</button>
+    </div>`).join('') : '<p class="empty-state">Noch keine Vokabeln eingetragen.</p>';
+  const addForm = state.addingPhrase ? `
+    <div class="inline-form">
+      <label class="field-label">Deutsch</label>
+      <input class="input" id="new-phrase-german" placeholder="z.B. Guten Morgen" style="margin-bottom:8px;">
+      <label class="field-label">Übersetzung</label>
+      <input class="input" id="new-phrase-local" placeholder="z.B. Kalimera" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-phrase">Speichern</button>
+        <button type="button" class="btn" data-action="cancel-add-phrase">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn" data-action="show-add-phrase">+ Vokabel hinzufügen</button>`;
+  return `${addForm}<div style="margin-top:16px;">${list}</div>`;
+}
+async function confirmAddPhrase(){
+  const german = document.getElementById('new-phrase-german').value.trim();
+  const local = document.getElementById('new-phrase-local').value.trim();
+  if(!german || !local) return;
+  const dd = destDataCache[state.destId];
+  dd.phrases.push({id:genId(), german, local});
+  await saveDestData(state.destId);
+  state.addingPhrase = false;
+  render();
+}
+async function deletePhrase(id){
+  const dd = destDataCache[state.destId];
+  dd.phrases = dd.phrases.filter(p=>p.id!==id);
+  await saveDestData(state.destId);
+  render();
+}
+
+/* ---------- Guide-Datei-Import (.docx) ---------- */
+async function onGuideFileSelected(file){
+  if(typeof mammoth === 'undefined'){
+    showToast('Der Datei-Import-Dienst konnte nicht geladen werden (keine Internetverbindung).');
+    return;
+  }
+  try{
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({arrayBuffer});
+    const text = result.value.trim();
+    if(!text){ showToast('Aus dieser Datei konnte kein Text extrahiert werden.'); return; }
+    const dd = destDataCache[state.destId];
+    dd.guide.imported = true;
+    dd.guide.importedText = text;
+    dd.guide.importedFileName = file.name;
+    await saveDestData(state.destId);
+    render();
+  }catch(e){
+    showToast('Datei konnte nicht gelesen werden. Bitte eine .docx-Datei verwenden.');
+  }
+}
+async function revertGuideToManual(){
+  const dd = destDataCache[state.destId];
+  if(!dd.guide.overview){ dd.guide.overview = dd.guide.importedText; }
+  dd.guide.imported = false;
+  state.confirmingRevertGuide = false;
+  await saveDestData(state.destId);
+  render();
+}
+
+/* ---------- Wetter tab ---------- */
+function renderWetterTab(){
+  return `<div id="weather-content" class="weather-loading">Lade Wetterdaten…</div>`;
+}
+async function loadWeather(dest){
+  const el = document.getElementById('weather-content');
+  if(!el) return;
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${dest.lat}&longitude=${dest.lng}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    const cur = data.current;
+    const [curEmoji,curLabel] = weatherInfo(cur.weather_code);
+    let daysHtml = '';
+    for(let i=0;i<data.daily.time.length;i++){
+      const [emoji] = weatherInfo(data.daily.weather_code[i]);
+      const dow = new Date(data.daily.time[i]+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short'});
+      daysHtml += `<div class="weather-day">
+        <div class="wd-day">${dow}</div>
+        <div class="wd-emoji">${emoji}</div>
+        <div>${Math.round(data.daily.temperature_2m_max[i])}° / ${Math.round(data.daily.temperature_2m_min[i])}°</div>
+      </div>`;
+    }
+    el.innerHTML = `
+      <div class="weather-now">
+        <div class="wn-emoji">${curEmoji}</div>
+        <div>
+          <div class="wn-temp">${Math.round(cur.temperature_2m)}°C</div>
+          <div class="wn-label">${curLabel}</div>
+          <div class="wn-meta"><span>Wind ${Math.round(cur.wind_speed_10m)} km/h</span><span>Feuchte ${cur.relative_humidity_2m}%</span></div>
+        </div>
+      </div>
+      <div class="weather-forecast">${daysHtml}</div>
+    `;
+  }catch(err){
+    el.innerHTML = `<p class="empty-state">Wetterdaten konnten nicht geladen werden. Prüfe deine Internetverbindung.</p>`;
+  }
+}
+
+/* ---------- Listen tab ---------- */
+function renderListenTab(dd){
+  return `
+    <h3 class="section-title">Packliste</h3>
+    ${renderCheckList(dd.packing,'packing')}
+    ${renderAddItemForm('packing','Gegenstand hinzufügen')}
+    <h3 class="section-title" style="margin-top:28px;">To-Do</h3>
+    ${renderCheckList(dd.todos,'todos')}
+    ${renderAddItemForm('todos','Aufgabe hinzufügen')}
+    <h3 class="section-title" style="margin-top:28px;">Bucketliste</h3>
+    ${renderCheckList(dd.bucketlist,'bucketlist')}
+    ${renderAddItemForm('bucketlist','Bucketlist-Eintrag hinzufügen')}
+  `;
+}
+function renderCheckList(items, listKey){
+  if(!items.length) return '<p class="empty-state">Noch nichts eingetragen.</p>';
+  return items.map(it=>`
+    <div class="list-item ${it.checked?'checked':''}">
+      <div class="checkbox ${it.checked?'checked':''}" data-action="toggle-check" data-list="${listKey}" data-id="${it.id}">${it.checked?'✓':''}</div>
+      <div class="list-item-text">${escapeHtml(it.text)}</div>
+      <button type="button" class="btn btn-danger" data-action="delete-item" data-list="${listKey}" data-id="${it.id}">🗑️</button>
+    </div>`).join('');
+}
+function renderAddItemForm(listKey, placeholder){
+  if(state.addingList===listKey){
+    return `<div class="inline-form">
+      <input class="input" id="new-item-input" placeholder="${placeholder}">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-item" data-list="${listKey}">Hinzufügen</button>
+        <button type="button" class="btn" data-action="cancel-add-item">Abbrechen</button>
+      </div>
+    </div>`;
+  }
+  return `<button type="button" class="btn" data-action="show-add-item" data-list="${listKey}">+ ${placeholder}</button>`;
+}
+async function confirmAddItem(listKey){
+  const input = document.getElementById('new-item-input');
+  const text = input.value.trim();
+  if(!text) return;
+  const container = getListContainer();
+  container[listKey].push({id:genId(), text, checked:false});
+  await saveListContainer();
+  state.addingList = null;
+  render();
+}
+async function toggleCheck(listKey,id){
+  const container = getListContainer();
+  const item = container[listKey].find(i=>i.id===id);
+  if(item){ item.checked=!item.checked; await saveListContainer(); render(); }
+}
+async function deleteListItem(listKey,id){
+  const container = getListContainer();
+  container[listKey] = container[listKey].filter(i=>i.id!==id);
+  await saveListContainer();
+  render();
+}
+
+/* ---------- Budget tab ---------- */
+function renderBudgetTab(trip){
+  const linkedDests = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
+  const defaultCurrency = linkedDests[0] ? linkedDests[0].currency : 'EUR';
+  const totals = {};
+  trip.budget.forEach(b=>{ totals[b.currency]=(totals[b.currency]||0)+Number(b.amount); });
+  const totalsHtml = Object.entries(totals).map(([cur,sum])=>
+    `<div class="budget-total-row"><span>${cur}</span><span>${sum.toFixed(2)}</span></div>`).join('');
+
+  const rows = trip.budget.length ? trip.budget.map(b=>`
+    <div class="budget-row ${b.paid?'paid':''}">
+      <div class="checkbox ${b.paid?'checked':''}" data-action="toggle-budget-paid" data-id="${b.id}" title="Bezahlt">${b.paid?'✓':''}</div>
+      <div style="flex:1;">
+        <div class="budget-cat">${escapeHtml(b.category)}${b.note? ' – '+escapeHtml(b.note):''}</div>
+        <div class="budget-amount">${Number(b.amount).toFixed(2)} ${b.currency}</div>
+      </div>
+      <button type="button" class="btn btn-danger" data-action="delete-budget" data-id="${b.id}">🗑️</button>
+    </div>`).join('') : '<p class="empty-state">Noch keine Ausgaben erfasst.</p>';
+
+  const addForm = state.addingBudget ? `
+    <div class="inline-form">
+      <select class="input" id="new-budget-cat" style="margin-bottom:8px;">
+        <option>Unterkunft</option><option>Transport</option><option>Essen</option><option>Aktivitäten</option><option>Sonstiges</option>
+      </select>
+      <input class="input" id="new-budget-amount" type="number" step="0.01" placeholder="Betrag" style="margin-bottom:8px;">
+      <select class="input" id="new-budget-currency" style="margin-bottom:8px;">${currencyOptions(defaultCurrency)}</select>
+      <input class="input" id="new-budget-note" placeholder="Notiz (optional)" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-budget">Hinzufügen</button>
+        <button type="button" class="btn" data-action="cancel-add-budget">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn" data-action="show-add-budget">+ Ausgabe erfassen</button>`;
+
+  return `
+    <h3 class="section-title">Währungsrechner</h3>
+    <div class="converter">
+      <input class="input" id="conv-amount" type="number" step="0.01" value="1">
+      <select class="input" id="conv-from">${currencyOptions('EUR')}</select>
+      <span class="conv-arrow">→</span>
+      <select class="input" id="conv-to">${currencyOptions(defaultCurrency)}</select>
+    </div>
+    <button type="button" class="btn" data-action="convert-currency">Umrechnen</button>
+    <div id="conv-result" class="conv-result"></div>
+
+    <h3 class="section-title" style="margin-top:28px;">Ausgaben dieser Reise</h3>
+    ${totalsHtml? `<div class="budget-totals">${totalsHtml}</div>`:''}
+    ${trip.budget.length ? `
+      <div class="budget-grand-total">
+        <span>Gesamt umgerechnet in</span>
+        <select class="input" id="budget-total-currency">${currencyOptions('EUR')}</select>
+        <span id="budget-grand-total-value">…</span>
+      </div>` : ''}
+    ${rows}
+    ${addForm}
+  `;
+}
+async function computeBudgetGrandTotal(trip){
+  const el = document.getElementById('budget-grand-total-value');
+  if(!el) return;
+  const targetSel = document.getElementById('budget-total-currency');
+  const target = targetSel ? targetSel.value : 'EUR';
+  const CVE_PER_EUR = 110.265;
+  el.textContent = 'Rechne…';
+  try{
+    const totals = {};
+    trip.budget.forEach(b=>{ totals[b.currency]=(totals[b.currency]||0)+Number(b.amount); });
+    let grandTotalEur = 0;
+    for(const [cur,sum] of Object.entries(totals)){
+      if(cur==='EUR') grandTotalEur += sum;
+      else if(cur==='CVE') grandTotalEur += sum/CVE_PER_EUR;
+      else { const rate = await fetchRate(cur,'EUR'); grandTotalEur += sum*rate; }
+    }
+    let result = grandTotalEur;
+    if(target==='CVE') result = grandTotalEur*CVE_PER_EUR;
+    else if(target!=='EUR'){ const rate2 = await fetchRate('EUR', target); result = grandTotalEur*rate2; }
+    el.textContent = `${result.toFixed(2)} ${target}`;
+  }catch(e){
+    el.textContent = 'nicht verfügbar';
+  }
+}
+async function fetchRate(base, symbol){
+  const r = await fetch(`https://api.frankfurter.app/latest?base=${base}&symbols=${symbol}`);
+  if(!r.ok) throw new Error('rate fetch failed');
+  const j = await r.json();
+  return j.rates[symbol];
+}
+async function doConvertCurrency(){
+  const amount = parseFloat(document.getElementById('conv-amount').value);
+  const from = document.getElementById('conv-from').value;
+  const to = document.getElementById('conv-to').value;
+  const resultEl = document.getElementById('conv-result');
+  if(isNaN(amount)){ resultEl.textContent='Bitte einen Betrag eingeben.'; return; }
+  if(from===to){ resultEl.textContent = `${amount.toFixed(2)} ${from} = ${amount.toFixed(2)} ${to}`; return; }
+  resultEl.textContent = 'Rechne um…';
+  const CVE_PER_EUR = 110.265;
+  try{
+    let eurAmount;
+    if(from==='CVE') eurAmount = amount/CVE_PER_EUR;
+    else if(from==='EUR') eurAmount = amount;
+    else { const rate = await fetchRate(from,'EUR'); eurAmount = amount*rate; }
+
+    let result;
+    if(to==='CVE') result = eurAmount*CVE_PER_EUR;
+    else if(to==='EUR') result = eurAmount;
+    else { const rate2 = await fetchRate('EUR',to); result = eurAmount*rate2; }
+
+    resultEl.textContent = `${amount.toFixed(2)} ${from} = ${result.toFixed(2)} ${to}`;
+  }catch(err){
+    resultEl.textContent = 'Umrechnung nicht verfügbar (keine Verbindung zum Kursdienst).';
+  }
+}
+async function confirmAddBudget(){
+  const category = document.getElementById('new-budget-cat').value;
+  const amount = parseFloat(document.getElementById('new-budget-amount').value);
+  const currency = document.getElementById('new-budget-currency').value;
+  const note = document.getElementById('new-budget-note').value.trim();
+  if(isNaN(amount)){ showToast('Bitte einen Betrag eingeben.'); return; }
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.budget.push({id:genId(), category, amount, currency, note, paid:false});
+  await saveTrips();
+  state.addingBudget = false;
+  render();
+}
+async function toggleBudgetPaid(id){
+  const trip = trips.find(t=>t.id===state.tripId);
+  const item = trip.budget.find(b=>b.id===id);
+  if(item){ item.paid = !item.paid; await saveTrips(); render(); }
+}
+async function deleteBudget(id){
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.budget = trip.budget.filter(b=>b.id!==id);
+  await saveTrips();
+  render();
+}
+
+/* ---------- Dokumente tab ---------- */
+function renderDokumenteTab(dd){
+  const docsList = dd.docs.length ? dd.docs.map(d=>`
+    <div class="doc-row">
+      <div><div class="doc-label">${escapeHtml(d.label)}</div><div class="doc-value">${escapeHtml(d.value)}</div></div>
+      <button type="button" class="btn btn-danger" data-action="delete-doc" data-kind="docs" data-id="${d.id}">🗑️</button>
+    </div>`).join('') : '<p class="empty-state">Noch keine Infos hinterlegt.</p>';
+
+  const emergencyList = dd.emergency.length ? dd.emergency.map(d=>`
+    <div class="doc-row">
+      <div><div class="doc-label">${escapeHtml(d.label)}</div><a class="doc-value doc-tel" href="tel:${escapeHtml(d.number)}">${escapeHtml(d.number)}</a></div>
+      <button type="button" class="btn btn-danger" data-action="delete-doc" data-kind="emergency" data-id="${d.id}">🗑️</button>
+    </div>`).join('') : '<p class="empty-state">Noch keine Kontakte hinterlegt.</p>';
+
+  const docForm = state.addingDoc==='docs' ? `
+    <div class="inline-form">
+      <input class="input" id="new-doc-label" placeholder="Bezeichnung (z.B. Flugnummer)" style="margin-bottom:8px;">
+      <input class="input" id="new-doc-value" placeholder="Wert" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-doc" data-kind="docs">Hinzufügen</button>
+        <button type="button" class="btn" data-action="cancel-add-doc">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn" data-action="show-add-doc" data-kind="docs">+ Info hinzufügen</button>`;
+
+  const emergencyForm = state.addingDoc==='emergency' ? `
+    <div class="inline-form">
+      <input class="input" id="new-doc-label" placeholder="Bezeichnung (z.B. Botschaft)" style="margin-bottom:8px;">
+      <input class="input" id="new-doc-value" placeholder="Telefonnummer" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-doc" data-kind="emergency">Hinzufügen</button>
+        <button type="button" class="btn" data-action="cancel-add-doc">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn" data-action="show-add-doc" data-kind="emergency">+ Kontakt hinzufügen</button>`;
+
+  return `
+    <h3 class="section-title">Wichtige Infos</h3>
+    ${docsList}
+    ${docForm}
+    <h3 class="section-title" style="margin-top:28px;">Notfallkontakte</h3>
+    ${emergencyList}
+    ${emergencyForm}
+  `;
+}
+async function confirmAddDoc(kind){
+  const label = document.getElementById('new-doc-label').value.trim();
+  const value = document.getElementById('new-doc-value').value.trim();
+  if(!label || !value) return;
+  const dd = destDataCache[state.destId];
+  const item = kind==='emergency' ? {id:genId(), label, number:value} : {id:genId(), label, value};
+  dd[kind].push(item);
+  await saveDestData(state.destId);
+  state.addingDoc = null;
+  render();
+}
+async function deleteDoc(kind,id){
+  const dd = destDataCache[state.destId];
+  dd[kind] = dd[kind].filter(d=>d.id!==id);
+  await saveDestData(state.destId);
+  render();
+}
+
+/* ---------- Add / delete destination ---------- */
+async function confirmAddDest(){
+  const name = document.getElementById('new-dest-name').value.trim();
+  const flag = document.getElementById('new-dest-flag').value.trim() || '📍';
+  const continent = document.getElementById('new-dest-continent').value;
+  const lat = parseFloat(document.getElementById('new-dest-lat').value);
+  const lng = parseFloat(document.getElementById('new-dest-lng').value);
+  if(!name || isNaN(lat) || isNaN(lng)){ showToast('Bitte Name sowie Breiten- und Längengrad angeben.'); return; }
+  const id = genId();
+  destinations.push({id,name,flag,lat,lng,currency:'EUR',continent});
+  await sSet('destinations', destinations);
+  destDataCache[id] = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[]};
+  await saveDestData(id);
+  state.showAddDest = false;
+  render();
+}
+async function deleteDestination(id){
+  destinations = destinations.filter(d=>d.id!==id);
+  await sSet('destinations', destinations);
+  await sDelete('dest-data:'+id);
+  delete destDataCache[id];
+  state.confirmingDelete = null;
+  render();
+}
+
+/* ---------- Event delegation ---------- */
+async function onAppClick(e){
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+  switch(action){
+    case 'open-dest': await openDestination(el.dataset.id); break;
+    case 'go-home': goHome(); break;
+    case 'show-add-dest': state.showAddDest=true; render(); break;
+    case 'cancel-add-dest': state.showAddDest=false; render(); break;
+    case 'confirm-add-dest': await confirmAddDest(); break;
+    case 'ask-delete': state.confirmingDelete = {type: el.dataset.type, id: el.dataset.id}; render(); break;
+    case 'cancel-delete': state.confirmingDelete = null; render(); break;
+    case 'do-delete':
+      if(el.dataset.type==='trip') await deleteTrip(el.dataset.id);
+      else if(el.dataset.type==='dest') await deleteDestination(el.dataset.id);
+      else if(el.dataset.type==='recipe') await deleteRecipe(el.dataset.id);
+      break;
+    case 'go-kochbuch': goToKochbuch(); break;
+    case 'pet-mascot': triggerMascotAnim('giggle', 1600); break;
+    case 'go-vergangene-reisen': goToVergangeneReisen(); break;
+    case 'export-guides-backup': await exportGuidesBackup(); break;
+    case 'trigger-guides-import': document.getElementById('guides-import-input').click(); break;
+    case 'export-trips-backup': await exportTripsBackup(); break;
+    case 'trigger-trips-import': document.getElementById('trips-import-input').click(); break;
+    case 'open-recipe': await openRecipeDetail(el.dataset.id); break;
+    case 'start-edit-recipe': state.editingRecipe=true; render(); break;
+    case 'finish-edit-recipe': state.editingRecipe=false; render(); break;
+    case 'trigger-recipe-photo-upload': document.getElementById('recipe-photo-input').click(); break;
+    case 'view-recipe-photo': await openLightbox(el.dataset.photoId, {type:'recipe', recipeId: state.recipeId}); break;
+    case 'trigger-recipe-file-upload': document.getElementById('recipe-file-input').click(); break;
+    case 'toggle-recipe-cat':
+      if(state.collapsedRecipeCats.includes(el.dataset.cat)){
+        state.collapsedRecipeCats = state.collapsedRecipeCats.filter(c=>c!==el.dataset.cat);
+      } else {
+        state.collapsedRecipeCats = [...state.collapsedRecipeCats, el.dataset.cat];
+      }
+      render();
+      break;
+    case 'show-add-recipe': state.addingRecipe=true; render(); break;
+    case 'cancel-add-recipe': state.addingRecipe=false; state.recipeImportDraft=null; render(); break;
+    case 'confirm-add-recipe': await confirmAddRecipe(); break;
+    case 'toggle-continent':
+      if(state.collapsedContinents.includes(el.dataset.continent)){
+        state.collapsedContinents = state.collapsedContinents.filter(c=>c!==el.dataset.continent);
+      } else {
+        state.collapsedContinents = [...state.collapsedContinents, el.dataset.continent];
+      }
+      render();
+      break;
+    case 'go-zielauswahl': goToZielauswahl(); break;
+    case 'new-trip': await createNewTrip(); break;
+    case 'save-draft-trip': await saveDraftTrip(); break;
+    case 'discard-draft-trip': discardDraftTrip(); break;
+    case 'trigger-booking-upload': document.getElementById('booking-file-input').click(); break;
+    case 'edit-trip': await openTripDetail(el.dataset.id, 'reisedaten'); break;
+    case 'switch-trip-tab': await switchTripTab(el.dataset.tab); break;
+    case 'toggle-day-import':
+      state.showDayImport = !state.showDayImport;
+      state.dayImportDestId = null; state.dayImportRouteId = null;
+      render();
+      break;
+    case 'import-whole-route': await importWholeRoute(el.dataset.destId, el.dataset.routeId); break;
+    case 'import-single-line': await importSingleLine(el.dataset.destId, el.dataset.routeId, parseInt(el.dataset.lineIndex,10)); break;
+    case 'show-add-route': state.addingRoute=true; render(); break;
+    case 'cancel-add-route': state.addingRoute=false; render(); break;
+    case 'confirm-add-route': await confirmAddRoute(); break;
+    case 'delete-route': await deleteRoute(el.dataset.id); break;
+    case 'show-add-hiking-route': state.addingHikingRoute=true; render(); break;
+    case 'cancel-add-hiking-route': state.addingHikingRoute=false; render(); break;
+    case 'confirm-add-hiking-route': await confirmAddHikingRoute(); break;
+    case 'edit-hiking-route': state.editingHikingRouteId=el.dataset.id; render(); break;
+    case 'cancel-edit-hiking-route': state.editingHikingRouteId=null; render(); break;
+    case 'confirm-edit-hiking-route': await confirmEditHikingRoute(el.dataset.id); break;
+    case 'delete-hiking-route': await deleteHikingRoute(el.dataset.id); break;
+    case 'trigger-gpx-upload': document.getElementById('gpx-file-input').click(); break;
+    case 'show-add-faq': state.addingFaq=true; render(); break;
+    case 'cancel-add-faq': state.addingFaq=false; render(); break;
+    case 'confirm-add-faq': await confirmAddFaq(); break;
+    case 'delete-faq': await deleteFaq(el.dataset.id); break;
+    case 'show-add-phrase': state.addingPhrase=true; render(); break;
+    case 'cancel-add-phrase': state.addingPhrase=false; render(); break;
+    case 'confirm-add-phrase': await confirmAddPhrase(); break;
+    case 'delete-phrase': await deletePhrase(el.dataset.id); break;
+    case 'open-trip-from-dest': await openTripDetail(el.dataset.id, 'reisedaten'); break;
+    case 'show-add-ticket': state.addingTicket=true; render(); break;
+    case 'cancel-add-ticket': state.addingTicket=false; render(); break;
+    case 'confirm-add-ticket': await confirmAddTicket(); break;
+    case 'delete-ticket': await deleteTicket(el.dataset.id); break;
+    case 'show-add-trip-doc': state.addingTripDoc=true; render(); break;
+    case 'cancel-add-trip-doc': state.addingTripDoc=false; render(); break;
+    case 'confirm-add-trip-doc': await confirmAddTripDoc(); break;
+    case 'delete-trip-doc': await deleteTripDoc(el.dataset.id); break;
+    case 'open-dest-from-trip': await openDestination(el.dataset.id); break;
+    case 'toggle-guide-bucket-item': await toggleGuideBucketItem(el.dataset.destId, el.dataset.id); break;
+    case 'delete-guide-bucket-item': await deleteGuideBucketItem(el.dataset.destId, el.dataset.id); break;
+    case 'show-add-guide-bucket-item': state.addingList='bucket:'+el.dataset.destId; render(); break;
+    case 'confirm-add-guide-bucket-item': await confirmAddGuideBucketItem(el.dataset.destId); break;
+    case 'show-add-activity-ticket': state.addingActivityTicket=true; render(); break;
+    case 'cancel-add-activity-ticket': state.addingActivityTicket=false; render(); break;
+    case 'confirm-add-activity-ticket': await confirmAddActivityTicket(); break;
+    case 'delete-activity-ticket': await deleteActivityTicket(el.dataset.id); break;
+    case 'add-ticket-photo':
+      state.ticketPhotoTarget = {listKey: el.dataset.list, ticketId: el.dataset.id};
+      document.getElementById('ticket-photo-input').click();
+      break;
+    case 'view-ticket-photo':
+      await openLightbox(el.dataset.photoId, {type:'ticket', listKey:el.dataset.list, ticketId:el.dataset.id});
+      break;
+    case 'delete-lightbox-photo': await deleteLightboxPhoto(); break;
+    case 'trigger-poi-csv-upload': document.getElementById('poi-csv-input').click(); break;
+    case 'search-poi': await searchPoi(); break;
+    case 'discover-nearby': await discoverNearby(); break;
+    case 'search-new-dest': await searchNewDest(); break;
+    case 'apply-new-dest-search': {
+      document.getElementById('new-dest-lat').value = el.dataset.lat;
+      document.getElementById('new-dest-lng').value = el.dataset.lon;
+      const nameInput = document.getElementById('new-dest-name');
+      if(!nameInput.value.trim()) nameInput.value = el.dataset.name;
+      const resultsEl = document.getElementById('new-dest-search-results');
+      if(resultsEl) resultsEl.innerHTML = '<p class="hint-text">Koordinaten übernommen.</p>';
+      break;
+    }
+    case 'add-searched-poi':
+      showPendingPoiForm(parseFloat(el.dataset.lat), parseFloat(el.dataset.lon), el.dataset.name);
+      break;
+    case 'locate-me': await locateMe(); break;
+    case 'show-route': await showRouteTo(el.dataset.id); break;
+    case 'clear-route': state.currentRoute=null; render(); break;
+    case 'trigger-guide-file-upload': document.getElementById('guide-file-input').click(); break;
+    case 'ask-revert-guide': state.confirmingRevertGuide=true; render(); break;
+    case 'cancel-revert-guide': state.confirmingRevertGuide=false; render(); break;
+    case 'do-revert-guide': await revertGuideToManual(); break;
+    case 'switch-tab': await switchTab(el.dataset.tab); break;
+    case 'toggle-check': await toggleCheck(el.dataset.list, el.dataset.id); break;
+    case 'delete-item': await deleteListItem(el.dataset.list, el.dataset.id); break;
+    case 'show-add-item': state.addingList=el.dataset.list; render(); break;
+    case 'cancel-add-item': state.addingList=null; render(); break;
+    case 'confirm-add-item': await confirmAddItem(el.dataset.list); break;
+    case 'delete-poi': await deletePoi(el.dataset.id); break;
+    case 'toggle-poi-geheimtipp': await togglePoiGeheimtipp(el.dataset.id); break;
+    case 'save-pending-poi': await savePendingPoi(); break;
+    case 'cancel-pending-poi':
+      state.pendingPoi=null;
+      const c=document.getElementById('poi-pending-container'); if(c) c.innerHTML='';
+      break;
+    case 'show-add-diary': state.addingDiary=true; render(); break;
+    case 'cancel-add-diary': state.addingDiary=false; render(); break;
+    case 'confirm-add-diary': await confirmAddDiary(); break;
+    case 'delete-diary': await deleteDiary(el.dataset.id); break;
+    case 'trigger-photo-upload': document.getElementById('photo-input').click(); break;
+    case 'view-photo': await openLightbox(el.dataset.id); break;
+    case 'close-lightbox': closeLightbox(); break;
+    case 'show-add-budget': state.addingBudget=true; render(); break;
+    case 'cancel-add-budget': state.addingBudget=false; render(); break;
+    case 'confirm-add-budget': await confirmAddBudget(); break;
+    case 'delete-budget': await deleteBudget(el.dataset.id); break;
+    case 'toggle-budget-paid': await toggleBudgetPaid(el.dataset.id); break;
+    case 'convert-currency': await doConvertCurrency(); break;
+    case 'show-add-doc': state.addingDoc=el.dataset.kind; render(); break;
+    case 'cancel-add-doc': state.addingDoc=null; render(); break;
+    case 'confirm-add-doc': await confirmAddDoc(el.dataset.kind); break;
+    case 'delete-doc': await deleteDoc(el.dataset.kind, el.dataset.id); break;
+  }
+}
+document.getElementById('app').addEventListener('click', onAppClick);
+
+document.getElementById('app').addEventListener('change', async function(e){
+  if(e.target.id==='photo-input'){
+    const file = e.target.files[0];
+    if(file) await onPhotoSelected(file);
+    e.target.value='';
+  }
+  if(e.target.id==='ticket-photo-input'){
+    const file = e.target.files[0];
+    if(file && state.ticketPhotoTarget){
+      await onTicketPhotoSelected(file, state.ticketPhotoTarget.listKey, state.ticketPhotoTarget.ticketId);
+    }
+    e.target.value='';
+    state.ticketPhotoTarget = null;
+  }
+  if(e.target.id==='recipe-photo-input'){
+    const file = e.target.files[0];
+    if(file) await onRecipePhotoSelected(file);
+    e.target.value='';
+  }
+  if(e.target.id==='recipe-file-input'){
+    const file = e.target.files[0];
+    if(file) await onRecipeFileSelected(file);
+    e.target.value='';
+  }
+  if(e.target.id==='booking-file-input'){
+    const file = e.target.files[0];
+    if(file) await onBookingFileSelected(file);
+    e.target.value='';
+  }
+  if(e.target.id==='poi-csv-input'){
+    const file = e.target.files[0];
+    if(file) await onPoiCsvSelected(file);
+    e.target.value='';
+  }
+  if(e.target.id==='gpx-file-input'){
+    const file = e.target.files[0];
+    if(file) await onGpxFileSelected(file);
+    e.target.value='';
+  }
+  if(e.target.id==='guides-import-input'){
+    const file = e.target.files[0];
+    if(file) await importGuidesBackup(file);
+    e.target.value='';
+  }
+  if(e.target.id==='trips-import-input'){
+    const file = e.target.files[0];
+    if(file) await importTripsBackup(file);
+    e.target.value='';
+  }
+  if(e.target.id==='guide-file-input'){
+    const file = e.target.files[0];
+    if(file) await onGuideFileSelected(file);
+    e.target.value='';
+  }
+  if(e.target.classList && e.target.classList.contains('trip-guide-select')){
+    const slot = parseInt(e.target.dataset.slot,10);
+    const newId = e.target.value;
+    const trip = trips.find(t=>t.id===state.tripId);
+    if(trip){
+      if(newId){
+        trip.destIds[slot] = newId;
+        trip.destIds = trip.destIds.filter((id,idx)=> trip.destIds.indexOf(id)===idx);
+        await loadDestData(newId);
+      } else {
+        trip.destIds = trip.destIds.slice(0, slot);
+      }
+      await saveTrips();
+      render();
+    }
+  }
+  if(e.target.dataset && e.target.dataset.tripField){
+    const trip = trips.find(t=>t.id===state.tripId);
+    if(trip){
+      trip[e.target.dataset.tripField] = e.target.value;
+      await saveTrips();
+      if(e.target.dataset.tripField==='dateFrom' || e.target.dataset.tripField==='dateTo'){
+        const el = document.getElementById('trip-duration-display');
+        if(el) el.innerHTML = renderTripDurationInfo(trip);
+      }
+    }
+  }
+  if(e.target.dataset && e.target.dataset.dayField){
+    const trip = trips.find(t=>t.id===state.tripId);
+    const day = trip && trip.dayPlan.find(d=>d.id===e.target.dataset.dayId);
+    if(day){
+      day[e.target.dataset.dayField] = e.target.value;
+      await saveTrips();
+    }
+  }
+  if(e.target.id==='day-import-dest'){
+    state.dayImportDestId = e.target.value; state.dayImportRouteId = null; render();
+  }
+  if(e.target.id==='day-import-route'){
+    state.dayImportRouteId = e.target.value; render();
+  }
+  if(e.target.id==='budget-total-currency'){
+    await computeBudgetGrandTotal(trips.find(t=>t.id===state.tripId));
+  }
+  if(e.target.dataset && e.target.dataset.recipeField){
+    const recipe = recipes.find(r=>r.id===e.target.dataset.recipeId);
+    if(recipe){
+      recipe[e.target.dataset.recipeField] = e.target.value;
+      await sSet('recipes', recipes);
+    }
+  }
+});
+
+document.getElementById('app').addEventListener('focusout', async function(e){
+  if(e.target.dataset && e.target.dataset.guideField){
+    const dd = destDataCache[state.destId];
+    dd.guide[e.target.dataset.guideField] = e.target.value;
+    await saveDestData(state.destId);
+  }
+  if(e.target.dataset && e.target.dataset.photoCaption){
+    const pid = e.target.dataset.photoCaption;
+    if(photoCache[pid]){
+      photoCache[pid].caption = e.target.value;
+      await sSet('photo:'+pid, photoCache[pid]);
+    }
+  }
+});
+
+setInterval(()=>{
+  if(state.view==='home'){ triggerMascotAnim('wave', 1500); }
+}, 20000);
+init();
+</script>
+</body>
+</html>
