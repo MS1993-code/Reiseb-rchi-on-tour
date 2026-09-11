@@ -164,6 +164,17 @@
   .day-plan-box{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--surface);font-family:inherit;font-size:14px;line-height:1.5;}
   .route-day-block{border-top:1px dashed var(--border);padding-top:10px;margin-top:10px;}
   .route-day-label{font-weight:700;font-size:12px;color:var(--brass);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:4px;}
+  .callout{padding:10px 12px;border-radius:10px;margin:8px 0;font-size:14px;line-height:1.4;}
+  .callout-tipp{background:#E8F2EC;color:#2F5D45;border-left:4px solid #4C9A72;}
+  .callout-geheimtipp{background:#FBF0DC;color:#7A5A1E;border-left:4px solid #C99A3E;}
+  .callout-achtung{background:#FBEAE8;color:#8A2E24;border-left:4px solid #B5544A;}
+  .guide-subhead{font-weight:700;font-size:14px;color:var(--brass);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.03em;}
+  .guide-subhead:first-child{margin-top:0;}
+  .guide-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;}
+  .guide-table th,.guide-table td{border:1px solid var(--border);padding:6px 8px;text-align:left;}
+  .guide-table th{background:var(--surface-alt);font-weight:700;}
+  .photo-day-group{margin-bottom:20px;}
+  .photo-day-group-title{font-weight:700;font-size:13px;color:var(--brass);margin-bottom:8px;}
 
   .btn{font-size:14px;font-weight:600;padding:10px 18px;border-radius:22px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;transition:all 0.15s ease;box-shadow:0 2px 5px rgba(51,44,34,0.10);}
   .btn:active{opacity:0.85;box-shadow:0 1px 2px rgba(51,44,34,0.10);transform:translateY(1px);}
@@ -473,7 +484,7 @@ const SEED_DESTINATIONS = [
   {id:'sardinien', name:'Sardinien', flag:'🇮🇹', lat:39.2238, lng:9.1217, currency:'EUR', continent:'Europa'},
   {id:'kreta', name:'Kreta', flag:'🇬🇷', lat:35.3387, lng:25.1442, currency:'EUR', continent:'Europa'}
 ];
-const EMPTY_GUIDE = {overview:'',bestTime:'',entryHealth:'',arrival:'',accommodation:'',regions:'',foodDrink:'',natureSafety:'',tips:'',imported:false,importedText:'',importedFileName:''};
+const EMPTY_GUIDE = {understanding:'',overview:'',bestTime:'',entryHealth:'',arrival:'',accommodation:'',regions:'',foodDrink:'',natureSafety:'',tips:'',imported:false,importedText:'',importedFileName:''};
 const SEED_DEST_DATA = {
   kapverde:{
     guide:{...EMPTY_GUIDE,
@@ -622,7 +633,7 @@ let state = {
   showAddDest:false, addingList:null, addingDiary:false, addingBudget:false,
   addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null,
   tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false,
-  addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false, editingDayId:null,
+  addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false, editingDayId:null, editingGuideField:null, confirmingResetGuide:false,
   collapsedContinents:[], confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
   addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
   recipeId:null, editingRecipe:false, recipeImportDraft:null,
@@ -693,6 +704,7 @@ async function init(){
     if(!t.dayPlan) t.dayPlan = [];
     if(!t.budget) t.budget = [];
     if(t.buchungsdatum===undefined) t.buchungsdatum = null;
+    if(!t.photoDayAssignments) t.photoDayAssignments = {};
     if(t.hotelName===undefined) t.hotelName = '';
   });
 
@@ -708,7 +720,7 @@ async function init(){
     }
     const hasCruiseTrip = trips.some(t=> t.destIds.includes('madeira') && t.destIds.includes('kanaren'));
     if(!hasCruiseTrip){
-      trips.push({id:genId(), dateFrom:'2027-01-16', dateTo:'2027-01-23', buchungsdatum:null, hotelName:'', type:'Schiffsreise', companions:'', destIds:['madeira','kanaren'], documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[]});
+      trips.push({id:genId(), dateFrom:'2027-01-16', dateTo:'2027-01-23', buchungsdatum:null, hotelName:'', type:'Schiffsreise', companions:'', destIds:['madeira','kanaren'], documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}});
       await saveTrips();
     }
     await sSet('migration-v2', true);
@@ -747,7 +759,7 @@ async function openDestination(id){
   state.view='destination'; state.destId=id; state.tab='guide';
   state.addingList=null; state.addingDiary=false; state.addingBudget=false;
   state.addingDoc=null; state.pendingPoi=null; state.lightboxPhotoId=null;
-  state.currentRoute=null; state.showDestSidebar=false;
+  state.currentRoute=null; state.showDestSidebar=false; state.editingGuideField=null;
   render();
 }
 function goHome(){
@@ -769,6 +781,11 @@ function goToKochbuch(){
 function goToVergangeneReisen(){
   if(leafletMap){ leafletMap.remove(); leafletMap=null; }
   state.view='vergangene-reisen';
+  render();
+}
+function goToMeineReisen(){
+  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+  state.view='meine-reisen';
   render();
 }
 function goToBackup(){
@@ -915,6 +932,10 @@ async function render(){
     app.innerHTML = renderVergangeneReisen();
     return;
   }
+  if(state.view==='meine-reisen'){
+    app.innerHTML = renderMeineReisen();
+    return;
+  }
   if(state.view==='backup'){
     app.innerHTML = renderBackupView();
     return;
@@ -941,13 +962,6 @@ async function render(){
   }
   app.innerHTML = renderDestination();
   const dd = destDataCache[state.destId];
-  if(state.tab==='guide' && !dd.guide.imported){
-    const guideFieldIds = {overview:'ta-overview', bestTime:'ta-besttime', entryHealth:'ta-entryhealth', arrival:'ta-arrival', accommodation:'ta-accommodation', regions:'ta-regions', foodDrink:'ta-fooddrink', natureSafety:'ta-naturesafety', tips:'ta-tips'};
-    Object.keys(guideFieldIds).forEach(field=>{
-      const el = document.getElementById(guideFieldIds[field]);
-      if(el) el.value = dd.guide[field] || '';
-    });
-  }
   if(state.tab==='karte') initMap(getCurrentDest(), dd);
   if(state.tab==='wetter'){ const d=getCurrentDest(); loadWeather(d.lat, d.lng, d.name); }
   if(state.tab==='wanderrouten') initHikingMaps(dd);
@@ -987,6 +1001,12 @@ function getOtherTrips(nextTrip){
   const rest = trips.filter(t=> (!nextTrip || t.id!==nextTrip.id) && !isTripPast(t));
   const withDate = rest.filter(t=>t.dateFrom).sort((a,b)=>a.dateFrom.localeCompare(b.dateFrom));
   const withoutDate = rest.filter(t=>!t.dateFrom);
+  return [...withDate, ...withoutDate];
+}
+function getUpcomingTrips(){
+  const upcoming = trips.filter(t=>!isTripPast(t));
+  const withDate = upcoming.filter(t=>t.dateFrom).sort((a,b)=>a.dateFrom.localeCompare(b.dateFrom));
+  const withoutDate = upcoming.filter(t=>!t.dateFrom);
   return [...withDate, ...withoutDate];
 }
 function calcDurationDays(dateFrom, dateTo){
@@ -1117,13 +1137,6 @@ async function renderHomeDashboard(){
       </div>`;
   }
 
-  const otherTrips = getOtherTrips(nextTrip);
-  const otherTripsHtml = otherTrips.length ? `
-    <h3 class="section-title" style="margin:24px 16px 10px;">Weitere Reisen</h3>
-    <div style="padding:0 16px;">
-      ${otherTrips.map(renderTripRow).join('')}
-    </div>` : '';
-
   return `
     <div class="header-home">
       <div class="logo-badge" data-action="pet-mascot">
@@ -1133,14 +1146,13 @@ async function renderHomeDashboard(){
     </div>
     <div class="countdown-card" ${nextTrip? `data-action="edit-trip" data-id="${nextTrip.id}" style="cursor:pointer;"` : ''}>${cardInner}</div>
     <div class="home-actions">
+      <button type="button" class="btn-home" data-action="go-meine-reisen">🧳 Meine Reisen</button>
       <button type="button" class="btn-home" data-action="go-zielauswahl">🗺️ Reiseziele entdecken</button>
       <button type="button" class="btn-home" data-action="go-kochbuch">🍲 Kulinarische Weltreise</button>
-      <button type="button" class="btn-home" data-action="new-trip">➕ Nächste Reise eintragen</button>
       <button type="button" class="btn-home" data-action="go-vergangene-reisen">🗄️ Vergangene Reisen</button>
       <button type="button" class="btn-home" data-action="go-backup">💾 Sichern &amp; Einlesen</button>
     </div>
     <div style="height:28px;"></div>
-    ${otherTripsHtml}
   `;
 }
 
@@ -1195,6 +1207,21 @@ function renderTripRow(t){
     </div>
     <button type="button" class="btn btn-danger" data-action="ask-delete" data-type="trip" data-id="${t.id}">🗑️</button>
   </div>`;
+}
+function renderMeineReisen(){
+  const upcoming = getUpcomingTrips();
+  const list = upcoming.length ? upcoming.map(renderTripRow).join('') : '<p class="empty-state" style="padding:0 16px;">Noch keine anstehenden Reisen.</p>';
+  return `
+    <div class="dest-header">
+      <div class="dest-header-icon-row">🧳</div>
+      <div class="dest-header-title">Meine Reisen</div>
+      <div class="dest-header-top" data-action="go-home">‹</div>
+    </div>
+    <div style="padding:16px;">
+      <button type="button" class="btn-home" data-action="new-trip">➕ Nächste Reise eintragen</button>
+    </div>
+    <div style="padding:0 0 16px;">${list}</div>
+  `;
 }
 function renderVergangeneReisen(){
   const past = getPastTrips();
@@ -1600,7 +1627,7 @@ async function deleteRecipe(id){
 /* ---------- Reise (Detailansicht mit 4 Reitern) ---------- */
 async function createNewTrip(){
   const trip = {id:genId(), dateFrom:null, dateTo:null, buchungsdatum:null, hotelName:'', type:'Städtetrip', companions:'', destIds:[],
-    documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[]};
+    documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}};
   trips.push(trip);
   state.isDraftTrip = true;
   await openTripDetail(trip.id, 'reisedaten');
@@ -2103,7 +2130,7 @@ function syncDayPlan(trip){
 }
 function getRouteDays(route){
   if(route.days && route.days.length) return route.days;
-  return route.text.split('\n').map(l=>l.trim()).filter(Boolean).map((line,i)=>({label:'Zeile '+(i+1), text:line}));
+  return route.text.split('\n').map(l=>l.trim()).filter(Boolean).map((line,i)=>({label:'Zeile '+(i+1), place:'', text:line}));
 }
 function renderDayImportPanel(trip){
   if(!state.showDayImport){
@@ -2164,6 +2191,7 @@ function renderDayImportPanel(trip){
 
       <div class="field-label" style="margin-top:16px;">Ganze Route übernehmen</div>
       <select class="input" id="day-import-route" style="margin-bottom:8px;">${routeOptions}</select>
+      <button type="button" class="btn" data-action="toggle-day-import" style="margin-bottom:14px;">Beenden</button>
       ${wholeRouteBlock}
 
       ${allDaysBlock ? `<div class="field-label" style="margin-top:24px;">Oder einzelnen Tag aus allen Routen übernehmen</div>${allDaysBlock}` : ''}
@@ -2198,8 +2226,8 @@ function renderTripTagesplanerTab(trip){
     }
     return `
       <div class="day-card">
-        <div class="day-card-title">Tag ${idx+1} – ${dateLabel}${day.ort? ' · '+escapeHtml(day.ort) : ''}</div>
-        <div class="day-plan-box">${day.plan ? escapeHtml(day.plan).replace(/\n/g,'<br>') : '<span class="hint-text">Noch kein Plan für diesen Tag.</span>'}</div>
+        <div class="day-card-title">Tag ${idx+1} – ${dateLabel}</div>
+        <div class="day-plan-box">${day.ort? `<div style="font-weight:700;margin-bottom:6px;">${escapeHtml(day.ort)}</div>`:''}${day.plan ? escapeHtml(day.plan).replace(/\n/g,'<br>') : '<span class="hint-text">Noch kein Plan für diesen Tag.</span>'}</div>
         <button type="button" class="btn" data-action="edit-day" data-id="${day.id}" style="margin-top:10px;">✏️ Bearbeiten</button>
       </div>`;
   }).join('');
@@ -2219,7 +2247,7 @@ async function importWholeRoute(destId, routeId){
     const day = days[dayIdx];
     if(day && trip.dayPlan[targetIdx]){
       trip.dayPlan[targetIdx].plan = trip.dayPlan[targetIdx].plan ? trip.dayPlan[targetIdx].plan+'\n'+day.text : day.text;
-      if(!trip.dayPlan[targetIdx].ort) trip.dayPlan[targetIdx].ort = route.title;
+      if(!trip.dayPlan[targetIdx].ort) trip.dayPlan[targetIdx].ort = day.place || route.title;
       count++;
     }
   });
@@ -2240,6 +2268,7 @@ async function importSingleDay(destId, routeId, dayIndex, globalIndex){
   syncDayPlan(trip);
   if(trip.dayPlan[targetIdx]){
     trip.dayPlan[targetIdx].plan = trip.dayPlan[targetIdx].plan ? trip.dayPlan[targetIdx].plan+'\n'+day.text : day.text;
+    if(!trip.dayPlan[targetIdx].ort && day.place) trip.dayPlan[targetIdx].ort = day.place;
   }
   await saveTrips();
   showToast('Tag übernommen.');
@@ -2250,6 +2279,8 @@ function renderTripUnterlagenTab(trip){
   const ticketsHtml = trip.tickets.length ? trip.tickets.map(renderTicketCard).join('') : '<p class="empty-state">Noch keine Tickets hinterlegt.</p>';
   const ticketForm = state.addingTicket ? `
     <div class="inline-form">
+      <label class="field-label">Datei/Screenshot (optional, füllt Felder automatisch)</label>
+      <input type="file" class="input" id="new-ticket-file" accept=".pdf,.docx,image/*" style="margin-bottom:8px;">
       <input class="input" id="new-ticket-airline" placeholder="Fluggesellschaft" style="margin-bottom:8px;">
       <input class="input" id="new-ticket-flightnum" placeholder="Flugnummer" style="margin-bottom:8px;">
       <input type="date" class="input" id="new-ticket-date" style="margin-bottom:8px;">
@@ -2271,6 +2302,8 @@ function renderTripUnterlagenTab(trip){
   const activityHtml = trip.activityTickets.length ? trip.activityTickets.map(renderActivityTicketCard).join('') : '<p class="empty-state">Noch keine Ausflugstickets hinterlegt.</p>';
   const activityForm = state.addingActivityTicket ? `
     <div class="inline-form">
+      <label class="field-label">Datei/Screenshot (optional, füllt Felder automatisch)</label>
+      <input type="file" class="input" id="new-activity-file" accept=".pdf,.docx,image/*" style="margin-bottom:8px;">
       <input class="input" id="new-activity-title" placeholder="Bezeichnung (z.B. Vulkan-Tour Fogo)" style="margin-bottom:8px;">
       <input type="date" class="input" id="new-activity-date" style="margin-bottom:8px;">
       <input type="time" class="input" id="new-activity-time" style="margin-bottom:8px;">
@@ -2293,6 +2326,8 @@ function renderTripUnterlagenTab(trip){
     </div>`).join('') : '<p class="empty-state">Noch keine Unterlagen hinterlegt.</p>';
   const docForm = state.addingTripDoc ? `
     <div class="inline-form">
+      <label class="field-label">Datei/Screenshot (optional)</label>
+      <input type="file" class="input" id="new-tripdoc-file" accept=".pdf,.docx,image/*" style="margin-bottom:8px;">
       <input class="input" id="new-tripdoc-label" placeholder="Bezeichnung (z.B. Hotel-Buchungsnummer)" style="margin-bottom:8px;">
       <input class="input" id="new-tripdoc-value" placeholder="Wert" style="margin-bottom:8px;">
       <div class="form-actions">
@@ -2315,6 +2350,62 @@ function renderTripUnterlagenTab(trip){
     <input type="file" id="tripdoc-file-input" accept="image/*,.pdf" style="display:none">
   `;
 }
+async function storeAttachedFile(file){
+  const isImage = file.type.startsWith('image/');
+  const dataUrl = isImage ? await compressImage(file) : await readFileAsDataUrl(file);
+  const fileId = genId();
+  const fileObj = {dataUrl, filename:file.name, caption:''};
+  await sSet('photo:'+fileId, fileObj);
+  photoCache[fileId] = fileObj;
+  return fileId;
+}
+async function extractTextFromAnyFile(file){
+  const name = file.name.toLowerCase();
+  if(name.endsWith('.pdf')){
+    if(typeof pdfjsLib==='undefined') return '';
+    return await extractPdfText(file);
+  }
+  if(file.type.startsWith('image/')){
+    return await extractImageText(file);
+  }
+  if(typeof mammoth==='undefined') return '';
+  const arrayBuffer = await file.arrayBuffer();
+  const res = await mammoth.extractRawText({arrayBuffer});
+  return res.value;
+}
+async function onNewTicketFileSelected(file){
+  showToast('Lese Datei…');
+  try{
+    const text = await extractTextFromAnyFile(file);
+    if(!text){ showToast('Datei angehängt, es konnte aber nichts automatisch erkannt werden.'); return; }
+    const parsed = parseBookingText(text);
+    if(parsed.ticket){
+      if(parsed.ticket.airline) document.getElementById('new-ticket-airline').value = parsed.ticket.airline;
+      if(parsed.ticket.flightNumber) document.getElementById('new-ticket-flightnum').value = parsed.ticket.flightNumber;
+      if(parsed.ticket.bookingCode) document.getElementById('new-ticket-code').value = parsed.ticket.bookingCode;
+      if(parsed.ticket.departTime) document.getElementById('new-ticket-depart').value = parsed.ticket.departTime;
+      if(parsed.ticket.arriveTime) document.getElementById('new-ticket-arrive').value = parsed.ticket.arriveTime;
+    }
+    if(parsed.dateFrom) document.getElementById('new-ticket-date').value = parsed.dateFrom;
+    showToast('Felder automatisch befüllt – bitte prüfen.');
+  }catch(e){
+    showToast('Datei angehängt, automatische Erkennung ist fehlgeschlagen.');
+  }
+}
+async function onNewActivityFileSelected(file){
+  showToast('Lese Datei…');
+  try{
+    const text = await extractTextFromAnyFile(file);
+    if(!text){ showToast('Datei angehängt, es konnte aber nichts automatisch erkannt werden.'); return; }
+    const parsed = parseBookingText(text);
+    if(parsed.dateFrom) document.getElementById('new-activity-date').value = parsed.dateFrom;
+    if(parsed.ticket && parsed.ticket.departTime) document.getElementById('new-activity-time').value = parsed.ticket.departTime;
+    if(parsed.ticket && parsed.ticket.bookingCode) document.getElementById('new-activity-code').value = parsed.ticket.bookingCode;
+    showToast('Felder automatisch befüllt (soweit erkennbar) – bitte prüfen.');
+  }catch(e){
+    showToast('Datei angehängt, automatische Erkennung ist fehlgeschlagen.');
+  }
+}
 async function confirmAddTicket(){
   const airline = document.getElementById('new-ticket-airline').value.trim();
   const flightNumber = document.getElementById('new-ticket-flightnum').value.trim();
@@ -2324,9 +2415,14 @@ async function confirmAddTicket(){
   const departTime = document.getElementById('new-ticket-depart').value;
   const arriveTime = document.getElementById('new-ticket-arrive').value;
   const bookingCode = document.getElementById('new-ticket-code').value.trim();
+  const fileInput = document.getElementById('new-ticket-file');
   if(!airline && !flightNumber && !from && !to){ showToast('Bitte mindestens Fluggesellschaft/Flugnummer oder Strecke angeben.'); return; }
   const trip = trips.find(t=>t.id===state.tripId);
-  trip.tickets.push({id:genId(), airline, flightNumber, date, from, to, departTime, arriveTime, bookingCode});
+  const ticket = {id:genId(), airline, flightNumber, date, from, to, departTime, arriveTime, bookingCode, photoId:null};
+  if(fileInput && fileInput.files[0]){
+    try{ ticket.photoId = await storeAttachedFile(fileInput.files[0]); }catch(e){}
+  }
+  trip.tickets.push(ticket);
   await saveTrips();
   state.addingTicket = false;
   render();
@@ -2359,9 +2455,14 @@ async function confirmAddActivityTicket(){
   const time = document.getElementById('new-activity-time').value;
   const location = document.getElementById('new-activity-location').value.trim();
   const bookingCode = document.getElementById('new-activity-code').value.trim();
+  const fileInput = document.getElementById('new-activity-file');
   if(!title){ showToast('Bitte eine Bezeichnung angeben.'); return; }
   const trip = trips.find(t=>t.id===state.tripId);
-  trip.activityTickets.push({id:genId(), title, date, time, location, bookingCode});
+  const ticket = {id:genId(), title, date, time, location, bookingCode, photoId:null};
+  if(fileInput && fileInput.files[0]){
+    try{ ticket.photoId = await storeAttachedFile(fileInput.files[0]); }catch(e){}
+  }
+  trip.activityTickets.push(ticket);
   await saveTrips();
   state.addingActivityTicket = false;
   render();
@@ -2438,8 +2539,13 @@ async function confirmAddTripDoc(){
   const label = document.getElementById('new-tripdoc-label').value.trim();
   const value = document.getElementById('new-tripdoc-value').value.trim();
   if(!label || !value) return;
+  const fileInput = document.getElementById('new-tripdoc-file');
   const trip = trips.find(t=>t.id===state.tripId);
-  trip.documents.push({id:genId(), label, value});
+  const doc = {id:genId(), label, value, fileId:null};
+  if(fileInput && fileInput.files[0]){
+    try{ doc.fileId = await storeAttachedFile(fileInput.files[0]); }catch(e){}
+  }
+  trip.documents.push(doc);
   await saveTrips();
   state.addingTripDoc = false;
   render();
@@ -2498,15 +2604,43 @@ async function deleteDiary(id){
 
 /* --- Bilder tab (Reise) --- */
 function renderTripBilderTab(trip){
-  const grid = trip.photoIds.length ? trip.photoIds.map(id=>{
+  if(!trip.photoDayAssignments) trip.photoDayAssignments = {};
+  const assignments = trip.photoDayAssignments;
+  const hasAssignments = Object.keys(assignments).length > 0 && trip.dayPlan && trip.dayPlan.length;
+  const photoThumb = id=>{
     const p = photoCache[id];
-    if(!p) return '';
-    return `<div class="photo-thumb" data-action="view-photo" data-id="${id}" style="background-image:url('${p.dataUrl}')"></div>`;
-  }).join('') : '<p class="empty-state">Noch keine Fotos abgelegt.</p>';
+    return p ? `<div class="photo-thumb" data-action="view-photo" data-id="${id}" style="background-image:url('${p.dataUrl}')"></div>` : '';
+  };
+  let gridHtml;
+  if(hasAssignments){
+    const groups = {};
+    trip.photoIds.forEach(id=>{
+      const dayIdx = assignments[id];
+      const key = (dayIdx!==undefined && trip.dayPlan[dayIdx]) ? String(dayIdx) : 'none';
+      if(!groups[key]) groups[key] = [];
+      groups[key].push(id);
+    });
+    const dayKeys = Object.keys(groups).filter(k=>k!=='none').map(Number).sort((a,b)=>a-b);
+    let sections = dayKeys.map(dayIdx=>`
+      <div class="photo-day-group">
+        <div class="photo-day-group-title">Tag ${dayIdx+1}</div>
+        <div class="photo-grid">${groups[String(dayIdx)].map(photoThumb).join('')}</div>
+      </div>`).join('');
+    if(groups['none'] && groups['none'].length){
+      sections += `
+      <div class="photo-day-group">
+        <div class="photo-day-group-title">Ohne Tag</div>
+        <div class="photo-grid">${groups['none'].map(photoThumb).join('')}</div>
+      </div>`;
+    }
+    gridHtml = sections;
+  } else {
+    gridHtml = trip.photoIds.length ? `<div class="photo-grid">${trip.photoIds.map(photoThumb).join('')}</div>` : '<p class="empty-state">Noch keine Fotos abgelegt.</p>';
+  }
   return `
     <button type="button" class="btn btn-add" data-action="trigger-photo-upload">+ Foto hinzufügen</button>
     <input type="file" id="photo-input" accept="image/*" style="display:none">
-    <div class="photo-grid" style="margin-top:14px;">${grid}</div>
+    <div style="margin-top:14px;">${gridHtml}</div>
   `;
 }
 function compressImage(file){
@@ -2545,6 +2679,19 @@ async function onPhotoSelected(file){
     render();
   }catch(e){ showToast('Foto konnte nicht gespeichert werden.'); }
 }
+function renderPhotoDayPicker(){
+  const ctx = state.lightboxContext || {type:'gallery'};
+  if(state.view!=='trip' || ctx.type!=='gallery') return '';
+  const trip = trips.find(t=>t.id===state.tripId);
+  if(!trip || !trip.dayPlan || !trip.dayPlan.length) return '';
+  if(!trip.photoDayAssignments) trip.photoDayAssignments = {};
+  const currentDayIdx = trip.photoDayAssignments[state.lightboxPhotoId];
+  const options = `<option value="">Kein Tag zugeordnet</option>` + trip.dayPlan.map((d,i)=>
+    `<option value="${i}" ${currentDayIdx===i?'selected':''}>Tag ${i+1}</option>`).join('');
+  return `
+    <label class="field-label" style="margin-top:10px;">Tag zuordnen</label>
+    <select class="input" id="lightbox-day-assign">${options}</select>`;
+}
 function renderLightbox(){
   const p = photoCache[state.lightboxPhotoId];
   if(!p) return '';
@@ -2553,6 +2700,7 @@ function renderLightbox(){
       <div class="lightbox-content" data-action="noop">
         <img src="${p.dataUrl}" class="lightbox-img">
         <input class="input" id="lightbox-caption" data-photo-caption="${state.lightboxPhotoId}" placeholder="Bildunterschrift hinzufügen…" style="margin-top:10px;">
+        ${renderPhotoDayPicker()}
         <div class="form-actions" style="margin-top:10px;">
           <button type="button" class="btn btn-danger" data-action="delete-lightbox-photo">Foto löschen</button>
           <button type="button" class="btn" data-action="close-lightbox">Schließen</button>
@@ -2586,6 +2734,7 @@ async function deleteLightboxPhoto(){
   } else {
     const trip = trips.find(t=>t.id===state.tripId);
     trip.photoIds = trip.photoIds.filter(pid=>pid!==id);
+    if(trip.photoDayAssignments) delete trip.photoDayAssignments[id];
     await saveTrips();
   }
   await sDelete('photo:'+id);
@@ -2655,6 +2804,44 @@ function renderDestination(){
 }
 
 /* ---------- Guide tab ---------- */
+function renderGuideCalloutText(text){
+  if(!text) return '<span class="hint-text">Noch nichts eingetragen.</span>';
+  return text.split('\n').map(line=>{
+    const trimmed = line.trim();
+    if(!trimmed) return '<br>';
+    if(trimmed.startsWith('###SUBHEAD###')){
+      return `<div class="guide-subhead">${escapeHtml(trimmed.slice('###SUBHEAD###'.length))}</div>`;
+    }
+    if(trimmed.startsWith('###TABLE###')){
+      try{
+        const rows = JSON.parse(trimmed.slice('###TABLE###'.length));
+        const rowsHtml = rows.map((row,i)=>
+          `<tr>${row.map(cell=>`<${i===0?'th':'td'}>${escapeHtml(cell)}</${i===0?'th':'td'}>`).join('')}</tr>`
+        ).join('');
+        return `<table class="guide-table">${rowsHtml}</table>`;
+      }catch(e){ return ''; }
+    }
+    let m = trimmed.match(/^geheimtipp\s*:\s*(.*)/i);
+    if(m) return `<div class="callout callout-geheimtipp">🤫 ${escapeHtml(m[1])}</div>`;
+    m = trimmed.match(/^tipp\s*:\s*(.*)/i);
+    if(m) return `<div class="callout callout-tipp">💡 ${escapeHtml(m[1])}</div>`;
+    m = trimmed.match(/^achtung\s*:\s*(.*)/i);
+    if(m) return `<div class="callout callout-achtung">⚠️ ${escapeHtml(m[1])}</div>`;
+    return `<div>${escapeHtml(line)}</div>`;
+  }).join('');
+}
+const GUIDE_FIELDS = [
+  ['understanding','Land &amp; Leute'],
+  ['bestTime','Beste Reisezeit'],
+  ['entryHealth','Einreise, Formalitäten &amp; Gesundheit'],
+  ['arrival','Anreise &amp; Fortbewegung vor Ort'],
+  ['accommodation','Unterkunft'],
+  ['regions','Regionen &amp; Top-Erlebnisse'],
+  ['foodDrink','Essen &amp; Trinken'],
+  ['natureSafety','Natur, Sicherheit &amp; Wanderregeln'],
+  ['tips','Praktisches A–Z &amp; Budget'],
+  ['overview','Sonstiges']
+];
 function renderGuideTab(dd){
   if(dd.guide.imported){
     const confirming = state.confirmingRevertGuide;
@@ -2676,45 +2863,36 @@ function renderGuideTab(dd){
       <input type="file" id="guide-file-input" accept=".docx" style="display:none">
     `;
   }
+  const cards = GUIDE_FIELDS.map(([key,label])=>{
+    const value = dd.guide[key] || '';
+    if(state.editingGuideField===key){
+      return `
+        <div class="diary-entry">
+          <div class="diary-date">${label}</div>
+          <textarea class="textarea" id="ta-${key}" data-guide-field="${key}">${escapeHtml(value)}</textarea>
+          <button type="button" class="btn btn-add" data-action="close-edit-guide-field" style="margin-top:8px;">Fertig</button>
+        </div>`;
+    }
+    return `
+      <div class="diary-entry">
+        <div class="diary-date">${label}</div>
+        <div class="diary-text">${renderGuideCalloutText(value)}</div>
+        <button type="button" class="btn" data-action="edit-guide-field" data-field="${key}" style="margin-top:10px;">✏️ Bearbeiten</button>
+      </div>`;
+  }).join('');
   return `
-    <div class="field-group">
-      <label class="field-label">Überblick</label>
-      <textarea class="textarea" id="ta-overview" data-guide-field="overview"></textarea>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Beste Reisezeit</label>
-      <textarea class="textarea" id="ta-besttime" data-guide-field="bestTime" style="min-height:56px;"></textarea>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Einreise, Formalitäten & Gesundheit</label>
-      <textarea class="textarea" id="ta-entryhealth" data-guide-field="entryHealth" style="min-height:56px;"></textarea>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Anreise & Fortbewegung vor Ort</label>
-      <textarea class="textarea" id="ta-arrival" data-guide-field="arrival" style="min-height:56px;"></textarea>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Unterkunft</label>
-      <textarea class="textarea" id="ta-accommodation" data-guide-field="accommodation" style="min-height:56px;"></textarea>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Regionen</label>
-      <textarea class="textarea" id="ta-regions" data-guide-field="regions" placeholder="Kurzcharakteristik je Region – die einzelnen Orte dazu findest du mit Region-Tag im Tab „Karte“."></textarea>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Essen & Trinken</label>
-      <textarea class="textarea" id="ta-fooddrink" data-guide-field="foodDrink" style="min-height:56px;"></textarea>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Natur, Sicherheit & Wanderregeln</label>
-      <textarea class="textarea" id="ta-naturesafety" data-guide-field="natureSafety" style="min-height:56px;"></textarea>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Praktisches A–Z</label>
-      <textarea class="textarea" id="ta-tips" data-guide-field="tips" placeholder="Sprache, Währung, Steckdosen, Besonderheiten…"></textarea>
-    </div>
-    <p class="hint-text">Fertige Routen findest du im Tab „Routen“, häufige Fragen im Tab „FAQ“, Top-Erlebnisse in der Bucketliste (Tab „Listen“), Budget-Infos im Tab „Budget“ und die Packliste ebenfalls im Tab „Listen“.</p>
+    ${cards}
+    <p class="hint-text">Fertige Routen findest du im Tab „Routen", häufige Fragen im Tab „FAQ", Bucketliste und Packliste im Tab „Listen". Rezepte aus „Essen &amp; Trinken" landen automatisch in der Kulinarischen Weltreise. Zeilen mit „Tipp:", „Geheimtipp:" oder „Achtung:" werden farbig hervorgehoben.</p>
     <button type="button" class="btn" data-action="trigger-guide-file-upload">📄 Reiseführer-Datei importieren (.docx)</button>
+    ${state.confirmingResetGuide ? `
+      <div class="confirm-inline-block" style="margin-top:10px;">
+        <div class="confirm-message">Wirklich alle Reiseführer-Felder dieses Ziels leeren? Das kann nicht rückgängig gemacht werden.</div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-danger" data-action="do-reset-guide">Ja, zurücksetzen</button>
+          <button type="button" class="btn" data-action="cancel-reset-guide">Abbrechen</button>
+        </div>
+      </div>` : `
+      <button type="button" class="btn btn-danger" data-action="ask-reset-guide" style="margin-top:10px;">🗑️ Reiseführer zurücksetzen</button>`}
     <input type="file" id="guide-file-input" accept=".docx" style="display:none">
   `;
 }
@@ -3354,24 +3532,24 @@ async function deletePhrase(id){
 
 /* ---------- Guide-Datei-Import (.docx) ---------- */
 const CHAPTER_FIELD_MAP = [
-  {pattern:/willkommen.*wie sie diesen guide nutzen/i, field:'overview'},
-  {pattern:/verstehen/i, field:'overview'},
+  {pattern:/willkommen.*wie sie diesen guide nutzen/i, field:null},
+  {pattern:/verstehen/i, field:'understanding'},
   {pattern:/beste reisezeit/i, field:'bestTime'},
   {pattern:/einreise.*formalit.*gesundheit/i, field:'entryHealth'},
   {pattern:/^anreise\b/i, field:'arrival'},
-  {pattern:/fortbewegung vor ort/i, field:'tips'},
+  {pattern:/fortbewegung vor ort/i, field:'arrival'},
   {pattern:/^unterkunft\b/i, field:'accommodation'},
   {pattern:/regionen im überblick/i, field:'regions'},
   {pattern:/fertige routen/i, field:'ROUTES'},
   {pattern:/top-erlebnisse/i, field:'regions'},
-  {pattern:/essen.*trinken/i, field:'foodDrink'},
+  {pattern:/essen.*trinken/i, field:'RECIPES'},
   {pattern:/budget.*kosten/i, field:'tips'},
   {pattern:/packliste/i, field:'PACKING'},
   {pattern:/praktisches a.z/i, field:'tips'},
   {pattern:/natur.*sicherheit.*wanderregeln/i, field:'natureSafety'},
   {pattern:/checklisten/i, field:'BUCKETLIST'},
   {pattern:/häufig gestellte fragen/i, field:'FAQ'},
-  {pattern:/zum schluss/i, field:'overview'},
+  {pattern:/zum schluss/i, field:null},
   {pattern:/mein reisetagebuch/i, field:null}
 ];
 function findChapterField(headingText){
@@ -3406,20 +3584,23 @@ async function onGuideFileSelected(file){
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const nodes = [...doc.body.children];
     const dd = destDataCache[state.destId];
-    const fieldBuckets = {overview:[], bestTime:[], entryHealth:[], arrival:[], accommodation:[], regions:[], foodDrink:[], natureSafety:[], tips:[]};
+    const fieldBuckets = {understanding:[], overview:[], bestTime:[], entryHealth:[], arrival:[], accommodation:[], regions:[], foodDrink:[], natureSafety:[], tips:[]};
     const listBuckets = {BUCKETLIST:[], PACKING:[]};
-    let currentMode = null; // 'field' | 'ROUTES' | 'FAQ' | 'BUCKETLIST' | 'PACKING' | null
+    let currentMode = null; // 'field' | 'ROUTES' | 'FAQ' | 'BUCKETLIST' | 'PACKING' | 'RECIPES' | null
     let currentField = null;
     let inChapter2 = false;
+    let inRecipeSection = false;
     let inSpracheSubsection = false;
     let subBuffer = null;
+    let recipeBuffer = null;
     let anyImported = false;
+    const dest = getCurrentDest();
 
     function flushSub(){
       if(subBuffer){
         if(currentMode==='ROUTES'){
           const descText = (subBuffer.descLines||[]).join('\n').trim();
-          const days = (subBuffer.days||[]).map(d=>({label:d.label, text:d.lines.join('\n').trim()})).filter(d=>d.text);
+          const days = (subBuffer.days||[]).map(d=>({label:d.label, place:d.place||'', text:d.lines.join('\n').trim()})).filter(d=>d.text);
           if(/^route\s*\d+/i.test(subBuffer.title)){
             if(descText || days.length){
               dd.routes.push({id:genId(), title:subBuffer.title, text:descText, days});
@@ -3439,27 +3620,62 @@ async function onGuideFileSelected(file){
       }
       subBuffer = null;
     }
+    function flushRecipeBuffer(){
+      if(recipeBuffer){
+        const blockText = recipeBuffer.title + '\n' + recipeBuffer.lines.join('\n');
+        const parsed = parseRecipeText(blockText);
+        if(parsed.ingredients || parsed.steps){
+          recipes.push({
+            id:genId(), destId: dest.id, category:'Sonstiges',
+            nameNative: parsed.nameNative || recipeBuffer.title, nameGerman: parsed.nameGerman||'',
+            servings: parsed.servings||'', time: parsed.time||'',
+            ingredients: parsed.ingredients||'', steps: parsed.steps||''
+          });
+          anyImported = true;
+        } else {
+          fieldBuckets.foodDrink.push(blockText);
+        }
+      }
+      recipeBuffer = null;
+    }
 
     for(const node of nodes){
       if(node.tagName==='H1'){
         if(currentMode==='ROUTES' || currentMode==='FAQ') flushSub();
+        if(currentMode==='RECIPES') flushRecipeBuffer();
         const headingText = node.textContent.trim();
         inChapter2 = /verstehen/i.test(headingText);
+        inRecipeSection = false;
         inSpracheSubsection = false;
         const field = findChapterField(headingText);
         currentMode = null; currentField = null;
-        if(field==='ROUTES' || field==='FAQ' || field==='BUCKETLIST' || field==='PACKING'){ currentMode = field; }
+        if(field==='ROUTES' || field==='FAQ' || field==='BUCKETLIST' || field==='PACKING' || field==='RECIPES'){ currentMode = field; }
         else if(field!==null){ currentMode = 'field'; currentField = field; }
         continue;
       }
-      if(currentMode==='ROUTES'){
+      if(currentMode==='RECIPES'){
+        const subHeading = getSubHeadingText(node);
+        if(subHeading && /^zum nachkochen/i.test(subHeading)){
+          inRecipeSection = true;
+        } else if(inRecipeSection && subHeading){
+          flushRecipeBuffer();
+          recipeBuffer = {title:subHeading, lines:[]};
+        } else {
+          const t = node.textContent.trim();
+          if(t){
+            if(inRecipeSection && recipeBuffer){ recipeBuffer.lines.push(t); }
+            else if(!inRecipeSection){ fieldBuckets.foodDrink.push(t); }
+          }
+        }
+      } else if(currentMode==='ROUTES'){
         const subHeading = getSubHeadingText(node);
         if(subHeading && /^route\s*\d+/i.test(subHeading)){
           flushSub();
           subBuffer = {title:subHeading, descLines:[], days:[], currentDay:null};
         } else if(subHeading && /^tag\s*\d+/i.test(subHeading)){
           if(!subBuffer) subBuffer = {title:'', descLines:[], days:[], currentDay:null};
-          const dayObj = {label:subHeading, lines:[]};
+          const m = subHeading.match(/^(tag\s*\d+)\s*:?\s*(.*)/i);
+          const dayObj = {label: m ? m[1].trim() : subHeading, place: m && m[2] ? m[2].trim() : '', lines:[]};
           subBuffer.days.push(dayObj);
           subBuffer.currentDay = dayObj;
         } else if(subHeading){
@@ -3519,11 +3735,28 @@ async function onGuideFileSelected(file){
             continue;
           }
         }
+        if(node.tagName==='TABLE'){
+          const rows = [...node.querySelectorAll('tr')].map(tr=>
+            [...tr.querySelectorAll('td,th')].map(c=>c.textContent.trim())
+          ).filter(r=>r.some(c=>c));
+          if(rows.length){
+            fieldBuckets[currentField].push('###TABLE###'+JSON.stringify(rows));
+            anyImported = true;
+          }
+          continue;
+        }
+        const subHeading = getSubHeadingText(node);
+        if(subHeading){
+          fieldBuckets[currentField].push('###SUBHEAD###'+subHeading);
+          anyImported = true;
+          continue;
+        }
         const t = node.textContent.trim();
         if(t){ fieldBuckets[currentField].push(t); anyImported = true; }
       }
     }
     if(currentMode==='ROUTES' || currentMode==='FAQ') flushSub();
+    if(currentMode==='RECIPES') flushRecipeBuffer();
 
     Object.keys(fieldBuckets).forEach(field=>{
       if(fieldBuckets[field].length){
@@ -3538,11 +3771,20 @@ async function onGuideFileSelected(file){
     dd.guide.imported = false;
     dd.guide.importedFileName = file.name;
     await saveDestData(state.destId);
+    await sSet('recipes', recipes);
     render();
     showToast(anyImported ? 'Reiseführer eingelesen und auf die Reiter verteilt – bitte prüfen.' : 'Es konnte nichts eindeutig zugeordnet werden – bitte manuell prüfen.');
   }catch(e){
     showToast('Datei konnte nicht gelesen werden. Bitte eine .docx-Datei verwenden.');
   }
+}
+async function resetGuide(){
+  const dd = destDataCache[state.destId];
+  dd.guide = {...EMPTY_GUIDE};
+  await saveDestData(state.destId);
+  state.confirmingResetGuide = false;
+  showToast('Reiseführer zurückgesetzt.');
+  render();
 }
 async function revertGuideToManual(){
   const dd = destDataCache[state.destId];
@@ -3928,6 +4170,7 @@ async function onAppClick(e){
     case 'go-kochbuch': goToKochbuch(); break;
     case 'pet-mascot': triggerMascotAnim('giggle', 1600); break;
     case 'go-vergangene-reisen': goToVergangeneReisen(); break;
+    case 'go-meine-reisen': goToMeineReisen(); break;
     case 'go-backup': goToBackup(); break;
     case 'export-guides-backup': await exportGuidesBackup(); break;
     case 'trigger-guides-import': document.getElementById('guides-import-input').click(); break;
@@ -3973,6 +4216,11 @@ async function onAppClick(e){
     case 'import-whole-route': await importWholeRoute(el.dataset.destId, el.dataset.routeId); break;
     case 'import-single-day': await importSingleDay(el.dataset.destId, el.dataset.routeId, parseInt(el.dataset.dayIndex,10), parseInt(el.dataset.globalIndex,10)); break;
     case 'edit-day': state.editingDayId = el.dataset.id; render(); break;
+    case 'edit-guide-field': state.editingGuideField = el.dataset.field; render(); break;
+    case 'close-edit-guide-field': state.editingGuideField = null; render(); break;
+    case 'ask-reset-guide': state.confirmingResetGuide = true; render(); break;
+    case 'cancel-reset-guide': state.confirmingResetGuide = false; render(); break;
+    case 'do-reset-guide': await resetGuide(); break;
     case 'close-edit-day': state.editingDayId = null; render(); break;
     case 'show-add-route': state.addingRoute=true; render(); break;
     case 'cancel-add-route': state.addingRoute=false; render(); break;
@@ -4119,6 +4367,14 @@ document.getElementById('app').addEventListener('change', async function(e){
     if(file) await onPhotoSelected(file);
     e.target.value='';
   }
+  if(e.target.id==='new-ticket-file'){
+    const file = e.target.files[0];
+    if(file) await onNewTicketFileSelected(file);
+  }
+  if(e.target.id==='new-activity-file'){
+    const file = e.target.files[0];
+    if(file) await onNewActivityFileSelected(file);
+  }
   if(e.target.id==='ticket-photo-input'){
     const file = e.target.files[0];
     if(file && state.ticketPhotoTarget){
@@ -4239,6 +4495,16 @@ document.getElementById('app').addEventListener('focusout', async function(e){
     if(photoCache[pid]){
       photoCache[pid].caption = e.target.value;
       await sSet('photo:'+pid, photoCache[pid]);
+    }
+  }
+  if(e.target.id==='lightbox-day-assign'){
+    const trip = trips.find(t=>t.id===state.tripId);
+    if(trip){
+      if(!trip.photoDayAssignments) trip.photoDayAssignments = {};
+      const val = e.target.value;
+      if(val==='') delete trip.photoDayAssignments[state.lightboxPhotoId];
+      else trip.photoDayAssignments[state.lightboxPhotoId] = parseInt(val,10);
+      await saveTrips();
     }
   }
 });
