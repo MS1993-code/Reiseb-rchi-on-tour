@@ -175,6 +175,9 @@
   .guide-table th{background:var(--surface-alt);font-weight:700;}
   .photo-day-group{margin-bottom:20px;}
   .photo-day-group-title{font-weight:700;font-size:13px;color:var(--brass);margin-bottom:8px;}
+  .hike-tracking-live{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface-alt);border-radius:12px;padding:10px 14px;margin-top:8px;font-weight:700;font-size:14px;flex-wrap:wrap;}
+  .hike-log-list{margin-top:6px;}
+  .hike-log-row{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--ink-muted);padding:6px 0;border-bottom:1px solid var(--border);}
 
   .btn{font-size:14px;font-weight:600;padding:10px 18px;border-radius:22px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;transition:all 0.15s ease;box-shadow:0 2px 5px rgba(51,44,34,0.10);}
   .btn:active{opacity:0.85;box-shadow:0 1px 2px rgba(51,44,34,0.10);transform:translateY(1px);}
@@ -225,9 +228,11 @@
 
   .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
   .photo-thumb{aspect-ratio:1;border-radius:10px;background-size:cover;background-position:center;cursor:pointer;border:1px solid var(--border);}
-  .lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000;}
-  .lightbox-content{background:var(--surface);border-radius:var(--radius);padding:16px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;}
-  .lightbox-img{width:100%;border-radius:10px;display:block;}
+  .lightbox-overlay{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;z-index:9999;}
+  .lightbox-img-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;}
+  .lightbox-img{max-width:100%;max-height:100%;object-fit:contain;display:block;}
+  .lightbox-controls{background:rgba(20,18,14,0.92);padding:12px 16px 16px;max-height:42vh;overflow-y:auto;flex:0 0 auto;}
+  .lightbox-controls .field-label{color:rgba(245,240,227,0.7);}
 
   .converter{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;}
   .converter .input{flex:1;min-width:76px;}
@@ -634,6 +639,8 @@ let state = {
   addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null,
   tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false,
   addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false, editingDayId:null, editingGuideField:null, confirmingResetGuide:false,
+  showHikingSearch:false, hikingSearchLoading:false, hikingSearchResults:null,
+  trackingDestId:null, trackingRouteId:null, trackingStartTime:null, trackingPoints:[], trackingDistanceKm:0, trackingWatchId:null, trackingTimerInterval:null,
   collapsedContinents:[], confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
   addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
   recipeId:null, editingRecipe:false, recipeImportDraft:null,
@@ -900,12 +907,12 @@ async function importTripsBackup(file){
 async function switchTab(tab){
   if(leafletMap && state.tab==='karte' && tab!=='karte'){ leafletMap.remove(); leafletMap=null; }
   if(state.tab==='wanderrouten' && tab!=='wanderrouten'){
-    hikingMapInstances.forEach(m=>{ try{ m.remove(); }catch(e){} });
-    hikingMapInstances = [];
+    Object.values(hikingMapInstances).forEach(m=>{ try{ m.remove(); }catch(e){} });
+    hikingMapInstances = {};
   }
   state.tab = tab;
   state.addingList=null; state.addingDoc=null; state.pendingPoi=null;
-  state.addingHikingRoute=false; state.editingHikingRouteId=null;
+  state.addingHikingRoute=false; state.editingHikingRouteId=null; state.showHikingSearch=false; state.hikingSearchResults=null;
   render();
 }
 
@@ -2697,9 +2704,11 @@ function renderLightbox(){
   if(!p) return '';
   return `
     <div class="lightbox-overlay" data-action="close-lightbox">
-      <div class="lightbox-content" data-action="noop">
+      <div class="lightbox-img-wrap" data-action="noop">
         <img src="${p.dataUrl}" class="lightbox-img">
-        <input class="input" id="lightbox-caption" data-photo-caption="${state.lightboxPhotoId}" placeholder="Bildunterschrift hinzufügen…" style="margin-top:10px;">
+      </div>
+      <div class="lightbox-controls" data-action="noop">
+        <input class="input" id="lightbox-caption" data-photo-caption="${state.lightboxPhotoId}" placeholder="Bildunterschrift hinzufügen…">
         ${renderPhotoDayPicker()}
         <div class="form-actions" style="margin-top:10px;">
           <button type="button" class="btn btn-danger" data-action="delete-lightbox-photo">Foto löschen</button>
@@ -3241,7 +3250,7 @@ async function deleteRoute(id){
 }
 
 /* ---------- Wanderrouten tab ---------- */
-let hikingMapInstances = [];
+let hikingMapInstances = {};
 function haversineKmSimple(lat1,lng1,lat2,lng2){ return haversineKm(lat1,lng1,lat2,lng2); }
 function parseGpxPoints(xmlText){
   const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
@@ -3295,6 +3304,26 @@ function renderHikingRouteForm(r){
 }
 function renderHikingRouteCard(r){
   if(state.editingHikingRouteId===r.id) return renderHikingRouteForm(r);
+  const isTracking = state.trackingRouteId===r.id;
+  const trackingBlock = r.gpxTrack && r.gpxTrack.length ? (
+    isTracking ? `
+      <div class="hike-tracking-live">
+        <div><span id="hike-tracking-timer">00:00:00</span> <span id="hike-tracking-distance">0 km</span></div>
+        <button type="button" class="btn btn-danger" data-action="stop-hike-tracking" style="padding:7px 12px;font-size:12px;">⏹️ Wanderung beenden</button>
+      </div>` : `
+      <button type="button" class="btn" data-action="start-hike-tracking" data-dest-id="${state.destId}" data-id="${r.id}" style="margin-top:8px;">▶️ Wanderung starten</button>`
+  ) : '';
+  const logsHtml = (r.hikeLogs||[]).length ? `
+    <div class="hike-log-list">
+      <div class="field-label" style="margin-top:12px;">Bisherige Wanderungen</div>
+      ${r.hikeLogs.slice().reverse().map(l=>`
+        <div class="hike-log-row">
+          <span>${formatDateDe(l.date)}</span>
+          <span>${escapeHtml(l.startTime)}–${escapeHtml(l.stopTime)} Uhr</span>
+          <span>${l.durationMin} Min.</span>
+          <span>${l.distanceKm} km</span>
+        </div>`).join('')}
+    </div>` : '';
   return `
     <div class="diary-entry">
       <div class="diary-date">${escapeHtml(r.title)}</div>
@@ -3307,10 +3336,38 @@ function renderHikingRouteCard(r){
         </div>` : ''}
       ${r.description? `<div class="diary-text">${escapeHtml(r.description)}</div>`:''}
       ${r.gpxTrack && r.gpxTrack.length ? `<div id="hiking-map-${r.id}" class="map-container" style="height:200px;margin-bottom:10px;"></div>`:''}
-      <div class="form-actions">
+      ${trackingBlock}
+      ${logsHtml}
+      <div class="form-actions" style="margin-top:10px;">
         <button type="button" class="btn" data-action="edit-hiking-route" data-id="${r.id}">Bearbeiten</button>
         <button type="button" class="btn btn-danger" data-action="delete-hiking-route" data-id="${r.id}">Löschen</button>
       </div>
+    </div>`;
+}
+function renderHikingSearchPanel(){
+  if(!state.showHikingSearch){
+    return `<button type="button" class="btn" data-action="toggle-hiking-search">🔍 Wanderwege in der Nähe suchen</button>`;
+  }
+  let resultsHtml = '';
+  if(state.hikingSearchLoading){
+    resultsHtml = '<p class="hint-text">Suche läuft…</p>';
+  } else if(state.hikingSearchResults===null){
+    resultsHtml = '';
+  } else if(state.hikingSearchResults.length===0){
+    resultsHtml = '<p class="hint-text">Keine Wanderwege in der Nähe gefunden.</p>';
+  } else {
+    resultsHtml = state.hikingSearchResults.map(r=>`
+      <div class="day-import-line">
+        <div class="day-import-text"><strong>${escapeHtml(r.name)}</strong><br>${r.distanceKm} km${r.difficulty? ' · '+escapeHtml(r.difficulty):''}</div>
+        <button type="button" class="btn btn-add" data-action="import-searched-hiking-trail" data-id="${r.id}" style="padding:7px 10px;font-size:12px;">+ Importieren</button>
+      </div>`).join('');
+  }
+  return `
+    <div class="inline-form">
+      <p class="hint-text" style="margin-top:0;">Sucht in OpenStreetMap nach benannten Wanderwegen im Umkreis von 15 km um dieses Reiseziel.</p>
+      <button type="button" class="btn" data-action="search-hiking-trails" style="margin-bottom:10px;">Jetzt suchen</button>
+      ${resultsHtml}
+      <button type="button" class="btn" data-action="toggle-hiking-search" style="margin-top:14px;">Schließen</button>
     </div>`;
 }
 function renderWanderroutenTab(dd){
@@ -3322,22 +3379,27 @@ function renderWanderroutenTab(dd){
       <button type="button" class="btn" data-action="trigger-gpx-upload">📍 GPX-Datei importieren</button>
       <input type="file" id="gpx-file-input" accept=".gpx" style="display:none">
     </div>`;
-  return `${addForm}<div style="margin-top:16px;">${list}</div>`;
+  return `${addForm}<div style="margin:10px 0 4px;">${renderHikingSearchPanel()}</div><div style="margin-top:16px;">${list}</div>`;
 }
 function initHikingMaps(dd){
-  hikingMapInstances.forEach(m=>{ try{ m.remove(); }catch(e){} });
-  hikingMapInstances = [];
+  Object.values(hikingMapInstances).forEach(m=>{ try{ m.remove(); }catch(e){} });
+  hikingMapInstances = {};
   if(typeof L==='undefined') return;
   (dd.hikingRoutes||[]).forEach(r=>{
     if(!r.gpxTrack || !r.gpxTrack.length || state.editingHikingRouteId===r.id) return;
     const container = document.getElementById('hiking-map-'+r.id);
     if(!container) return;
+    const isTracking = state.trackingRouteId===r.id;
     try{
-      const map = L.map(container, {zoomControl:false, attributionControl:false, dragging:false, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:false});
+      const map = L.map(container, {zoomControl:false, attributionControl:false, dragging:isTracking, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:isTracking});
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18}).addTo(map);
       const line = L.polyline(r.gpxTrack, {color:'#C99A3E', weight:4}).addTo(map);
       map.fitBounds(line.getBounds().pad(0.15));
-      hikingMapInstances.push(map);
+      hikingMapInstances[r.id] = map;
+      if(isTracking && state.trackingPoints.length){
+        const last = state.trackingPoints[state.trackingPoints.length-1];
+        map._liveMarker = L.circleMarker(last, {radius:8, color:'#3F9C97', fillColor:'#3F9C97', fillOpacity:0.9, weight:2}).addTo(map);
+      }
     }catch(e){}
   });
 }
@@ -3391,6 +3453,108 @@ async function onGpxFileSelected(file){
   }catch(e){
     showToast('GPX-Datei konnte nicht gelesen werden.');
   }
+}
+async function searchHikingTrails(){
+  const dest = getCurrentDest();
+  state.hikingSearchLoading = true;
+  render();
+  try{
+    const radius = 15000;
+    const query = `[out:json][timeout:20];relation["route"="hiking"](around:${radius},${dest.lat},${dest.lng});out geom;`;
+    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('failed');
+    const data = await res.json();
+    const relations = (data.elements||[]).filter(el=>el.type==='relation' && el.tags && el.tags.name);
+    const results = relations.map(rel=>{
+      const track = [];
+      (rel.members||[]).forEach(m=>{ if(m.geometry){ m.geometry.forEach(pt=>track.push([pt.lat, pt.lon])); } });
+      if(track.length<2) return null;
+      const distanceKm = calcTrackDistanceKm(track.map(p=>({lat:p[0],lng:p[1]})));
+      return {id:String(rel.id), name:rel.tags.name, distanceKm, track, difficulty: rel.tags.sac_scale||''};
+    }).filter(Boolean);
+    const seen = new Set();
+    state.hikingSearchResults = results.filter(r=>{
+      if(seen.has(r.name)) return false;
+      seen.add(r.name);
+      return true;
+    }).slice(0,15);
+  }catch(e){
+    state.hikingSearchResults = [];
+  }
+  state.hikingSearchLoading = false;
+  render();
+}
+async function importSearchedHikingTrail(resultId){
+  const result = (state.hikingSearchResults||[]).find(r=>r.id===resultId);
+  if(!result) return;
+  const dd = destDataCache[state.destId];
+  dd.hikingRoutes.push({
+    id:genId(), title:result.name, distanceKm:String(result.distanceKm), durationText:'', difficulty:result.difficulty||'',
+    description:'Importiert aus OpenStreetMap.', gpxTrack:result.track, elevationGain:null, hikeLogs:[]
+  });
+  await saveDestData(state.destId);
+  showToast(`„${result.name}" importiert.`);
+  render();
+}
+function updateLiveTrackingMarker(lat, lng){
+  const map = hikingMapInstances[state.trackingRouteId];
+  if(!map || typeof L==='undefined') return;
+  if(map._liveMarker){ map._liveMarker.setLatLng([lat,lng]); }
+  else { map._liveMarker = L.circleMarker([lat,lng], {radius:8, color:'#3F9C97', fillColor:'#3F9C97', fillOpacity:0.9, weight:2}).addTo(map); }
+}
+function updateTrackingTimerDisplay(){
+  if(!state.trackingStartTime) return;
+  const elapsedSec = Math.floor((Date.now()-state.trackingStartTime)/1000);
+  const h = Math.floor(elapsedSec/3600), m = Math.floor((elapsedSec%3600)/60), s = elapsedSec%60;
+  const timeEl = document.getElementById('hike-tracking-timer');
+  if(timeEl) timeEl.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const distEl = document.getElementById('hike-tracking-distance');
+  if(distEl) distEl.textContent = (Math.round(state.trackingDistanceKm*100)/100)+' km';
+}
+async function startHikeTracking(destId, routeId){
+  if(!navigator.geolocation){ showToast('Standortbestimmung wird von diesem Gerät/Browser nicht unterstützt.'); return; }
+  if(state.trackingRouteId){ showToast('Es läuft bereits eine Wanderung – bitte erst beenden.'); return; }
+  state.trackingDestId = destId;
+  state.trackingRouteId = routeId;
+  state.trackingStartTime = Date.now();
+  state.trackingPoints = [];
+  state.trackingDistanceKm = 0;
+  showToast('Wanderung gestartet – Standort wird verfolgt.');
+  state.trackingWatchId = navigator.geolocation.watchPosition(pos=>{
+    const {latitude, longitude} = pos.coords;
+    if(state.trackingPoints.length){
+      const last = state.trackingPoints[state.trackingPoints.length-1];
+      state.trackingDistanceKm += haversineKm(last[0], last[1], latitude, longitude);
+    }
+    state.trackingPoints.push([latitude, longitude]);
+    updateLiveTrackingMarker(latitude, longitude);
+  }, ()=>{ showToast('Standort konnte nicht ermittelt werden.'); }, {enableHighAccuracy:true, maximumAge:5000, timeout:15000});
+  state.trackingTimerInterval = setInterval(updateTrackingTimerDisplay, 1000);
+  render();
+}
+async function stopHikeTracking(){
+  if(state.trackingWatchId!=null){ try{ navigator.geolocation.clearWatch(state.trackingWatchId); }catch(e){} }
+  if(state.trackingTimerInterval){ clearInterval(state.trackingTimerInterval); state.trackingTimerInterval=null; }
+  const durationMin = Math.max(1, Math.round((Date.now()-state.trackingStartTime)/60000));
+  const distanceKm = Math.round(state.trackingDistanceKm*10)/10;
+  const dd = destDataCache[state.trackingDestId];
+  const route = dd && dd.hikingRoutes.find(r=>r.id===state.trackingRouteId);
+  if(route){
+    if(!route.hikeLogs) route.hikeLogs = [];
+    route.hikeLogs.push({
+      id: genId(),
+      date: new Date(state.trackingStartTime).toISOString().slice(0,10),
+      startTime: new Date(state.trackingStartTime).toTimeString().slice(0,5),
+      stopTime: new Date().toTimeString().slice(0,5),
+      durationMin, distanceKm
+    });
+    await saveDestData(state.trackingDestId);
+  }
+  showToast(`Wanderung beendet: ${durationMin} Min., ${distanceKm} km.`);
+  state.trackingRouteId = null; state.trackingDestId = null; state.trackingStartTime = null;
+  state.trackingPoints = []; state.trackingDistanceKm = 0; state.trackingWatchId = null;
+  render();
 }
 
 /* ---------- FAQ tab ---------- */
@@ -4233,7 +4397,16 @@ async function onAppClick(e){
     case 'cancel-edit-hiking-route': state.editingHikingRouteId=null; render(); break;
     case 'confirm-edit-hiking-route': await confirmEditHikingRoute(el.dataset.id); break;
     case 'delete-hiking-route': await deleteHikingRoute(el.dataset.id); break;
+    case 'start-hike-tracking': await startHikeTracking(el.dataset.destId, el.dataset.id); break;
+    case 'stop-hike-tracking': await stopHikeTracking(); break;
     case 'trigger-gpx-upload': document.getElementById('gpx-file-input').click(); break;
+    case 'toggle-hiking-search':
+      state.showHikingSearch = !state.showHikingSearch;
+      state.hikingSearchResults = null;
+      render();
+      break;
+    case 'search-hiking-trails': await searchHikingTrails(); break;
+    case 'import-searched-hiking-trail': await importSearchedHikingTrail(el.dataset.id); break;
     case 'show-add-faq': state.addingFaq=true; render(); break;
     case 'cancel-add-faq': state.addingFaq=false; render(); break;
     case 'confirm-add-faq': await confirmAddFaq(); break;
