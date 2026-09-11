@@ -106,8 +106,6 @@
   .countdown-empty-icon{font-size:36px;}
   .home-actions{padding:0 16px;display:flex;flex-direction:column;gap:10px;margin-bottom:8px;}
   .btn-link-subtle{background:none;border:none;color:var(--ink-muted);font-size:13px;text-decoration:underline;cursor:pointer;padding:8px;display:block;margin:2px auto 4px;text-align:center;}
-  .backup-group{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;margin-top:4px;}
-  .backup-group-label{font-size:12px;color:var(--ink-muted);font-weight:600;width:100%;text-align:center;margin-bottom:-2px;}
   .btn-block{width:100%;padding:14px 16px;font-size:15px;}
   .trip-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;margin:0 16px 10px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);cursor:pointer;}
   .trip-row-title{font-weight:600;font-size:14px;}
@@ -131,15 +129,25 @@
   .dest-card-add .dest-name{color:var(--ink-muted);font-weight:600;font-size:15px;}
 
   /* Destination view */
-  .dest-header{background:var(--navy);color:var(--on-navy);padding:18px 20px 16px;}
-  .dest-header-top{font-size:13px;color:rgba(245,240,227,0.7);margin-bottom:9px;cursor:pointer;}
-  .dest-header-title{font-size:21px;font-weight:700;letter-spacing:-0.01em;}
-  .dest-header-coords{font-size:12px;color:rgba(245,240,227,0.55);margin-top:2px;}
+  .dest-header{background:var(--navy);color:var(--on-navy);padding:18px 20px 16px;display:flex;flex-direction:column;align-items:center;}
+  .dest-header-icon-row{font-size:26px;margin-bottom:2px;line-height:1;}
+  .dest-header-title{font-size:21px;font-weight:700;letter-spacing:-0.01em;text-align:center;}
+  .dest-header-coords{font-size:12px;color:rgba(245,240,227,0.55);margin-top:2px;text-align:center;}
+  .dest-header-top{align-self:flex-start;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.14);color:var(--on-navy);font-size:16px;cursor:pointer;margin-top:12px;}
   .countdown-banner{display:flex;align-items:center;justify-content:space-between;background:var(--surface-alt);padding:12px 20px;font-size:13px;gap:10px;flex-wrap:wrap;}
   .draft-banner{display:flex;align-items:center;justify-content:space-between;background:var(--surface-alt);padding:12px 20px;font-size:13px;gap:10px;flex-wrap:wrap;border-bottom:2px dashed var(--brass);}
   .countdown-banner input[type=date]{border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:13px;background:var(--surface);color:var(--ink);font-family:inherit;}
 
   .tabbar{display:flex;overflow-x:auto;gap:2px;padding:0 10px;background:var(--navy);position:sticky;top:0;z-index:20;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .toc-trigger-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20;}
+  .toc-trigger-current{font-weight:700;font-size:14px;color:var(--brass);}
+  .hamburger-btn{background:var(--surface-alt);border:1px solid var(--border);border-radius:10px;font-size:18px;line-height:1;padding:8px 14px;cursor:pointer;flex:0 0 auto;}
+  .toc-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;display:flex;justify-content:flex-end;}
+  .toc-sidebar{background:var(--surface);width:78%;max-width:300px;height:100%;overflow-y:auto;box-shadow:-4px 0 16px rgba(0,0,0,0.25);animation:tocSlideIn 0.18s ease-out;}
+  @keyframes tocSlideIn{from{transform:translateX(100%);}to{transform:translateX(0);}}
+  .toc-sidebar-title{font-weight:700;font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.05em;padding:22px 20px 10px;}
+  .toc-item{display:block;padding:14px 20px;font-size:15px;border-bottom:1px solid var(--border);cursor:pointer;}
+  .toc-item.active{background:var(--surface-alt);font-weight:700;color:var(--brass);}
   .tabbar::-webkit-scrollbar{display:none;}
   .tab{flex:0 0 auto;padding:12px 11px;font-size:13px;color:rgba(245,240,227,0.6);border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer;}
   .tab.active{color:var(--on-navy);border-bottom-color:var(--brass);font-weight:700;}
@@ -153,6 +161,7 @@
 
   .input,.textarea,select.input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:14px;background:var(--surface-alt);color:var(--ink);}
   .textarea{min-height:90px;resize:vertical;}
+  .day-plan-box{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--surface);font-family:inherit;font-size:14px;line-height:1.5;}
 
   .btn{font-size:14px;font-weight:600;padding:10px 18px;border-radius:22px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;transition:all 0.15s ease;box-shadow:0 2px 5px rgba(51,44,34,0.10);}
   .btn:active{opacity:0.85;box-shadow:0 1px 2px rgba(51,44,34,0.10);transform:translateY(1px);}
@@ -186,6 +195,7 @@
   .poi-desc{font-size:12px;color:var(--ink-muted);margin-top:2px;}
 
   .weather-loading{font-size:14px;color:var(--ink-muted);padding:20px 0;}
+  .weather-location-row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-muted);font-weight:600;margin-bottom:6px;}
   .weather-now{display:flex;align-items:center;gap:14px;padding:6px 0 16px;}
   .wn-emoji{font-size:44px;}
   .wn-temp{font-size:28px;font-weight:700;letter-spacing:-0.01em;}
@@ -610,7 +620,7 @@ let state = {
   showAddDest:false, addingList:null, addingDiary:false, addingBudget:false,
   addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null,
   tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false,
-  addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null,
+  addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false,
   collapsedContinents:[], confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
   addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
   recipeId:null, editingRecipe:false, recipeImportDraft:null,
@@ -735,7 +745,7 @@ async function openDestination(id){
   state.view='destination'; state.destId=id; state.tab='guide';
   state.addingList=null; state.addingDiary=false; state.addingBudget=false;
   state.addingDoc=null; state.pendingPoi=null; state.lightboxPhotoId=null;
-  state.currentRoute=null;
+  state.currentRoute=null; state.showDestSidebar=false;
   render();
 }
 function goHome(){
@@ -757,6 +767,11 @@ function goToKochbuch(){
 function goToVergangeneReisen(){
   if(leafletMap){ leafletMap.remove(); leafletMap=null; }
   state.view='vergangene-reisen';
+  render();
+}
+function goToBackup(){
+  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+  state.view='backup';
   render();
 }
 function downloadJson(obj, filename){
@@ -898,6 +913,10 @@ async function render(){
     app.innerHTML = renderVergangeneReisen();
     return;
   }
+  if(state.view==='backup'){
+    app.innerHTML = renderBackupView();
+    return;
+  }
   if(state.view==='recipe'){
     app.innerHTML = renderRecipeDetail();
     if(state.lightboxPhotoId){
@@ -928,7 +947,7 @@ async function render(){
     });
   }
   if(state.tab==='karte') initMap(getCurrentDest(), dd);
-  if(state.tab==='wetter') loadWeather(getCurrentDest());
+  if(state.tab==='wetter'){ const d=getCurrentDest(); loadWeather(d.lat, d.lng, d.name); }
   if(state.tab==='wanderrouten') initHikingMaps(dd);
   if(state.lightboxPhotoId){
     const capInput = document.getElementById('lightbox-caption');
@@ -1116,18 +1135,7 @@ async function renderHomeDashboard(){
       <button type="button" class="btn-home" data-action="go-kochbuch">🍲 Kulinarische Weltreise</button>
       <button type="button" class="btn-home" data-action="new-trip">➕ Nächste Reise eintragen</button>
       <button type="button" class="btn-home" data-action="go-vergangene-reisen">🗄️ Vergangene Reisen</button>
-    </div>
-    <div class="backup-group">
-      <div class="backup-group-label">📖 Reiseführer &amp; Rezepte</div>
-      <button type="button" class="btn-link-subtle" data-action="export-guides-backup">💾 Sichern</button>
-      <button type="button" class="btn-link-subtle" data-action="trigger-guides-import">📥 Einlesen</button>
-      <input type="file" id="guides-import-input" accept=".json,application/json" style="display:none">
-    </div>
-    <div class="backup-group">
-      <div class="backup-group-label">🧳 Meine Reisen</div>
-      <button type="button" class="btn-link-subtle" data-action="export-trips-backup">💾 Sichern</button>
-      <button type="button" class="btn-link-subtle" data-action="trigger-trips-import">📥 Einlesen</button>
-      <input type="file" id="trips-import-input" accept=".json,application/json" style="display:none">
+      <button type="button" class="btn-home" data-action="go-backup">💾 Sichern &amp; Einlesen</button>
     </div>
     ${otherTripsHtml}
   `;
@@ -1190,10 +1198,37 @@ function renderVergangeneReisen(){
   const list = past.length ? past.map(renderTripRow).join('') : '<p class="empty-state" style="padding:0 16px;">Noch keine vergangenen Reisen.</p>';
   return `
     <div class="dest-header">
-      <div class="dest-header-top" data-action="go-home">← Zurück</div>
-      <div class="dest-header-title">🗄️ Vergangene Reisen</div>
+      <div class="dest-header-icon-row">🗄️</div>
+      <div class="dest-header-title">Vergangene Reisen</div>
+      <div class="dest-header-top" data-action="go-home">‹</div>
     </div>
     <div style="padding:16px 0;">${list}</div>
+  `;
+}
+function renderBackupView(){
+  return `
+    <div class="dest-header">
+      <div class="dest-header-icon-row">💾</div>
+      <div class="dest-header-title">Sichern &amp; Einlesen</div>
+      <div class="dest-header-top" data-action="go-home">‹</div>
+    </div>
+    <div class="panel">
+      <h3 class="section-title">📖 Reiseführer &amp; Rezepte</h3>
+      <p class="hint-text" style="margin-top:0;">Sichert alle Reiseziele (Reiseführer-Texte, Karten, Routen, Wanderrouten, Listen, Sprache, FAQ) und alle Rezepte in einer Datei. Beim Einlesen wird dieser Bereich komplett ersetzt – deine Reisen bleiben unberührt.</p>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="btn btn-add" data-action="export-guides-backup" style="flex:1;">💾 Sichern</button>
+        <button type="button" class="btn" data-action="trigger-guides-import" style="flex:1;">📥 Einlesen</button>
+      </div>
+      <input type="file" id="guides-import-input" accept=".json,application/json" style="display:none">
+
+      <h3 class="section-title" style="margin-top:32px;">🧳 Meine Reisen</h3>
+      <p class="hint-text" style="margin-top:0;">Sichert alle deine Reisen (Termine, Tagesplaner, Budget, Tickets, Tagebuch, Fotos) in einer Datei. Beim Einlesen wird dieser Bereich komplett ersetzt – Reiseführer und Rezepte bleiben unberührt.</p>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="btn btn-add" data-action="export-trips-backup" style="flex:1;">💾 Sichern</button>
+        <button type="button" class="btn" data-action="trigger-trips-import" style="flex:1;">📥 Einlesen</button>
+      </div>
+      <input type="file" id="trips-import-input" accept=".json,application/json" style="display:none">
+    </div>
   `;
 }
 function renderZielauswahl(){
@@ -1243,12 +1278,10 @@ function renderZielauswahl(){
     </div>` : '';
 
   return `
-    <div class="dest-header" style="display:flex;align-items:center;gap:12px;">
-      <div style="flex:1;min-width:0;">
-        <div class="dest-header-top" data-action="go-home">← Zurück</div>
-        <div class="dest-header-title">Reiseziele</div>
-      </div>
-      <div class="logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</div>
+    <div class="dest-header">
+      <div class="dest-header-icon-row"><span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span></div>
+      <div class="dest-header-title">Reiseziele</div>
+      <div class="dest-header-top" data-action="go-home">‹</div>
     </div>
     <div class="dest-list">
       ${groupsHtml}
@@ -1406,13 +1439,14 @@ function renderRecipeDetail(){
     </div>`;
 
   return `
-    <div class="dest-header" style="display:flex;align-items:center;gap:12px;">
-      <div style="flex:1;min-width:0;">
-        <div class="dest-header-top" data-action="go-kochbuch">← Kulinarische Weltreise</div>
-        <div class="dest-header-title">${flag} ${escapeHtml(r.nameNative)}</div>
-        <div class="dest-header-coords">${escapeHtml(r.nameGerman||'')}</div>
+    <div class="dest-header">
+      <div class="dest-header-icon-row" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span>${flag}</span>
+        <span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span>
       </div>
-      <div class="logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</div>
+      <div class="dest-header-title">${escapeHtml(r.nameNative)}</div>
+      <div class="dest-header-coords">${escapeHtml(r.nameGerman||'')}</div>
+      <div class="dest-header-top" data-action="go-kochbuch">‹</div>
     </div>
     <div class="panel">
       ${body}
@@ -1522,12 +1556,13 @@ function renderKochbuch(){
     <input type="file" id="recipe-file-input" accept=".docx" style="display:none">`;
 
   return `
-    <div class="dest-header" style="display:flex;align-items:center;gap:12px;">
-      <div style="flex:1;min-width:0;">
-        <div class="dest-header-top" data-action="go-home">← Zurück</div>
-        <div class="dest-header-title">🍲 Kulinarische Weltreise</div>
+    <div class="dest-header">
+      <div class="dest-header-icon-row" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span>🍲</span>
+        <span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span>
       </div>
-      <div class="logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</div>
+      <div class="dest-header-title">Kulinarische Weltreise</div>
+      <div class="dest-header-top" data-action="go-home">‹</div>
     </div>
     <div class="dest-list">
       ${recipes.length ? '' : '<p class="empty-state" style="padding:0 16px 14px;">Noch keine Rezepte hinterlegt.</p>'}
@@ -1789,13 +1824,11 @@ function renderTrip(){
     </div>` : '';
 
   return `
-    <div class="dest-header" style="display:flex;align-items:center;gap:12px;">
-      <div style="flex:1;min-width:0;">
-        <div class="dest-header-top" data-action="go-home">← Übersicht</div>
-        <div class="dest-header-title">${flags} ${escapeHtml(title)}</div>
-        <div class="dest-header-coords">${escapeHtml(dateRange)}</div>
-      </div>
-      ${state.isDraftTrip ? `<div class="logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</div>` : ''}
+    <div class="dest-header">
+      <div class="dest-header-icon-row">${state.isDraftTrip ? `<span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span>` : (flags || '🧳')}</div>
+      <div class="dest-header-title">${escapeHtml(title)}</div>
+      <div class="dest-header-coords">${escapeHtml(dateRange)}</div>
+      <div class="dest-header-top" data-action="go-home">‹</div>
     </div>
     ${draftBanner}
     <div class="tabbar">${tabbar}</div>
@@ -2118,7 +2151,7 @@ function renderTripTagesplanerTab(trip){
         </div>
         <div class="field-group">
           <label class="field-label">Tagesplan</label>
-          <textarea class="textarea" data-day-field="plan" data-day-id="${day.id}">${escapeHtml(day.plan)}</textarea>
+          <textarea class="textarea day-plan-box" data-day-field="plan" data-day-id="${day.id}">${escapeHtml(day.plan)}</textarea>
         </div>
       </div>`;
   }).join('');
@@ -2527,9 +2560,7 @@ function renderDestination(){
     ['guide','📖','Reiseführer'],['karte','🗺️','Karte'],['routen','🧭','Routen'],['wanderrouten','🥾','Wanderrouten'],['wetter','⛅','Wetter'],
     ['listen','✅','Listen'],['sprache','🗣️','Sprache'],['faq','❓','FAQ'],['dokumente','🛂','Dokumente']
   ];
-  const tabbar = tabs.map(([key,icon,label])=>
-    `<div class="tab ${state.tab===key?'active':''}" data-action="switch-tab" data-tab="${key}">${icon} ${label}</div>`
-  ).join('');
+  const activeTab = tabs.find(([key])=>key===state.tab) || tabs[0];
 
   let content = '';
   if(state.tab==='guide') content = renderGuideTab(dd);
@@ -2542,15 +2573,30 @@ function renderDestination(){
   else if(state.tab==='faq') content = renderFaqTab(dd);
   else if(state.tab==='dokumente') content = renderDokumenteTab(dd);
 
+  const sidebar = state.showDestSidebar ? `
+    <div class="toc-overlay" data-action="close-dest-sidebar">
+      <div class="toc-sidebar" data-action="noop">
+        <div class="toc-sidebar-title">Inhaltsverzeichnis</div>
+        ${tabs.map(([key,icon,label])=>
+          `<div class="toc-item ${state.tab===key?'active':''}" data-action="switch-tab-from-sidebar" data-tab="${key}">${icon} ${label}</div>`
+        ).join('')}
+      </div>
+    </div>` : '';
+
   return `
     <div class="dest-header">
-      <div class="dest-header-top" data-action="go-zielauswahl">← Alle Ziele</div>
-      <div class="dest-header-title">${dest.flag} ${escapeHtml(dest.name)}</div>
+      <div class="dest-header-icon-row">${dest.flag}</div>
+      <div class="dest-header-title">${escapeHtml(dest.name)}</div>
       <div class="dest-header-coords">${dest.lat.toFixed(2)}°, ${dest.lng.toFixed(2)}°</div>
+      <div class="dest-header-top" data-action="go-zielauswahl">‹</div>
     </div>
     ${countdownBanner}
-    <div class="tabbar">${tabbar}</div>
+    <div class="toc-trigger-row">
+      <div class="toc-trigger-current">${activeTab[1]} ${activeTab[2]}</div>
+      <button type="button" class="hamburger-btn" data-action="toggle-dest-sidebar">☰</button>
+    </div>
     <div class="panel">${content}</div>
+    ${sidebar}
     ${state.lightboxPhotoId ? renderLightbox() : ''}
   `;
 }
@@ -3197,8 +3243,8 @@ function renderPhrasesTab(dd){
   const phrases = dd.phrases || [];
   const list = phrases.length ? phrases.map(p=>`
     <div class="diary-entry">
-      <div class="diary-date">${escapeHtml(p.german)}</div>
-      <div class="diary-text">${escapeHtml(p.local)}</div>
+      <div class="diary-date">${escapeHtml(p.local)}</div>
+      <div class="diary-text">${escapeHtml(p.german)}</div>
       <div class="form-actions" style="margin-top:8px;">
         <button type="button" class="btn" data-action="speak-phrase" data-text="${escapeHtml(p.local)}" style="padding:6px 12px;font-size:12px;">🔊 Anhören</button>
         <button type="button" class="btn btn-danger" data-action="delete-phrase" data-id="${p.id}">Löschen</button>
@@ -3206,10 +3252,10 @@ function renderPhrasesTab(dd){
     </div>`).join('') : '<p class="empty-state">Noch keine Vokabeln eingetragen.</p>';
   const addForm = state.addingPhrase ? `
     <div class="inline-form">
+      <label class="field-label">Fremdsprache</label>
+      <input class="input" id="new-phrase-local" placeholder="z.B. Kalimera" style="margin-bottom:8px;">
       <label class="field-label">Deutsch</label>
       <input class="input" id="new-phrase-german" placeholder="z.B. Guten Morgen" style="margin-bottom:8px;">
-      <label class="field-label">Übersetzung</label>
-      <input class="input" id="new-phrase-local" placeholder="z.B. Kalimera" style="margin-bottom:8px;">
       <div class="form-actions">
         <button type="button" class="btn btn-add" data-action="confirm-add-phrase">Speichern</button>
         <button type="button" class="btn" data-action="cancel-add-phrase">Abbrechen</button>
@@ -3312,7 +3358,14 @@ async function onGuideFileSelected(file){
       if(subBuffer){
         const text = subBuffer.lines.join('\n').trim();
         if(text){
-          if(currentMode==='ROUTES'){ dd.routes.push({id:genId(), title:subBuffer.title||'Route', text}); anyImported = true; }
+          if(currentMode==='ROUTES'){
+            if(/^route\s*\d+/i.test(subBuffer.title)){
+              dd.routes.push({id:genId(), title:subBuffer.title, text});
+            } else {
+              fieldBuckets.overview.push(subBuffer.title ? subBuffer.title+'\n'+text : text);
+            }
+            anyImported = true;
+          }
           else if(currentMode==='FAQ'){ dd.faq.push({id:genId(), question:subBuffer.title||'Frage', answer:text}); anyImported = true; }
         }
       }
@@ -3331,7 +3384,7 @@ async function onGuideFileSelected(file){
         else if(field!==null){ currentMode = 'field'; currentField = field; }
         continue;
       }
-      if(currentMode==='ROUTES' || currentMode==='FAQ'){
+      if(currentMode==='ROUTES'){
         const subHeading = getSubHeadingText(node);
         if(subHeading){
           flushSub();
@@ -3343,12 +3396,30 @@ async function onGuideFileSelected(file){
             subBuffer.lines.push(t);
           }
         }
+      } else if(currentMode==='FAQ'){
+        const t = node.textContent.trim();
+        if(t){
+          const fMatch = t.match(/^F\s*:\s*(.+)/i) || t.match(/^Frage\s*:\s*(.+)/i);
+          if(fMatch){
+            flushSub();
+            subBuffer = {title:fMatch[1].trim(), lines:[]};
+          } else if(subBuffer){
+            subBuffer.lines.push(t.replace(/^A\s*:\s*/i,'').replace(/^Antwort\s*:\s*/i,''));
+          } else {
+            fieldBuckets.overview.push(t);
+            anyImported = true;
+          }
+        }
       } else if(currentMode==='BUCKETLIST' || currentMode==='PACKING'){
         if(node.tagName==='UL' || node.tagName==='OL'){
           [...node.querySelectorAll('li')].forEach(li=>{
             const t = li.textContent.trim();
             if(t) listBuckets[currentMode].push(t);
           });
+        } else {
+          let t = node.textContent.trim();
+          t = t.replace(/^[•\-\*▪]\s*/, '').replace(/^\d+[\.\)]\s*/, '');
+          if(t) listBuckets[currentMode].push(t);
         }
       } else if(currentMode==='field' && currentField){
         if(inChapter2){
@@ -3360,13 +3431,12 @@ async function onGuideFileSelected(file){
           if(inSpracheSubsection && node.tagName==='TABLE'){
             [...node.querySelectorAll('tr')].forEach(tr=>{
               const cells = [...tr.querySelectorAll('td,th')];
-              if(cells.length>=2){
-                const german = cells[0].textContent.trim();
-                const local = cells[1].textContent.trim();
-                if(german && local && !/^deutsch$/i.test(german)){
-                  dd.phrases.push({id:genId(), german, local});
-                  anyImported = true;
-                }
+              let local = '', german = '';
+              if(cells.length>=3){ local = cells[0].textContent.trim(); german = cells[2].textContent.trim(); }
+              else if(cells.length===2){ local = cells[0].textContent.trim(); german = cells[1].textContent.trim(); }
+              if(german && local && !/^deutsch$/i.test(german) && !/^fremdsprache$/i.test(local)){
+                dd.phrases.push({id:genId(), german, local});
+                anyImported = true;
               }
             });
             continue;
@@ -3408,18 +3478,25 @@ async function revertGuideToManual(){
 
 /* ---------- Wetter tab ---------- */
 function renderWetterTab(){
-  return `<div id="weather-content" class="weather-loading">Lade Wetterdaten…</div>`;
+  return `
+    <div class="map-tools-row">
+      <button type="button" class="btn" data-action="locate-me-weather">📍 Mein Standort</button>
+    </div>
+    <div id="weather-content" class="weather-loading">Lade Wetterdaten…</div>`;
 }
-async function loadWeather(dest){
+async function loadWeather(lat, lng, locationName){
   const el = document.getElementById('weather-content');
   if(!el) return;
+  el.innerHTML = 'Lade Wetterdaten…';
   try{
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${dest.lat}&longitude=${dest.lng}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
     const res = await fetch(url);
     if(!res.ok) throw new Error('bad response');
     const data = await res.json();
     const cur = data.current;
     const [curEmoji,curLabel] = weatherInfo(cur.weather_code);
+    let localTime = '';
+    try{ localTime = new Date().toLocaleTimeString('de-DE',{timeZone:data.timezone, hour:'2-digit', minute:'2-digit'}); }catch(e){}
     let daysHtml = '';
     for(let i=0;i<data.daily.time.length;i++){
       const [emoji] = weatherInfo(data.daily.weather_code[i]);
@@ -3431,6 +3508,10 @@ async function loadWeather(dest){
       </div>`;
     }
     el.innerHTML = `
+      <div class="weather-location-row">
+        <span>📍 ${escapeHtml(locationName)}</span>
+        ${localTime? `<span>🕐 ${localTime} Uhr Ortszeit</span>`:''}
+      </div>
       <div class="weather-now">
         <div class="wn-emoji">${curEmoji}</div>
         <div>
@@ -3443,6 +3524,31 @@ async function loadWeather(dest){
     `;
   }catch(err){
     el.innerHTML = `<p class="empty-state">Wetterdaten konnten nicht geladen werden. Prüfe deine Internetverbindung.</p>`;
+  }
+}
+async function locateMeForWeather(){
+  if(!navigator.geolocation){
+    showToast('Standortbestimmung wird von diesem Browser nicht unterstützt.');
+    return;
+  }
+  showToast('Suche deinen Standort…');
+  try{
+    const pos = await new Promise((resolve,reject)=>{
+      navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:10000});
+    });
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    let name = 'Mein Standort';
+    try{
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      if(res.ok){
+        const data = await res.json();
+        const a = data.address || {};
+        name = a.city || a.town || a.village || a.municipality || (data.display_name? data.display_name.split(',')[0] : name);
+      }
+    }catch(e){}
+    await loadWeather(lat, lng, name);
+  }catch(err){
+    showToast('Standort nicht verfügbar (Berechtigung verweigert oder in dieser Umgebung nicht unterstützt).');
   }
 }
 
@@ -3745,6 +3851,7 @@ async function onAppClick(e){
     case 'go-kochbuch': goToKochbuch(); break;
     case 'pet-mascot': triggerMascotAnim('giggle', 1600); break;
     case 'go-vergangene-reisen': goToVergangeneReisen(); break;
+    case 'go-backup': goToBackup(); break;
     case 'export-guides-backup': await exportGuidesBackup(); break;
     case 'trigger-guides-import': document.getElementById('guides-import-input').click(); break;
     case 'export-trips-backup': await exportTripsBackup(); break;
@@ -3875,6 +3982,7 @@ async function onAppClick(e){
       showPendingPoiForm(parseFloat(el.dataset.lat), parseFloat(el.dataset.lon), el.dataset.name);
       break;
     case 'locate-me': await locateMe(); break;
+    case 'locate-me-weather': await locateMeForWeather(); break;
     case 'show-route': await showRouteTo(el.dataset.id); break;
     case 'clear-route': state.currentRoute=null; render(); break;
     case 'trigger-guide-file-upload': document.getElementById('guide-file-input').click(); break;
@@ -3882,6 +3990,12 @@ async function onAppClick(e){
     case 'cancel-revert-guide': state.confirmingRevertGuide=false; render(); break;
     case 'do-revert-guide': await revertGuideToManual(); break;
     case 'switch-tab': await switchTab(el.dataset.tab); break;
+    case 'toggle-dest-sidebar': state.showDestSidebar = !state.showDestSidebar; render(); break;
+    case 'close-dest-sidebar': state.showDestSidebar = false; render(); break;
+    case 'switch-tab-from-sidebar':
+      state.showDestSidebar = false;
+      await switchTab(el.dataset.tab);
+      break;
     case 'toggle-check': await toggleCheck(el.dataset.list, el.dataset.id); break;
     case 'delete-item': await deleteListItem(el.dataset.list, el.dataset.id); break;
     case 'show-add-item': state.addingList=el.dataset.list; render(); break;
