@@ -142,7 +142,7 @@
   .toc-trigger-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20;}
   .toc-trigger-current{font-weight:700;font-size:14px;color:var(--brass);}
   .hamburger-btn{background:var(--surface-alt);border:1px solid var(--border);border-radius:10px;font-size:18px;line-height:1;padding:8px 14px;cursor:pointer;flex:0 0 auto;}
-  .toc-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;display:flex;justify-content:flex-end;}
+  .toc-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;justify-content:flex-end;}
   .toc-sidebar{background:var(--surface);width:78%;max-width:300px;height:100%;overflow-y:auto;box-shadow:-4px 0 16px rgba(0,0,0,0.25);animation:tocSlideIn 0.18s ease-out;}
   @keyframes tocSlideIn{from{transform:translateX(100%);}to{transform:translateX(0);}}
   .toc-sidebar-title{font-weight:700;font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.05em;padding:22px 20px 10px;}
@@ -162,6 +162,8 @@
   .input,.textarea,select.input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:14px;background:var(--surface-alt);color:var(--ink);}
   .textarea{min-height:90px;resize:vertical;}
   .day-plan-box{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--surface);font-family:inherit;font-size:14px;line-height:1.5;}
+  .route-day-block{border-top:1px dashed var(--border);padding-top:10px;margin-top:10px;}
+  .route-day-label{font-weight:700;font-size:12px;color:var(--brass);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:4px;}
 
   .btn{font-size:14px;font-weight:600;padding:10px 18px;border-radius:22px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;transition:all 0.15s ease;box-shadow:0 2px 5px rgba(51,44,34,0.10);}
   .btn:active{opacity:0.85;box-shadow:0 1px 2px rgba(51,44,34,0.10);transform:translateY(1px);}
@@ -620,7 +622,7 @@ let state = {
   showAddDest:false, addingList:null, addingDiary:false, addingBudget:false,
   addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null,
   tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false,
-  addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false,
+  addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false, editingDayId:null,
   collapsedContinents:[], confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
   addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
   recipeId:null, editingRecipe:false, recipeImportDraft:null,
@@ -1137,6 +1139,7 @@ async function renderHomeDashboard(){
       <button type="button" class="btn-home" data-action="go-vergangene-reisen">🗄️ Vergangene Reisen</button>
       <button type="button" class="btn-home" data-action="go-backup">💾 Sichern &amp; Einlesen</button>
     </div>
+    <div style="height:28px;"></div>
     ${otherTripsHtml}
   `;
 }
@@ -1760,7 +1763,7 @@ async function openTripDetail(tripId, tab){
   state.view='trip'; state.tripId=tripId; state.tripTab=tab||'reisedaten';
   state.addingTicket=false; state.addingTripDoc=false; state.addingDiary=false; state.editingTicketId=null;
   state.addingActivityTicket=false; state.lightboxPhotoId=null; state.lightboxContext=null;
-  state.showDayImport=false; state.dayImportDestId=null; state.dayImportRouteId=null;
+  state.showDayImport=false; state.dayImportDestId=null; state.dayImportRouteId=null; state.showDestSidebar=false; state.editingDayId=null;
   const trip = trips.find(t=>t.id===tripId);
   if(trip){
     await ensureLinkedGuidesLoaded(trip);
@@ -1772,7 +1775,7 @@ async function openTripDetail(tripId, tab){
 async function switchTripTab(tab){
   state.tripTab = tab;
   state.addingTicket=false; state.addingTripDoc=false; state.addingDiary=false; state.addingActivityTicket=false; state.editingTicketId=null;
-  state.showDayImport=false; state.dayImportDestId=null; state.dayImportRouteId=null; state.addingBudget=false;
+  state.showDayImport=false; state.dayImportDestId=null; state.dayImportRouteId=null; state.addingBudget=false; state.editingDayId=null;
   const trip = trips.find(t=>t.id===state.tripId);
   if(tab==='bilder'){
     await ensurePhotosLoaded(trip.photoIds);
@@ -1802,9 +1805,7 @@ function renderTrip(){
     ['reisedaten','📅','Reisedaten'],['tagesplaner','🗓️','Tagesplaner'],['unterlagen','🎫','Unterlagen'],
     ['budget','💶','Budget'],['tagebuch','📔','Tagebuch'],['bilder','📷','Bilder']
   ];
-  const tabbar = tabs.map(([key,icon,label])=>
-    `<div class="tab ${state.tripTab===key?'active':''}" data-action="switch-trip-tab" data-tab="${key}">${icon} ${label}</div>`
-  ).join('');
+  const activeTab = tabs.find(([key])=>key===state.tripTab) || tabs[0];
 
   let content = '';
   if(state.tripTab==='reisedaten') content = renderTripReisedatenTab(trip);
@@ -1823,6 +1824,16 @@ function renderTrip(){
       </div>
     </div>` : '';
 
+  const sidebar = state.showDestSidebar ? `
+    <div class="toc-overlay" data-action="close-dest-sidebar">
+      <div class="toc-sidebar" data-action="noop">
+        <div class="toc-sidebar-title">Inhaltsverzeichnis</div>
+        ${tabs.map(([key,icon,label])=>
+          `<div class="toc-item ${state.tripTab===key?'active':''}" data-action="switch-trip-tab-from-sidebar" data-tab="${key}">${icon} ${label}</div>`
+        ).join('')}
+      </div>
+    </div>` : '';
+
   return `
     <div class="dest-header">
       <div class="dest-header-icon-row">${state.isDraftTrip ? `<span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span>` : (flags || '🧳')}</div>
@@ -1831,8 +1842,12 @@ function renderTrip(){
       <div class="dest-header-top" data-action="go-home">‹</div>
     </div>
     ${draftBanner}
-    <div class="tabbar">${tabbar}</div>
+    <div class="toc-trigger-row">
+      <div class="toc-trigger-current">${activeTab[1]} ${activeTab[2]}</div>
+      <button type="button" class="hamburger-btn" data-action="toggle-dest-sidebar">☰</button>
+    </div>
     <div class="panel">${content}</div>
+    ${sidebar}
     ${state.lightboxPhotoId ? renderLightbox() : ''}
   `;
 }
@@ -2086,6 +2101,10 @@ function syncDayPlan(trip){
   while(trip.dayPlan.length < days){ trip.dayPlan.push({id:genId(), ort:'', plan:''}); }
   if(trip.dayPlan.length > days){ trip.dayPlan = trip.dayPlan.slice(0, days); }
 }
+function getRouteDays(route){
+  if(route.days && route.days.length) return route.days;
+  return route.text.split('\n').map(l=>l.trim()).filter(Boolean).map((line,i)=>({label:'Zeile '+(i+1), text:line}));
+}
 function renderDayImportPanel(trip){
   if(!state.showDayImport){
     return `<button type="button" class="btn" data-action="toggle-day-import">📥 Aus Reiseführer importieren</button>`;
@@ -2103,32 +2122,52 @@ function renderDayImportPanel(trip){
   const routeOptions = `<option value="">– Route wählen –</option>` + routes.map(r=>`<option value="${r.id}" ${r.id===routeId?'selected':''}>${escapeHtml(r.title)}</option>`).join('');
   const dayOptions = trip.dayPlan.map((d,idx)=>`<option value="${idx}">Tag ${idx+1}</option>`).join('');
 
-  let routeDetail = '';
+  let wholeRouteBlock = '';
   if(!routes.length){
-    routeDetail = `<p class="hint-text">Dieser Reiseführer hat noch keine Routen im Tab "Routen".</p>`;
+    wholeRouteBlock = `<p class="hint-text">Dieser Reiseführer hat noch keine Routen im Tab "Routen".</p>`;
   } else if(route){
-    const lines = route.text.split('\n').map(l=>l.trim()).filter(Boolean);
-    routeDetail = `
-      <button type="button" class="btn btn-add" data-action="import-whole-route" data-dest-id="${destId}" data-route-id="${routeId}" style="margin-top:6px;">Ganze Route ab Tag 1 einfügen</button>
-      <div class="field-label" style="margin-top:16px;">Oder einzelne Zeilen übernehmen:</div>
-      ${lines.map((line,i)=>`
+    const days = getRouteDays(route);
+    wholeRouteBlock = `
+      ${days.map((d,i)=>`
         <div class="day-import-line">
-          <div class="day-import-text">${escapeHtml(line)}</div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <select class="input day-import-target" data-line-index="${i}" style="max-width:100px;">${dayOptions}</select>
-            <button type="button" class="btn" data-action="import-single-line" data-dest-id="${destId}" data-route-id="${routeId}" data-line-index="${i}" style="padding:7px 10px;font-size:12px;">Übernehmen</button>
-          </div>
+          <div class="day-import-text"><strong>${escapeHtml(d.label)}</strong><br>${escapeHtml(d.text)}</div>
+          <select class="input day-import-whole-target" data-day-index="${i}" style="max-width:100px;">${dayOptions}</select>
         </div>`).join('')}
+      <button type="button" class="btn btn-add" data-action="import-whole-route" data-dest-id="${destId}" data-route-id="${routeId}" style="margin-top:10px;">Zugeordnete Tage übernehmen</button>
     `;
+  }
+
+  let allDaysBlock = '';
+  if(routes.length){
+    const allDayItems = [];
+    routes.forEach(r=>{
+      getRouteDays(r).forEach((d,i)=>{
+        allDayItems.push({routeId:r.id, routeTitle:r.title, dayIndex:i, label:d.label, text:d.text});
+      });
+    });
+    if(allDayItems.length){
+      allDaysBlock = allDayItems.map((item,globalIdx)=>`
+        <div class="day-import-line">
+          <div class="day-import-text"><strong>${escapeHtml(item.routeTitle)} – ${escapeHtml(item.label)}</strong><br>${escapeHtml(item.text)}</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select class="input day-import-target" data-global-index="${globalIdx}" style="max-width:100px;">${dayOptions}</select>
+            <button type="button" class="btn" data-action="import-single-day" data-dest-id="${destId}" data-route-id="${item.routeId}" data-day-index="${item.dayIndex}" data-global-index="${globalIdx}" style="padding:7px 10px;font-size:12px;">Übernehmen</button>
+          </div>
+        </div>`).join('');
+    }
   }
 
   return `
     <div class="inline-form">
       <label class="field-label">Reiseführer</label>
       <select class="input" id="day-import-dest" style="margin-bottom:8px;">${destOptions}</select>
-      <label class="field-label">Route</label>
+
+      <div class="field-label" style="margin-top:16px;">Ganze Route übernehmen</div>
       <select class="input" id="day-import-route" style="margin-bottom:8px;">${routeOptions}</select>
-      ${routeDetail}
+      ${wholeRouteBlock}
+
+      ${allDaysBlock ? `<div class="field-label" style="margin-top:24px;">Oder einzelnen Tag aus allen Routen übernehmen</div>${allDaysBlock}` : ''}
+
       <button type="button" class="btn" data-action="toggle-day-import" style="margin-top:16px;">Schließen</button>
     </div>`;
 }
@@ -2142,17 +2181,26 @@ function renderTripTagesplanerTab(trip){
     const date = new Date(trip.dateFrom+'T00:00:00');
     date.setDate(date.getDate()+idx);
     const dateLabel = date.toLocaleDateString('de-DE',{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
+    if(state.editingDayId===day.id){
+      return `
+        <div class="day-card">
+          <div class="day-card-title">Tag ${idx+1} – ${dateLabel}</div>
+          <div class="field-group">
+            <label class="field-label">Ort</label>
+            <input class="input" data-day-field="ort" data-day-id="${day.id}" value="${escapeHtml(day.ort)}" placeholder="z.B. Chania">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Tagesplan</label>
+            <textarea class="textarea" data-day-field="plan" data-day-id="${day.id}" style="min-height:160px;">${escapeHtml(day.plan)}</textarea>
+          </div>
+          <button type="button" class="btn btn-add" data-action="close-edit-day">Fertig</button>
+        </div>`;
+    }
     return `
       <div class="day-card">
-        <div class="day-card-title">Tag ${idx+1} – ${dateLabel}</div>
-        <div class="field-group">
-          <label class="field-label">Ort</label>
-          <input class="input" data-day-field="ort" data-day-id="${day.id}" value="${escapeHtml(day.ort)}" placeholder="z.B. Chania">
-        </div>
-        <div class="field-group">
-          <label class="field-label">Tagesplan</label>
-          <textarea class="textarea day-plan-box" data-day-field="plan" data-day-id="${day.id}">${escapeHtml(day.plan)}</textarea>
-        </div>
+        <div class="day-card-title">Tag ${idx+1} – ${dateLabel}${day.ort? ' · '+escapeHtml(day.ort) : ''}</div>
+        <div class="day-plan-box">${day.plan ? escapeHtml(day.plan).replace(/\n/g,'<br>') : '<span class="hint-text">Noch kein Plan für diesen Tag.</span>'}</div>
+        <button type="button" class="btn" data-action="edit-day" data-id="${day.id}" style="margin-top:10px;">✏️ Bearbeiten</button>
       </div>`;
   }).join('');
   return `${importPanel}<div style="margin-top:16px;">${daysHtml}</div>`;
@@ -2162,31 +2210,36 @@ async function importWholeRoute(destId, routeId){
   const dd = destDataCache[destId];
   const route = dd.routes.find(r=>r.id===routeId);
   if(!route) return;
-  const lines = route.text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const days = getRouteDays(route);
   syncDayPlan(trip);
-  lines.forEach((line,i)=>{
-    if(trip.dayPlan[i]){
-      trip.dayPlan[i].plan = trip.dayPlan[i].plan ? trip.dayPlan[i].plan+'\n'+line : line;
-      if(!trip.dayPlan[i].ort) trip.dayPlan[i].ort = route.title;
+  let count = 0;
+  document.querySelectorAll('.day-import-whole-target').forEach(sel=>{
+    const dayIdx = parseInt(sel.dataset.dayIndex,10);
+    const targetIdx = parseInt(sel.value,10);
+    const day = days[dayIdx];
+    if(day && trip.dayPlan[targetIdx]){
+      trip.dayPlan[targetIdx].plan = trip.dayPlan[targetIdx].plan ? trip.dayPlan[targetIdx].plan+'\n'+day.text : day.text;
+      if(!trip.dayPlan[targetIdx].ort) trip.dayPlan[targetIdx].ort = route.title;
+      count++;
     }
   });
   await saveTrips();
-  showToast('Route übernommen.');
+  showToast(count ? `${count} Tag(e) übernommen.` : 'Nichts übernommen.');
   render();
 }
-async function importSingleLine(destId, routeId, lineIndex){
+async function importSingleDay(destId, routeId, dayIndex, globalIndex){
   const trip = trips.find(t=>t.id===state.tripId);
   const dd = destDataCache[destId];
   const route = dd.routes.find(r=>r.id===routeId);
   if(!route) return;
-  const lines = route.text.split('\n').map(l=>l.trim()).filter(Boolean);
-  const line = lines[lineIndex];
-  if(line===undefined) return;
-  const selectEl = document.querySelector(`.day-import-target[data-line-index="${lineIndex}"]`);
+  const days = getRouteDays(route);
+  const day = days[dayIndex];
+  if(!day) return;
+  const selectEl = document.querySelector(`.day-import-target[data-global-index="${globalIndex}"]`);
   const targetIdx = selectEl ? parseInt(selectEl.value,10) : 0;
   syncDayPlan(trip);
   if(trip.dayPlan[targetIdx]){
-    trip.dayPlan[targetIdx].plan = trip.dayPlan[targetIdx].plan ? trip.dayPlan[targetIdx].plan+'\n'+line : line;
+    trip.dayPlan[targetIdx].plan = trip.dayPlan[targetIdx].plan ? trip.dayPlan[targetIdx].plan+'\n'+day.text : day.text;
   }
   await saveTrips();
   showToast('Tag übernommen.');
@@ -2965,12 +3018,20 @@ async function deletePoi(id){
 /* ---------- Routen tab (Kapitel 9: Fertige Routen) ---------- */
 function renderRoutenTab(dd){
   const routes = dd.routes || [];
-  const list = routes.length ? routes.map(r=>`
+  const list = routes.length ? routes.map(r=>{
+    const daysHtml = (r.days||[]).length ? (r.days||[]).map(d=>`
+      <div class="route-day-block">
+        <div class="route-day-label">${escapeHtml(d.label)}</div>
+        <div class="diary-text">${escapeHtml(d.text)}</div>
+      </div>`).join('') : '';
+    return `
     <div class="diary-entry">
       <div class="diary-date">${escapeHtml(r.title)}</div>
-      <div class="diary-text">${escapeHtml(r.text)}</div>
+      ${r.text ? `<div class="diary-text">${escapeHtml(r.text)}</div>` : ''}
+      ${daysHtml}
       <button type="button" class="btn btn-danger" data-action="delete-route" data-id="${r.id}">Route löschen</button>
-    </div>`).join('') : '<p class="empty-state">Noch keine Routen eingetragen.</p>';
+    </div>`;
+  }).join('') : '<p class="empty-state">Noch keine Routen eingetragen.</p>';
   const addForm = state.addingRoute ? `
     <div class="inline-form">
       <label class="field-label">Titel</label>
@@ -2989,7 +3050,7 @@ async function confirmAddRoute(){
   const text = document.getElementById('new-route-text').value.trim();
   if(!title || !text) return;
   const dd = destDataCache[state.destId];
-  dd.routes.push({id:genId(), title, text});
+  dd.routes.push({id:genId(), title, text, days:[]});
   await saveDestData(state.destId);
   state.addingRoute = false;
   render();
@@ -3356,17 +3417,24 @@ async function onGuideFileSelected(file){
 
     function flushSub(){
       if(subBuffer){
-        const text = subBuffer.lines.join('\n').trim();
-        if(text){
-          if(currentMode==='ROUTES'){
-            if(/^route\s*\d+/i.test(subBuffer.title)){
-              dd.routes.push({id:genId(), title:subBuffer.title, text});
-            } else {
-              fieldBuckets.overview.push(subBuffer.title ? subBuffer.title+'\n'+text : text);
+        if(currentMode==='ROUTES'){
+          const descText = (subBuffer.descLines||[]).join('\n').trim();
+          const days = (subBuffer.days||[]).map(d=>({label:d.label, text:d.lines.join('\n').trim()})).filter(d=>d.text);
+          if(/^route\s*\d+/i.test(subBuffer.title)){
+            if(descText || days.length){
+              dd.routes.push({id:genId(), title:subBuffer.title, text:descText, days});
+              anyImported = true;
             }
-            anyImported = true;
+          } else {
+            const combined = [descText, ...days.map(d=>d.label+'\n'+d.text)].filter(Boolean).join('\n\n');
+            if(combined){
+              fieldBuckets.overview.push(subBuffer.title ? subBuffer.title+'\n'+combined : combined);
+              anyImported = true;
+            }
           }
-          else if(currentMode==='FAQ'){ dd.faq.push({id:genId(), question:subBuffer.title||'Frage', answer:text}); anyImported = true; }
+        } else if(currentMode==='FAQ'){
+          const text = subBuffer.lines.join('\n').trim();
+          if(text){ dd.faq.push({id:genId(), question:subBuffer.title||'Frage', answer:text}); anyImported = true; }
         }
       }
       subBuffer = null;
@@ -3386,14 +3454,23 @@ async function onGuideFileSelected(file){
       }
       if(currentMode==='ROUTES'){
         const subHeading = getSubHeadingText(node);
-        if(subHeading){
+        if(subHeading && /^route\s*\d+/i.test(subHeading)){
           flushSub();
-          subBuffer = {title:subHeading, lines:[]};
+          subBuffer = {title:subHeading, descLines:[], days:[], currentDay:null};
+        } else if(subHeading && /^tag\s*\d+/i.test(subHeading)){
+          if(!subBuffer) subBuffer = {title:'', descLines:[], days:[], currentDay:null};
+          const dayObj = {label:subHeading, lines:[]};
+          subBuffer.days.push(dayObj);
+          subBuffer.currentDay = dayObj;
+        } else if(subHeading){
+          flushSub();
+          subBuffer = {title:subHeading, descLines:[], days:[], currentDay:null};
         } else {
           const t = node.textContent.trim();
           if(t){
-            if(!subBuffer) subBuffer = {title:'', lines:[]};
-            subBuffer.lines.push(t);
+            if(!subBuffer) subBuffer = {title:'', descLines:[], days:[], currentDay:null};
+            if(subBuffer.currentDay){ subBuffer.currentDay.lines.push(t); }
+            else { subBuffer.descLines.push(t); }
           }
         }
       } else if(currentMode==='FAQ'){
@@ -3894,7 +3971,9 @@ async function onAppClick(e){
       render();
       break;
     case 'import-whole-route': await importWholeRoute(el.dataset.destId, el.dataset.routeId); break;
-    case 'import-single-line': await importSingleLine(el.dataset.destId, el.dataset.routeId, parseInt(el.dataset.lineIndex,10)); break;
+    case 'import-single-day': await importSingleDay(el.dataset.destId, el.dataset.routeId, parseInt(el.dataset.dayIndex,10), parseInt(el.dataset.globalIndex,10)); break;
+    case 'edit-day': state.editingDayId = el.dataset.id; render(); break;
+    case 'close-edit-day': state.editingDayId = null; render(); break;
     case 'show-add-route': state.addingRoute=true; render(); break;
     case 'cancel-add-route': state.addingRoute=false; render(); break;
     case 'confirm-add-route': await confirmAddRoute(); break;
@@ -3995,6 +4074,10 @@ async function onAppClick(e){
     case 'switch-tab-from-sidebar':
       state.showDestSidebar = false;
       await switchTab(el.dataset.tab);
+      break;
+    case 'switch-trip-tab-from-sidebar':
+      state.showDestSidebar = false;
+      await switchTripTab(el.dataset.tab);
       break;
     case 'toggle-check': await toggleCheck(el.dataset.list, el.dataset.id); break;
     case 'delete-item': await deleteListItem(el.dataset.list, el.dataset.id); break;
