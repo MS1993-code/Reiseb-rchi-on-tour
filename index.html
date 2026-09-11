@@ -170,9 +170,14 @@
   .callout-achtung{background:#FBEAE8;color:#8A2E24;border-left:4px solid #B5544A;}
   .guide-subhead{font-weight:700;font-size:14px;color:var(--brass);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.03em;}
   .guide-subhead:first-child{margin-top:0;}
-  .guide-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;}
+  .guide-table-wrap{overflow-x:auto;margin:10px 0;-webkit-overflow-scrolling:touch;}
+  .guide-table{border-collapse:collapse;font-size:12px;min-width:100%;}
+  .guide-table th,.guide-table td{white-space:normal;word-break:break-word;max-width:160px;}
   .guide-table th,.guide-table td{border:1px solid var(--border);padding:6px 8px;text-align:left;}
   .guide-table th{background:var(--surface-alt);font-weight:700;}
+  .guide-card{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;background:var(--surface);}
+  .guide-card-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;font-weight:700;font-size:14px;}
+  .guide-card-body{padding:0 16px 16px;}
   .photo-day-group{margin-bottom:20px;}
   .photo-day-group-title{font-weight:700;font-size:13px;color:var(--brass);margin-bottom:8px;}
   .hike-tracking-live{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface-alt);border-radius:12px;padding:10px 14px;margin-top:8px;font-weight:700;font-size:14px;flex-wrap:wrap;}
@@ -639,7 +644,7 @@ let state = {
   addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null,
   tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false,
   addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false, editingDayId:null, editingGuideField:null, confirmingResetGuide:false,
-  showHikingSearch:false, hikingSearchLoading:false, hikingSearchResults:null,
+  showHikingSearch:false, hikingSearchLoading:false, hikingSearchResults:null, hikingSearchPoiIndex:0, expandedGuideFields:[],
   trackingDestId:null, trackingRouteId:null, trackingStartTime:null, trackingPoints:[], trackingDistanceKm:0, trackingWatchId:null, trackingTimerInterval:null,
   collapsedContinents:[], confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
   addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
@@ -766,7 +771,7 @@ async function openDestination(id){
   state.view='destination'; state.destId=id; state.tab='guide';
   state.addingList=null; state.addingDiary=false; state.addingBudget=false;
   state.addingDoc=null; state.pendingPoi=null; state.lightboxPhotoId=null;
-  state.currentRoute=null; state.showDestSidebar=false; state.editingGuideField=null;
+  state.currentRoute=null; state.showDestSidebar=false; state.editingGuideField=null; state.expandedGuideFields=[];
   render();
 }
 function goHome(){
@@ -1342,7 +1347,7 @@ function renderRecipeAddForm(){
     </select>
     <label class="field-label">Kategorie</label>
     <select class="input" id="new-recipe-category" style="margin-bottom:8px;">
-      ${RECIPE_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}
+      ${[...RECIPE_CATEGORIES,'Sonstiges'].map(c=>`<option ${c===(d.category||'')?'selected':''}>${c}</option>`).join('')}
     </select>
     <label class="field-label">Name</label>
     <input class="input" id="new-recipe-name" placeholder="Name (Landessprache)" value="${escapeHtml(d.nameNative||'')}" style="margin-bottom:8px;">
@@ -1419,7 +1424,7 @@ function renderRecipeDetail(){
       <div class="field-group">
         <label class="field-label">Kategorie</label>
         <select class="input" data-recipe-field="category" data-recipe-id="${r.id}">
-          ${RECIPE_CATEGORIES.map(c=>`<option ${c===r.category?'selected':''}>${c}</option>`).join('')}
+          ${[...RECIPE_CATEGORIES,'Sonstiges'].map(c=>`<option ${c===r.category?'selected':''}>${c}</option>`).join('')}
         </select>
       </div>
       <div class="field-group">
@@ -2827,7 +2832,7 @@ function renderGuideCalloutText(text){
         const rowsHtml = rows.map((row,i)=>
           `<tr>${row.map(cell=>`<${i===0?'th':'td'}>${escapeHtml(cell)}</${i===0?'th':'td'}>`).join('')}</tr>`
         ).join('');
-        return `<table class="guide-table">${rowsHtml}</table>`;
+        return `<div class="guide-table-wrap"><table class="guide-table">${rowsHtml}</table></div>`;
       }catch(e){ return ''; }
     }
     let m = trimmed.match(/^geheimtipp\s*:\s*(.*)/i);
@@ -2876,17 +2881,26 @@ function renderGuideTab(dd){
     const value = dd.guide[key] || '';
     if(state.editingGuideField===key){
       return `
-        <div class="diary-entry">
-          <div class="diary-date">${label}</div>
-          <textarea class="textarea" id="ta-${key}" data-guide-field="${key}">${escapeHtml(value)}</textarea>
-          <button type="button" class="btn btn-add" data-action="close-edit-guide-field" style="margin-top:8px;">Fertig</button>
+        <div class="guide-card">
+          <div class="guide-card-body" style="padding-top:16px;">
+            <div class="diary-date">${label}</div>
+            <textarea class="textarea" id="ta-${key}" data-guide-field="${key}">${escapeHtml(value)}</textarea>
+            <button type="button" class="btn btn-add" data-action="close-edit-guide-field" style="margin-top:8px;">Fertig</button>
+          </div>
         </div>`;
     }
+    const expanded = state.expandedGuideFields.includes(key);
     return `
-      <div class="diary-entry">
-        <div class="diary-date">${label}</div>
-        <div class="diary-text">${renderGuideCalloutText(value)}</div>
-        <button type="button" class="btn" data-action="edit-guide-field" data-field="${key}" style="margin-top:10px;">✏️ Bearbeiten</button>
+      <div class="guide-card">
+        <div class="guide-card-header" data-action="toggle-guide-field" data-field="${key}">
+          <span>${label}</span>
+          <span class="continent-caret">${expanded?'▾':'▸'}</span>
+        </div>
+        ${expanded ? `
+          <div class="guide-card-body">
+            <div class="diary-text">${renderGuideCalloutText(value)}</div>
+            <button type="button" class="btn" data-action="edit-guide-field" data-field="${key}" style="margin-top:10px;">✏️ Bearbeiten</button>
+          </div>` : ''}
       </div>`;
   }).join('');
   return `
@@ -3344,10 +3358,11 @@ function renderHikingRouteCard(r){
       </div>
     </div>`;
 }
-function renderHikingSearchPanel(){
+function renderHikingSearchPanel(dd){
   if(!state.showHikingSearch){
     return `<button type="button" class="btn" data-action="toggle-hiking-search">🔍 Wanderwege in der Nähe suchen</button>`;
   }
+  const pois = dd.pois || [];
   let resultsHtml = '';
   if(state.hikingSearchLoading){
     resultsHtml = '<p class="hint-text">Suche läuft…</p>';
@@ -3362,10 +3377,15 @@ function renderHikingSearchPanel(){
         <button type="button" class="btn btn-add" data-action="import-searched-hiking-trail" data-id="${r.id}" style="padding:7px 10px;font-size:12px;">+ Importieren</button>
       </div>`).join('');
   }
+  const poiOptions = pois.map((p,i)=>`<option value="${i}" ${state.hikingSearchPoiIndex===i?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
   return `
     <div class="inline-form">
-      <p class="hint-text" style="margin-top:0;">Sucht in OpenStreetMap nach benannten Wanderwegen im Umkreis von 15 km um dieses Reiseziel.</p>
-      <button type="button" class="btn" data-action="search-hiking-trails" style="margin-bottom:10px;">Jetzt suchen</button>
+      <p class="hint-text" style="margin-top:0;">Sucht in OpenStreetMap nach benannten Wanderwegen im Umkreis von 50 km um einen gewählten Punkt.</p>
+      ${pois.length ? `
+        <label class="field-label">Ausgangspunkt (aus deinen Sehenswürdigkeiten)</label>
+        <select class="input" id="hiking-search-poi" style="margin-bottom:10px;">${poiOptions}</select>
+      ` : `<p class="hint-text">Lege zuerst ein paar Sehenswürdigkeiten im Tab „Karte" an, damit du hier einen Ausgangspunkt wählen kannst.</p>`}
+      <button type="button" class="btn" data-action="search-hiking-trails" style="margin-bottom:10px;" ${!pois.length?'disabled':''}>Jetzt suchen</button>
       ${resultsHtml}
       <button type="button" class="btn" data-action="toggle-hiking-search" style="margin-top:14px;">Schließen</button>
     </div>`;
@@ -3379,7 +3399,7 @@ function renderWanderroutenTab(dd){
       <button type="button" class="btn" data-action="trigger-gpx-upload">📍 GPX-Datei importieren</button>
       <input type="file" id="gpx-file-input" accept=".gpx" style="display:none">
     </div>`;
-  return `${addForm}<div style="margin:10px 0 4px;">${renderHikingSearchPanel()}</div><div style="margin-top:16px;">${list}</div>`;
+  return `${addForm}<div style="margin:10px 0 4px;">${renderHikingSearchPanel(dd)}</div><div style="margin-top:16px;">${list}</div>`;
 }
 function initHikingMaps(dd){
   Object.values(hikingMapInstances).forEach(m=>{ try{ m.remove(); }catch(e){} });
@@ -3455,12 +3475,20 @@ async function onGpxFileSelected(file){
   }
 }
 async function searchHikingTrails(){
-  const dest = getCurrentDest();
+  const dd = destDataCache[state.destId];
+  const pois = dd.pois || [];
+  const selectEl = document.getElementById('hiking-search-poi');
+  const poiIndex = selectEl ? parseInt(selectEl.value,10) : state.hikingSearchPoiIndex;
+  state.hikingSearchPoiIndex = poiIndex;
+  let lat, lng;
+  if(pois.length && pois[poiIndex]){ lat = pois[poiIndex].lat; lng = pois[poiIndex].lng; }
+  else if(pois.length){ lat = pois[0].lat; lng = pois[0].lng; }
+  else { const dest = getCurrentDest(); lat = dest.lat; lng = dest.lng; }
   state.hikingSearchLoading = true;
   render();
   try{
-    const radius = 15000;
-    const query = `[out:json][timeout:20];relation["route"="hiking"](around:${radius},${dest.lat},${dest.lng});out geom;`;
+    const radius = 50000;
+    const query = `[out:json][timeout:25];relation["route"="hiking"](around:${radius},${lat},${lng});out geom;`;
     const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
     const res = await fetch(url);
     if(!res.ok) throw new Error('failed');
@@ -3478,7 +3506,7 @@ async function searchHikingTrails(){
       if(seen.has(r.name)) return false;
       seen.add(r.name);
       return true;
-    }).slice(0,15);
+    }).slice(0,25);
   }catch(e){
     state.hikingSearchResults = [];
   }
@@ -4380,7 +4408,19 @@ async function onAppClick(e){
     case 'import-whole-route': await importWholeRoute(el.dataset.destId, el.dataset.routeId); break;
     case 'import-single-day': await importSingleDay(el.dataset.destId, el.dataset.routeId, parseInt(el.dataset.dayIndex,10), parseInt(el.dataset.globalIndex,10)); break;
     case 'edit-day': state.editingDayId = el.dataset.id; render(); break;
-    case 'edit-guide-field': state.editingGuideField = el.dataset.field; render(); break;
+    case 'edit-guide-field':
+      state.editingGuideField = el.dataset.field;
+      if(!state.expandedGuideFields.includes(el.dataset.field)) state.expandedGuideFields.push(el.dataset.field);
+      render();
+      break;
+    case 'toggle-guide-field': {
+      const f = el.dataset.field;
+      const idx = state.expandedGuideFields.indexOf(f);
+      if(idx>=0) state.expandedGuideFields.splice(idx,1);
+      else state.expandedGuideFields.push(f);
+      render();
+      break;
+    }
     case 'close-edit-guide-field': state.editingGuideField = null; render(); break;
     case 'ask-reset-guide': state.confirmingResetGuide = true; render(); break;
     case 'cancel-reset-guide': state.confirmingResetGuide = false; render(); break;
@@ -4641,6 +4681,9 @@ document.getElementById('app').addEventListener('change', async function(e){
   }
   if(e.target.id==='day-import-dest'){
     state.dayImportDestId = e.target.value; state.dayImportRouteId = null; render();
+  }
+  if(e.target.id==='hiking-search-poi'){
+    state.hikingSearchPoiIndex = parseInt(e.target.value,10);
   }
   if(e.target.id==='day-import-route'){
     state.dayImportRouteId = e.target.value; render();
