@@ -1863,6 +1863,17 @@ function renderTrip(){
       </div>
     </div>` : '';
 
+  const linkedDestsForSidebar = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
+  const guideJumpTabs = [['wetter','⛅','Wetter'],['karte','🗺️','Karte'],['wanderrouten','🥾','Wanderrouten'],['sprache','🗣️','Sprache']];
+  const guideJumpsHtml = linkedDestsForSidebar.length ? `
+    <div class="toc-sidebar-title" style="margin-top:16px;">Aus dem Reiseführer</div>
+    ${linkedDestsForSidebar.map(d=>`
+      ${linkedDestsForSidebar.length>1 ? `<div class="toc-item" style="font-weight:700;cursor:default;">${d.flag} ${escapeHtml(d.name)}</div>` : ''}
+      ${guideJumpTabs.map(([key,icon,label])=>
+        `<div class="toc-item" data-action="jump-to-dest-tab" data-dest-id="${d.id}" data-tab="${key}">${icon} ${label}</div>`
+      ).join('')}
+    `).join('')}` : '';
+
   const sidebar = state.showDestSidebar ? `
     <div class="toc-overlay" data-action="close-dest-sidebar">
       <div class="toc-sidebar" data-action="noop">
@@ -1870,6 +1881,7 @@ function renderTrip(){
         ${tabs.map(([key,icon,label])=>
           `<div class="toc-item ${state.tripTab===key?'active':''}" data-action="switch-trip-tab-from-sidebar" data-tab="${key}">${icon} ${label}</div>`
         ).join('')}
+        ${guideJumpsHtml}
       </div>
     </div>` : '';
 
@@ -2909,7 +2921,7 @@ function renderGuideTab(dd){
     <button type="button" class="btn" data-action="trigger-guide-file-upload">📄 Reiseführer-Datei importieren (.docx)</button>
     ${state.confirmingResetGuide ? `
       <div class="confirm-inline-block" style="margin-top:10px;">
-        <div class="confirm-message">Wirklich alle Reiseführer-Felder dieses Ziels leeren? Das kann nicht rückgängig gemacht werden.</div>
+        <div class="confirm-message">Wirklich alle Reiseführer-Felder und die Listen (Packliste, Todos, Bucketliste) dieses Ziels leeren? Das kann nicht rückgängig gemacht werden.</div>
         <div class="form-actions">
           <button type="button" class="btn btn-danger" data-action="do-reset-guide">Ja, zurücksetzen</button>
           <button type="button" class="btn" data-action="cancel-reset-guide">Abbrechen</button>
@@ -3349,7 +3361,7 @@ function renderHikingRouteCard(r){
           ${r.elevationGain? `<span>📈 ${r.elevationGain} Hm</span>`:''}
         </div>` : ''}
       ${r.description? `<div class="diary-text">${escapeHtml(r.description)}</div>`:''}
-      ${r.gpxTrack && r.gpxTrack.length ? `<div id="hiking-map-${r.id}" class="map-container" style="height:200px;margin-bottom:10px;"></div>`:''}
+      ${r.gpxTrack && r.gpxTrack.length ? `<div id="hiking-map-${r.id}" class="map-container" style="height:280px;margin-bottom:10px;"></div>`:''}
       ${trackingBlock}
       ${logsHtml}
       <div class="form-actions" style="margin-top:10px;">
@@ -3411,7 +3423,7 @@ function initHikingMaps(dd){
     if(!container) return;
     const isTracking = state.trackingRouteId===r.id;
     try{
-      const map = L.map(container, {zoomControl:false, attributionControl:false, dragging:isTracking, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:isTracking});
+      const map = L.map(container, {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true, doubleClickZoom:true, touchZoom:true});
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18}).addTo(map);
       const line = L.polyline(r.gpxTrack, {color:'#C99A3E', weight:4}).addTo(map);
       map.fitBounds(line.getBounds().pad(0.15));
@@ -3474,6 +3486,33 @@ async function onGpxFileSelected(file){
     showToast('GPX-Datei konnte nicht gelesen werden.');
   }
 }
+function chainWaySegments(members){
+  const segments = (members||[]).filter(m=>m.geometry && m.geometry.length>1).map(m=>m.geometry.map(pt=>[pt.lat,pt.lon]));
+  if(!segments.length) return [];
+  const used = new Array(segments.length).fill(false);
+  let chain = segments[0].slice();
+  used[0] = true;
+  let remaining = segments.length - 1;
+  while(remaining>0){
+    const chainEnd = chain[chain.length-1];
+    let bestIdx = -1, bestDist = Infinity, bestReversed = false;
+    for(let i=0;i<segments.length;i++){
+      if(used[i]) continue;
+      const seg = segments[i];
+      const dStart = haversineKm(chainEnd[0],chainEnd[1], seg[0][0], seg[0][1]);
+      const dEnd = haversineKm(chainEnd[0],chainEnd[1], seg[seg.length-1][0], seg[seg.length-1][1]);
+      if(dStart<bestDist){ bestDist=dStart; bestIdx=i; bestReversed=false; }
+      if(dEnd<bestDist){ bestDist=dEnd; bestIdx=i; bestReversed=true; }
+    }
+    if(bestIdx===-1) break;
+    let seg = segments[bestIdx];
+    if(bestReversed) seg = seg.slice().reverse();
+    chain = chain.concat(seg);
+    used[bestIdx] = true;
+    remaining--;
+  }
+  return chain;
+}
 async function searchHikingTrails(){
   const dd = destDataCache[state.destId];
   const pois = dd.pois || [];
@@ -3495,12 +3534,18 @@ async function searchHikingTrails(){
     const data = await res.json();
     const relations = (data.elements||[]).filter(el=>el.type==='relation' && el.tags && el.tags.name);
     const results = relations.map(rel=>{
-      const track = [];
-      (rel.members||[]).forEach(m=>{ if(m.geometry){ m.geometry.forEach(pt=>track.push([pt.lat, pt.lon])); } });
+      const track = chainWaySegments(rel.members);
       if(track.length<2) return null;
       const distanceKm = calcTrackDistanceKm(track.map(p=>({lat:p[0],lng:p[1]})));
-      return {id:String(rel.id), name:rel.tags.name, distanceKm, track, difficulty: rel.tags.sac_scale||''};
+      if(distanceKm<1 || distanceKm>30) return null;
+      return {id:String(rel.id), name:rel.tags.name, distanceKm, track, difficulty: rel.tags.sac_scale||'', network: rel.tags.network||''};
     }).filter(Boolean);
+    results.sort((a,b)=>{
+      const aLocal = (a.network==='lwn'||a.network==='rwn') ? 0 : 1;
+      const bLocal = (b.network==='lwn'||b.network==='rwn') ? 0 : 1;
+      if(aLocal!==bLocal) return aLocal-bLocal;
+      return a.distanceKm - b.distanceKm;
+    });
     const seen = new Set();
     state.hikingSearchResults = results.filter(r=>{
       if(seen.has(r.name)) return false;
@@ -3807,7 +3852,11 @@ async function onGuideFileSelected(file){
           }
         } else if(currentMode==='FAQ'){
           const text = subBuffer.lines.join('\n').trim();
-          if(text){ dd.faq.push({id:genId(), question:subBuffer.title||'Frage', answer:text}); anyImported = true; }
+          if(text){
+            const question = subBuffer.title||'Frage';
+            const dup = dd.faq.some(f=>f.question.trim().toLowerCase()===question.trim().toLowerCase());
+            if(!dup){ dd.faq.push({id:genId(), question, answer:text}); anyImported = true; }
+          }
         }
       }
       subBuffer = null;
@@ -3920,8 +3969,8 @@ async function onGuideFileSelected(file){
               if(cells.length>=3){ local = cells[0].textContent.trim(); german = cells[2].textContent.trim(); }
               else if(cells.length===2){ local = cells[0].textContent.trim(); german = cells[1].textContent.trim(); }
               if(german && local && !/^deutsch$/i.test(german) && !/^fremdsprache$/i.test(local)){
-                dd.phrases.push({id:genId(), german, local});
-                anyImported = true;
+                const dup = dd.phrases.some(p=>p.local.toLowerCase()===local.toLowerCase() && p.german.toLowerCase()===german.toLowerCase());
+                if(!dup){ dd.phrases.push({id:genId(), german, local}); anyImported = true; }
               }
             });
             continue;
@@ -3973,9 +4022,12 @@ async function onGuideFileSelected(file){
 async function resetGuide(){
   const dd = destDataCache[state.destId];
   dd.guide = {...EMPTY_GUIDE};
+  dd.packing = [];
+  dd.todos = [];
+  dd.bucketlist = [];
   await saveDestData(state.destId);
   state.confirmingResetGuide = false;
-  showToast('Reiseführer zurückgesetzt.');
+  showToast('Reiseführer und Listen zurückgesetzt.');
   render();
 }
 async function revertGuideToManual(){
@@ -4540,6 +4592,17 @@ async function onAppClick(e){
       state.showDestSidebar = false;
       await switchTripTab(el.dataset.tab);
       break;
+    case 'jump-to-dest-tab': {
+      state.showDestSidebar = false;
+      discardDraftIfActive();
+      await loadDestData(el.dataset.destId);
+      state.view='destination'; state.destId=el.dataset.destId; state.tab=el.dataset.tab;
+      state.addingList=null; state.addingDiary=false; state.addingBudget=false;
+      state.addingDoc=null; state.pendingPoi=null; state.lightboxPhotoId=null;
+      state.currentRoute=null; state.expandedGuideFields=[]; state.editingGuideField=null;
+      render();
+      break;
+    }
     case 'toggle-check': await toggleCheck(el.dataset.list, el.dataset.id); break;
     case 'delete-item': await deleteListItem(el.dataset.list, el.dataset.id); break;
     case 'show-add-item': state.addingList=el.dataset.list; render(); break;
