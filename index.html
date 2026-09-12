@@ -182,7 +182,8 @@
   .photo-day-group-title{font-weight:700;font-size:13px;color:var(--brass);margin-bottom:8px;}
   .hike-tracking-live{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface-alt);border-radius:12px;padding:10px 14px;margin-top:8px;font-weight:700;font-size:14px;flex-wrap:wrap;}
   .hike-log-list{margin-top:6px;}
-  .hike-log-row{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--ink-muted);padding:6px 0;border-bottom:1px solid var(--border);}
+  .hike-log-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--ink-muted);padding:6px 0;border-bottom:1px solid var(--border);}
+  .hike-log-delete{margin-left:auto;cursor:pointer;padding:2px 4px;}
 
   .btn{font-size:14px;font-weight:600;padding:10px 18px;border-radius:22px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;transition:all 0.15s ease;box-shadow:0 2px 5px rgba(51,44,34,0.10);}
   .btn:active{opacity:0.85;box-shadow:0 1px 2px rgba(51,44,34,0.10);transform:translateY(1px);}
@@ -922,6 +923,21 @@ async function switchTab(tab){
 }
 
 /* ---------- Render dispatcher ---------- */
+function setupLightboxPostRender(){
+  if(!state.lightboxPhotoId) return;
+  const capInput = document.getElementById('lightbox-caption');
+  if(capInput) capInput.value = (photoCache[state.lightboxPhotoId]||{}).caption || '';
+  const img = document.querySelector('.lightbox-img');
+  if(img){
+    let zoomed = false;
+    img.style.transition = 'transform 0.15s ease';
+    img.style.transformOrigin = 'center center';
+    img.ondblclick = () => {
+      zoomed = !zoomed;
+      img.style.transform = zoomed ? 'scale(2.5)' : 'scale(1)';
+    };
+  }
+}
 async function render(){
   const app = document.getElementById('app');
   if(state.view==='home'){
@@ -954,18 +970,12 @@ async function render(){
   }
   if(state.view==='recipe'){
     app.innerHTML = renderRecipeDetail();
-    if(state.lightboxPhotoId){
-      const capInput = document.getElementById('lightbox-caption');
-      if(capInput) capInput.value = (photoCache[state.lightboxPhotoId]||{}).caption || '';
-    }
+    setupLightboxPostRender();
     return;
   }
   if(state.view==='trip'){
     app.innerHTML = renderTrip();
-    if(state.lightboxPhotoId){
-      const capInput = document.getElementById('lightbox-caption');
-      if(capInput) capInput.value = (photoCache[state.lightboxPhotoId]||{}).caption || '';
-    }
+    setupLightboxPostRender();
     if(state.tripTab==='budget'){
       const trip = trips.find(t=>t.id===state.tripId);
       if(trip) computeBudgetGrandTotal(trip);
@@ -977,10 +987,7 @@ async function render(){
   if(state.tab==='karte') initMap(getCurrentDest(), dd);
   if(state.tab==='wetter'){ const d=getCurrentDest(); loadWeather(d.lat, d.lng, d.name); }
   if(state.tab==='wanderrouten') initHikingMaps(dd);
-  if(state.lightboxPhotoId){
-    const capInput = document.getElementById('lightbox-caption');
-    if(capInput) capInput.value = (photoCache[state.lightboxPhotoId]||{}).caption || '';
-  }
+  setupLightboxPostRender();
 }
 
 /* ---------- Home dashboard ---------- */
@@ -1692,11 +1699,46 @@ function loadTesseract(){
   });
   return tesseractLoadPromise;
 }
+function preprocessImageForOcr(file){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; };
+    reader.onerror = reject;
+    img.onload = () => {
+      try{
+        const minWidth = 1600;
+        const scale = img.width < minWidth ? minWidth / img.width : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const contrast = 1.35;
+        const intercept = 128 * (1 - contrast);
+        for(let i=0; i<data.length; i+=4){
+          const gray = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+          let v = gray*contrast + intercept;
+          v = Math.max(0, Math.min(255, v));
+          data[i] = data[i+1] = data[i+2] = v;
+        }
+        ctx.putImageData(imageData, 0, 0);
+        canvas.toBlob(blob=> blob ? resolve(blob) : reject(new Error('toBlob failed')), 'image/png');
+      }catch(e){ reject(e); }
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 async function extractImageText(file){
   await loadTesseract();
   const worker = await Tesseract.createWorker('deu+eng');
   try{
-    const { data:{ text } } = await worker.recognize(file);
+    let input = file;
+    try{ input = await preprocessImageForOcr(file); }catch(e){ input = file; }
+    const { data:{ text } } = await worker.recognize(input);
     return text;
   } finally {
     await worker.terminate();
@@ -1739,12 +1781,15 @@ function parseBookingText(text){
   const flightMatch = text.match(/\b([A-Z]{2})\s?(\d{2,4})\b/);
   const airlineMatch = KNOWN_AIRLINES.find(a=>text.toLowerCase().includes(a.toLowerCase()));
   const codeMatch = text.match(/(?:Buchungscode|Booking\s*(?:reference|code)|PNR|Bestätigungsnummer|Confirmation(?:\s*number)?)[:\s]+([A-Z0-9]{5,8})/i);
+  const passengerMatch = text.match(/(?:Passenger|Passagier|Fluggast|Fahrgast|Name)[:\s]+([A-ZÄÖÜ][A-ZÄÖÜa-zäöüß\s\/]{2,40})/i);
+  const seatMatch = text.match(/(?:Seat|Sitz(?:platz)?)[:\s]+([0-9]{1,3}\s?[A-Za-z])/i);
   const timeMatches = [...text.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)].map(mm=>mm[0]);
   if(flightMatch || airlineMatch || codeMatch){
     result.ticket = {
       id: genId(), airline: airlineMatch||'', flightNumber: flightMatch? flightMatch[1]+flightMatch[2] : '',
       date: result.dateFrom||'', from:'', to:'',
-      departTime: timeMatches[0]||'', arriveTime: timeMatches[1]||'', bookingCode: codeMatch? codeMatch[1] : ''
+      departTime: timeMatches[0]||'', arriveTime: timeMatches[1]||'', bookingCode: codeMatch? codeMatch[1] : '',
+      passengerName: passengerMatch? passengerMatch[1].trim() : '', seat: seatMatch? seatMatch[1].replace(/\s/g,'') : ''
     };
   }
   return result;
@@ -2070,12 +2115,14 @@ function renderTicketCard(t){
   if(t.arriveTime) timesParts.push('Ankunft '+t.arriveTime);
   const timesHtml = timesParts.length ? `<div class="ticket-times">${timesParts.map(p=>`<span>${escapeHtml(p)}</span>`).join('')}</div>` : '';
   const subLine = [t.airline,t.flightNumber].filter(Boolean).map(s=>escapeHtml(s)).join(' ');
+  const passengerLine = [t.passengerName, t.seat? 'Sitz '+t.seat : ''].filter(Boolean).map(s=>escapeHtml(s)).join(' · ');
   return `<div class="ticket-card">
     <div class="ticket-main">
       <div class="ticket-route">${escapeHtml(t.from||'?')} → ${escapeHtml(t.to||'?')}</div>
       ${subLine? `<div class="ticket-sub">${subLine}</div>`:''}
       ${t.date? `<div class="ticket-sub">${formatDateDe(t.date)}</div>` : ''}
       ${timesHtml}
+      ${passengerLine? `<div class="ticket-sub">👤 ${passengerLine}</div>`:''}
       ${renderTicketPhotoLink(t,'tickets')}
     </div>
     <div class="ticket-stub">${t.bookingCode? escapeHtml(t.bookingCode) : '—'}</div>
@@ -2099,6 +2146,10 @@ function renderTicketEditForm(t){
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="time" class="input" id="edit-ticket-depart" value="${t.departTime||''}">
         <input type="time" class="input" id="edit-ticket-arrive" value="${t.arriveTime||''}">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="input" id="edit-ticket-passenger" value="${escapeHtml(t.passengerName||'')}" placeholder="Name des Passagiers">
+        <input class="input" id="edit-ticket-seat" value="${escapeHtml(t.seat||'')}" placeholder="Sitzplatz" style="max-width:110px;">
       </div>
       <label class="field-label">Buchungscode</label>
       <input class="input" id="edit-ticket-code" value="${escapeHtml(t.bookingCode||'')}" style="margin-bottom:8px;">
@@ -2316,6 +2367,10 @@ function renderTripUnterlagenTab(trip){
         <input type="time" class="input" id="new-ticket-depart" placeholder="Abflugzeit">
         <input type="time" class="input" id="new-ticket-arrive" placeholder="Ankunftszeit">
       </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="input" id="new-ticket-passenger" placeholder="Name des Passagiers">
+        <input class="input" id="new-ticket-seat" placeholder="Sitzplatz" style="max-width:110px;">
+      </div>
       <input class="input" id="new-ticket-code" placeholder="Buchungscode" style="margin-bottom:8px;">
       <div class="form-actions">
         <button type="button" class="btn btn-add" data-action="confirm-add-ticket">Hinzufügen</button>
@@ -2360,11 +2415,19 @@ function renderTripUnterlagenTab(trip){
       </div>
     </div>` : `<button type="button" class="btn" data-action="show-add-trip-doc">+ Info hinzufügen</button>`;
 
+  const linkedDestNames = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
+  const gygQuery = linkedDestNames.length ? linkedDestNames[0].name : '';
+  const gygLink = gygQuery ? `
+    <div style="margin:6px 0 14px;">
+      <a href="https://www.getyourguide.com/s/?q=${encodeURIComponent(gygQuery)}" target="_blank" rel="noopener" class="btn" style="text-decoration:none;display:inline-block;">🔗 Ausflüge bei GetYourGuide (${escapeHtml(gygQuery)})</a>
+    </div>` : '';
+
   return `
     <h3 class="section-title">Flugtickets</h3>
     ${ticketsHtml}
     ${ticketForm}
     <h3 class="section-title" style="margin-top:28px;">Ausflugstickets</h3>
+    ${gygLink}
     ${activityHtml}
     ${activityForm}
     <h3 class="section-title" style="margin-top:28px;">Weitere Unterlagen</h3>
@@ -2374,9 +2437,31 @@ function renderTripUnterlagenTab(trip){
     <input type="file" id="tripdoc-file-input" accept="image/*,.pdf" style="display:none">
   `;
 }
+async function renderPdfFirstPageToImage(file){
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  const page = await pdf.getPage(1);
+  const baseViewport = page.getViewport({scale:1});
+  const targetWidth = 1400;
+  const scale = Math.max(1, targetWidth / baseViewport.width);
+  const viewport = page.getViewport({scale});
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d');
+  await page.render({canvasContext:ctx, viewport}).promise;
+  return canvas.toDataURL('image/png');
+}
 async function storeAttachedFile(file){
   const isImage = file.type.startsWith('image/');
-  const dataUrl = isImage ? await compressImage(file) : await readFileAsDataUrl(file);
+  const isPdf = file.type==='application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+  let dataUrl;
+  if(isImage){ dataUrl = await compressImage(file); }
+  else if(isPdf && typeof pdfjsLib!=='undefined'){
+    try{ dataUrl = await renderPdfFirstPageToImage(file); }
+    catch(e){ dataUrl = await readFileAsDataUrl(file); }
+  }
+  else { dataUrl = await readFileAsDataUrl(file); }
   const fileId = genId();
   const fileObj = {dataUrl, filename:file.name, caption:''};
   await sSet('photo:'+fileId, fileObj);
@@ -2409,6 +2494,8 @@ async function onNewTicketFileSelected(file){
       if(parsed.ticket.bookingCode) document.getElementById('new-ticket-code').value = parsed.ticket.bookingCode;
       if(parsed.ticket.departTime) document.getElementById('new-ticket-depart').value = parsed.ticket.departTime;
       if(parsed.ticket.arriveTime) document.getElementById('new-ticket-arrive').value = parsed.ticket.arriveTime;
+      if(parsed.ticket.passengerName) document.getElementById('new-ticket-passenger').value = parsed.ticket.passengerName;
+      if(parsed.ticket.seat) document.getElementById('new-ticket-seat').value = parsed.ticket.seat;
     }
     if(parsed.dateFrom) document.getElementById('new-ticket-date').value = parsed.dateFrom;
     showToast('Felder automatisch befüllt – bitte prüfen.');
@@ -2438,11 +2525,13 @@ async function confirmAddTicket(){
   const to = document.getElementById('new-ticket-to').value.trim();
   const departTime = document.getElementById('new-ticket-depart').value;
   const arriveTime = document.getElementById('new-ticket-arrive').value;
+  const passengerName = document.getElementById('new-ticket-passenger').value.trim();
+  const seat = document.getElementById('new-ticket-seat').value.trim();
   const bookingCode = document.getElementById('new-ticket-code').value.trim();
   const fileInput = document.getElementById('new-ticket-file');
   if(!airline && !flightNumber && !from && !to){ showToast('Bitte mindestens Fluggesellschaft/Flugnummer oder Strecke angeben.'); return; }
   const trip = trips.find(t=>t.id===state.tripId);
-  const ticket = {id:genId(), airline, flightNumber, date, from, to, departTime, arriveTime, bookingCode, photoId:null};
+  const ticket = {id:genId(), airline, flightNumber, date, from, to, departTime, arriveTime, passengerName, seat, bookingCode, photoId:null};
   if(fileInput && fileInput.files[0]){
     try{ ticket.photoId = await storeAttachedFile(fileInput.files[0]); }catch(e){}
   }
@@ -2468,10 +2557,26 @@ async function confirmEditTicket(id){
   t.to = document.getElementById('edit-ticket-to').value.trim();
   t.departTime = document.getElementById('edit-ticket-depart').value;
   t.arriveTime = document.getElementById('edit-ticket-arrive').value;
+  t.passengerName = document.getElementById('edit-ticket-passenger').value.trim();
+  t.seat = document.getElementById('edit-ticket-seat').value.trim();
   t.bookingCode = document.getElementById('edit-ticket-code').value.trim();
   await saveTrips();
   state.editingTicketId = null;
   render();
+}
+function syncActivityToDayPlan(trip, activity){
+  if(!activity.date || !trip.dateFrom || !trip.dateTo) return;
+  syncDayPlan(trip);
+  const startDate = new Date(trip.dateFrom+'T00:00:00');
+  const activityDate = new Date(activity.date+'T00:00:00');
+  const dayIndex = Math.round((activityDate - startDate) / 86400000);
+  if(dayIndex<0 || dayIndex>=trip.dayPlan.length) return;
+  const day = trip.dayPlan[dayIndex];
+  const parts = [activity.title];
+  if(activity.time) parts.push('um '+activity.time+' Uhr');
+  const line = parts.join(' ');
+  day.plan = day.plan ? day.plan+'\n'+line : line;
+  if(!day.ort && activity.location) day.ort = activity.location;
 }
 async function confirmAddActivityTicket(){
   const title = document.getElementById('new-activity-title').value.trim();
@@ -2487,8 +2592,10 @@ async function confirmAddActivityTicket(){
     try{ ticket.photoId = await storeAttachedFile(fileInput.files[0]); }catch(e){}
   }
   trip.activityTickets.push(ticket);
+  syncActivityToDayPlan(trip, ticket);
   await saveTrips();
   state.addingActivityTicket = false;
+  showToast(date && trip.dateFrom && trip.dateTo ? 'Ausflug hinzugefügt und in den Tagesplaner übernommen.' : 'Ausflug hinzugefügt.');
   render();
 }
 async function deleteActivityTicket(id){
@@ -2921,7 +3028,7 @@ function renderGuideTab(dd){
     <button type="button" class="btn" data-action="trigger-guide-file-upload">📄 Reiseführer-Datei importieren (.docx)</button>
     ${state.confirmingResetGuide ? `
       <div class="confirm-inline-block" style="margin-top:10px;">
-        <div class="confirm-message">Wirklich alle Reiseführer-Felder und die Listen (Packliste, Todos, Bucketliste) dieses Ziels leeren? Das kann nicht rückgängig gemacht werden.</div>
+        <div class="confirm-message">Wirklich alle Reiseführer-Felder, die Routen und die Listen (Packliste, Todos, Bucketliste) dieses Ziels leeren? FAQ, Sprache und Wanderrouten bleiben unberührt. Das kann nicht rückgängig gemacht werden.</div>
         <div class="form-actions">
           <button type="button" class="btn btn-danger" data-action="do-reset-guide">Ja, zurücksetzen</button>
           <button type="button" class="btn" data-action="cancel-reset-guide">Abbrechen</button>
@@ -3348,6 +3455,7 @@ function renderHikingRouteCard(r){
           <span>${escapeHtml(l.startTime)}–${escapeHtml(l.stopTime)} Uhr</span>
           <span>${l.durationMin} Min.</span>
           <span>${l.distanceKm} km</span>
+          <span class="hike-log-delete" data-action="delete-hike-log" data-route-id="${r.id}" data-log-id="${l.id}" title="Löschen">🗑️</span>
         </div>`).join('')}
     </div>` : '';
   return `
@@ -3370,10 +3478,12 @@ function renderHikingRouteCard(r){
       </div>
     </div>`;
 }
+const GPS_WANDERATLAS_SLUGS = {kreta:'kreta', madeira:'madeira', sardinien:'sardinien'};
 function renderHikingSearchPanel(dd){
   if(!state.showHikingSearch){
     return `<button type="button" class="btn" data-action="toggle-hiking-search">🔍 Wanderwege in der Nähe suchen</button>`;
   }
+  const dest = getCurrentDest();
   const pois = dd.pois || [];
   let resultsHtml = '';
   if(state.hikingSearchLoading){
@@ -3389,16 +3499,22 @@ function renderHikingSearchPanel(dd){
         <button type="button" class="btn btn-add" data-action="import-searched-hiking-trail" data-id="${r.id}" style="padding:7px 10px;font-size:12px;">+ Importieren</button>
       </div>`).join('');
   }
-  const poiOptions = pois.map((p,i)=>`<option value="${i}" ${state.hikingSearchPoiIndex===i?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  const poiOptions = `<option value="mylocation" ${state.hikingSearchPoiIndex==='mylocation'?'selected':''}>📍 Mein aktueller Standort</option>` +
+    pois.map((p,i)=>`<option value="${i}" ${state.hikingSearchPoiIndex===i?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  const wanderatlasSlug = GPS_WANDERATLAS_SLUGS[dest.id];
+  const wanderatlasUrl = wanderatlasSlug ? `https://www.ich-geh-wandern.de/${wanderatlasSlug}` : 'https://www.ich-geh-wandern.de/tourensuche';
   return `
     <div class="inline-form">
       <p class="hint-text" style="margin-top:0;">Sucht in OpenStreetMap nach benannten Wanderwegen im Umkreis von 50 km um einen gewählten Punkt.</p>
-      ${pois.length ? `
-        <label class="field-label">Ausgangspunkt (aus deinen Sehenswürdigkeiten)</label>
-        <select class="input" id="hiking-search-poi" style="margin-bottom:10px;">${poiOptions}</select>
-      ` : `<p class="hint-text">Lege zuerst ein paar Sehenswürdigkeiten im Tab „Karte" an, damit du hier einen Ausgangspunkt wählen kannst.</p>`}
-      <button type="button" class="btn" data-action="search-hiking-trails" style="margin-bottom:10px;" ${!pois.length?'disabled':''}>Jetzt suchen</button>
+      <label class="field-label">Ausgangspunkt</label>
+      <select class="input" id="hiking-search-poi" style="margin-bottom:10px;">${poiOptions}</select>
+      ${!pois.length ? `<p class="hint-text">Tipp: Lege ein paar Sehenswürdigkeiten im Tab „Karte" an, um dort auch einen Ausgangspunkt wählen zu können.</p>` : ''}
+      <button type="button" class="btn" data-action="search-hiking-trails" style="margin-bottom:10px;">Jetzt suchen</button>
       ${resultsHtml}
+      <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px;">
+        <p class="hint-text" style="margin-top:0;">Nichts Passendes dabei? Beim GPS-Wanderatlas gibt's von Wanderern geprüfte Touren zum kostenlosen GPX-Download – einfach dort eine Route suchen, herunterladen und hier oben über „GPX-Datei importieren" einlesen.</p>
+        <a href="${wanderatlasUrl}" target="_blank" rel="noopener" class="btn" style="text-decoration:none;display:inline-block;">🔗 Beim GPS-Wanderatlas suchen</a>
+      </div>
       <button type="button" class="btn" data-action="toggle-hiking-search" style="margin-top:14px;">Schließen</button>
     </div>`;
 }
@@ -3517,10 +3633,26 @@ async function searchHikingTrails(){
   const dd = destDataCache[state.destId];
   const pois = dd.pois || [];
   const selectEl = document.getElementById('hiking-search-poi');
-  const poiIndex = selectEl ? parseInt(selectEl.value,10) : state.hikingSearchPoiIndex;
+  const rawValue = selectEl ? selectEl.value : state.hikingSearchPoiIndex;
+  const poiIndex = rawValue==='mylocation' ? 'mylocation' : parseInt(rawValue,10);
   state.hikingSearchPoiIndex = poiIndex;
   let lat, lng;
-  if(pois.length && pois[poiIndex]){ lat = pois[poiIndex].lat; lng = pois[poiIndex].lng; }
+  if(poiIndex==='mylocation'){
+    if(!navigator.geolocation){ showToast('Standortbestimmung wird von diesem Gerät/Browser nicht unterstützt.'); return; }
+    state.hikingSearchLoading = true;
+    render();
+    try{
+      const pos = await new Promise((resolve,reject)=>{
+        navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:10000});
+      });
+      lat = pos.coords.latitude; lng = pos.coords.longitude;
+    }catch(e){
+      showToast('Standort nicht verfügbar (Berechtigung verweigert?).');
+      state.hikingSearchLoading = false;
+      render();
+      return;
+    }
+  } else if(pois.length && pois[poiIndex]){ lat = pois[poiIndex].lat; lng = pois[poiIndex].lng; }
   else if(pois.length){ lat = pois[0].lat; lng = pois[0].lng; }
   else { const dest = getCurrentDest(); lat = dest.lat; lng = dest.lng; }
   state.hikingSearchLoading = true;
@@ -3628,6 +3760,15 @@ async function stopHikeTracking(){
   state.trackingRouteId = null; state.trackingDestId = null; state.trackingStartTime = null;
   state.trackingPoints = []; state.trackingDistanceKm = 0; state.trackingWatchId = null;
   render();
+}
+async function deleteHikeLog(routeId, logId){
+  const dd = destDataCache[state.destId];
+  const route = dd.hikingRoutes.find(r=>r.id===routeId);
+  if(route && route.hikeLogs){
+    route.hikeLogs = route.hikeLogs.filter(l=>l.id!==logId);
+    await saveDestData(state.destId);
+    render();
+  }
 }
 
 /* ---------- FAQ tab ---------- */
@@ -4025,9 +4166,10 @@ async function resetGuide(){
   dd.packing = [];
   dd.todos = [];
   dd.bucketlist = [];
+  dd.routes = [];
   await saveDestData(state.destId);
   state.confirmingResetGuide = false;
-  showToast('Reiseführer und Listen zurückgesetzt.');
+  showToast('Reiseführer, Routen und Listen zurückgesetzt.');
   render();
 }
 async function revertGuideToManual(){
@@ -4491,6 +4633,7 @@ async function onAppClick(e){
     case 'delete-hiking-route': await deleteHikingRoute(el.dataset.id); break;
     case 'start-hike-tracking': await startHikeTracking(el.dataset.destId, el.dataset.id); break;
     case 'stop-hike-tracking': await stopHikeTracking(); break;
+    case 'delete-hike-log': await deleteHikeLog(el.dataset.routeId, el.dataset.logId); break;
     case 'trigger-gpx-upload': document.getElementById('gpx-file-input').click(); break;
     case 'toggle-hiking-search':
       state.showHikingSearch = !state.showHikingSearch;
