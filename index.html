@@ -234,11 +234,13 @@
 
   .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
   .photo-thumb{aspect-ratio:1;border-radius:10px;background-size:cover;background-position:center;cursor:pointer;border:1px solid var(--border);}
-  .lightbox-overlay{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;z-index:9999;}
-  .lightbox-img-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;}
-  .lightbox-img{max-width:100%;max-height:100%;object-fit:contain;display:block;}
-  .lightbox-controls{background:rgba(20,18,14,0.92);padding:12px 16px 16px;max-height:42vh;overflow-y:auto;flex:0 0 auto;}
-  .lightbox-controls .field-label{color:rgba(245,240,227,0.7);}
+  .lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999;}
+  .lightbox-content{background:var(--surface);border-radius:var(--radius);padding:16px;max-width:460px;width:100%;max-height:88vh;overflow-y:auto;}
+  .lightbox-img{width:100%;border-radius:10px;display:block;cursor:zoom-in;}
+  .lightbox-fullscreen-overlay{position:fixed;inset:0;background:#000;z-index:10000;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .lightbox-fullscreen-img{max-width:100%;max-height:100%;object-fit:contain;touch-action:manipulation;transition:transform 0.15s ease;user-select:none;-webkit-user-select:none;}
+  .lightbox-fs-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;z-index:1;}
+  .lightbox-fs-hint{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.6);font-size:12px;}
 
   .converter{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;}
   .converter .input{flex:1;min-width:76px;}
@@ -642,7 +644,7 @@ let leafletMap = null;
 let state = {
   view:'home', destId:null, tab:'guide',
   showAddDest:false, addingList:null, addingDiary:false, addingBudget:false,
-  addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null,
+  addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null, lightboxFullscreen:false,
   tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false,
   addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false, editingDayId:null, editingGuideField:null, confirmingResetGuide:false,
   showHikingSearch:false, hikingSearchLoading:false, hikingSearchResults:null, hikingSearchPoiIndex:0, expandedGuideFields:[],
@@ -927,14 +929,19 @@ function setupLightboxPostRender(){
   if(!state.lightboxPhotoId) return;
   const capInput = document.getElementById('lightbox-caption');
   if(capInput) capInput.value = (photoCache[state.lightboxPhotoId]||{}).caption || '';
-  const img = document.querySelector('.lightbox-img');
-  if(img){
+  const fsImg = document.getElementById('lightbox-fs-img');
+  if(fsImg){
     let zoomed = false;
-    img.style.transition = 'transform 0.15s ease';
-    img.style.transformOrigin = 'center center';
-    img.ondblclick = () => {
-      zoomed = !zoomed;
-      img.style.transform = zoomed ? 'scale(2.5)' : 'scale(1)';
+    let lastTap = 0;
+    fsImg.onclick = (e) => {
+      const now = Date.now();
+      if(now - lastTap < 350){
+        zoomed = !zoomed;
+        fsImg.style.transform = zoomed ? 'scale(2.5)' : 'scale(1)';
+        lastTap = 0;
+      } else {
+        lastTap = now;
+      }
     };
   }
 }
@@ -1736,6 +1743,7 @@ async function extractImageText(file){
   await loadTesseract();
   const worker = await Tesseract.createWorker('deu+eng');
   try{
+    try{ await worker.setParameters({ tessedit_pageseg_mode: '6' }); }catch(e){}
     let input = file;
     try{ input = await preprocessImageForOcr(file); }catch(e){ input = file; }
     const { data:{ text } } = await worker.recognize(input);
@@ -2826,27 +2834,33 @@ function renderPhotoDayPicker(){
 function renderLightbox(){
   const p = photoCache[state.lightboxPhotoId];
   if(!p) return '';
+  const fullscreen = state.lightboxFullscreen ? `
+    <div class="lightbox-fullscreen-overlay" data-action="close-lightbox-fullscreen">
+      <button type="button" class="lightbox-fs-close" data-action="close-lightbox-fullscreen">✕</button>
+      <img src="${p.dataUrl}" class="lightbox-fullscreen-img" id="lightbox-fs-img" data-action="noop">
+      <div class="lightbox-fs-hint">Doppeltippen zum Zoomen</div>
+    </div>` : '';
   return `
     <div class="lightbox-overlay" data-action="close-lightbox">
-      <div class="lightbox-img-wrap" data-action="noop">
-        <img src="${p.dataUrl}" class="lightbox-img">
-      </div>
-      <div class="lightbox-controls" data-action="noop">
-        <input class="input" id="lightbox-caption" data-photo-caption="${state.lightboxPhotoId}" placeholder="Bildunterschrift hinzufügen…">
+      <div class="lightbox-content" data-action="noop">
+        <img src="${p.dataUrl}" class="lightbox-img" data-action="open-lightbox-fullscreen">
+        <input class="input" id="lightbox-caption" data-photo-caption="${state.lightboxPhotoId}" placeholder="Bildunterschrift hinzufügen…" style="margin-top:10px;">
         ${renderPhotoDayPicker()}
         <div class="form-actions" style="margin-top:10px;">
           <button type="button" class="btn btn-danger" data-action="delete-lightbox-photo">Foto löschen</button>
           <button type="button" class="btn" data-action="close-lightbox">Schließen</button>
         </div>
       </div>
-    </div>`;
+    </div>
+    ${fullscreen}`;
 }
 async function openLightbox(id, context){
   state.lightboxPhotoId = id;
   state.lightboxContext = context || {type:'gallery'};
+  state.lightboxFullscreen = false;
   render();
 }
-function closeLightbox(){ state.lightboxPhotoId=null; state.lightboxContext=null; render(); }
+function closeLightbox(){ state.lightboxPhotoId=null; state.lightboxContext=null; state.lightboxFullscreen=false; render(); }
 async function deleteLightboxPhoto(){
   const id = state.lightboxPhotoId;
   const ctx = state.lightboxContext || {type:'gallery'};
@@ -4765,6 +4779,8 @@ async function onAppClick(e){
     case 'trigger-photo-upload': document.getElementById('photo-input').click(); break;
     case 'view-photo': await openLightbox(el.dataset.id); break;
     case 'close-lightbox': closeLightbox(); break;
+    case 'open-lightbox-fullscreen': state.lightboxFullscreen = true; render(); break;
+    case 'close-lightbox-fullscreen': state.lightboxFullscreen = false; render(); break;
     case 'noop': break;
     case 'show-add-budget': state.addingBudget=true; render(); break;
     case 'cancel-add-budget': state.addingBudget=false; render(); break;
