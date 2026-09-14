@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Reisebärchi">
+<meta name="apple-mobile-web-app-title" content="ReiseGuide">
 <meta name="theme-color" content="#3E5142">
 <link rel="manifest" id="app-manifest">
 <link rel="apple-touch-icon" id="app-touch-icon">
@@ -238,7 +238,7 @@
   .lightbox-content{background:var(--surface);border-radius:var(--radius);padding:16px;max-width:460px;width:100%;max-height:88vh;overflow-y:auto;}
   .lightbox-img{width:100%;border-radius:10px;display:block;cursor:zoom-in;}
   .lightbox-fullscreen-overlay{position:fixed;inset:0;background:#000;z-index:10000;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-  .lightbox-fullscreen-img{max-width:100%;max-height:100%;object-fit:contain;touch-action:manipulation;transition:transform 0.15s ease;user-select:none;-webkit-user-select:none;}
+  .lightbox-fullscreen-img{max-width:100%;max-height:100%;object-fit:contain;touch-action:none;user-select:none;-webkit-user-select:none;}
   .lightbox-fs-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;z-index:1;}
   .lightbox-fs-hint{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.6);font-size:12px;}
 
@@ -345,7 +345,7 @@ const ICON_192 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADd
 function setupPwa(){
   const manifest = {
     name: 'Reisebärchi on Tour',
-    short_name: 'Reisebärchi',
+    short_name: 'ReiseGuide',
     description: 'Persönlicher Reisebegleiter für deine Reiseziele, Reisen und Rezepte',
     start_url: '.',
     display: 'standalone',
@@ -930,20 +930,100 @@ function setupLightboxPostRender(){
   const capInput = document.getElementById('lightbox-caption');
   if(capInput) capInput.value = (photoCache[state.lightboxPhotoId]||{}).caption || '';
   const fsImg = document.getElementById('lightbox-fs-img');
-  if(fsImg){
-    let zoomed = false;
-    let lastTap = 0;
-    fsImg.onclick = (e) => {
-      const now = Date.now();
-      if(now - lastTap < 350){
-        zoomed = !zoomed;
-        fsImg.style.transform = zoomed ? 'scale(2.5)' : 'scale(1)';
-        lastTap = 0;
-      } else {
-        lastTap = now;
-      }
-    };
+  if(fsImg) setupImageZoomPan(fsImg);
+}
+function setupImageZoomPan(img){
+  let scale = 1, panX = 0, panY = 0;
+  let lastDistance = null;
+  let isPanning = false;
+  let panStart = null;
+  let lastTapTime = 0;
+
+  function applyTransform(){
+    img.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
   }
+  function getDistance(t1,t2){
+    return Math.hypot(t1.clientX-t2.clientX, t1.clientY-t2.clientY);
+  }
+  function clampPan(){
+    const maxPan = Math.max(0, (scale-1)) * (img.clientWidth/2) + 120;
+    panX = Math.max(-maxPan, Math.min(maxPan, panX));
+    panY = Math.max(-maxPan, Math.min(maxPan, panY));
+  }
+  function resetZoom(){
+    scale = 1; panX = 0; panY = 0;
+    img.style.transition = 'transform 0.15s ease';
+    applyTransform();
+    setTimeout(()=>{ img.style.transition = ''; }, 160);
+  }
+  function zoomToDefault(){
+    scale = 2.5;
+    img.style.transition = 'transform 0.15s ease';
+    applyTransform();
+    setTimeout(()=>{ img.style.transition = ''; }, 160);
+  }
+
+  img.style.touchAction = 'none';
+
+  img.addEventListener('touchstart', (e)=>{
+    if(e.touches.length===2){
+      lastDistance = getDistance(e.touches[0], e.touches[1]);
+    } else if(e.touches.length===1){
+      const now = Date.now();
+      if(now - lastTapTime < 350){
+        if(scale>1) resetZoom(); else zoomToDefault();
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+      if(scale>1){
+        isPanning = true;
+        panStart = {x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY};
+      }
+    }
+  }, {passive:true});
+
+  img.addEventListener('touchmove', (e)=>{
+    if(e.touches.length===2 && lastDistance){
+      e.preventDefault();
+      const dist = getDistance(e.touches[0], e.touches[1]);
+      scale = Math.max(1, Math.min(5, scale * (dist/lastDistance)));
+      lastDistance = dist;
+      clampPan();
+      applyTransform();
+    } else if(e.touches.length===1 && isPanning && scale>1){
+      e.preventDefault();
+      panX = e.touches[0].clientX - panStart.x;
+      panY = e.touches[0].clientY - panStart.y;
+      clampPan();
+      applyTransform();
+    }
+  }, {passive:false});
+
+  img.addEventListener('touchend', (e)=>{
+    if(e.touches.length<2) lastDistance = null;
+    if(e.touches.length===0) isPanning = false;
+  });
+
+  // Mouse fallback for desktop testing: click-drag to pan, double-click to toggle zoom
+  let mouseDown = false, mouseStart = null, lastClickTime = 0;
+  img.addEventListener('mousedown', (e)=>{
+    const now = Date.now();
+    if(now - lastClickTime < 350){
+      if(scale>1) resetZoom(); else zoomToDefault();
+    }
+    lastClickTime = now;
+    if(scale>1){ mouseDown = true; mouseStart = {x:e.clientX-panX, y:e.clientY-panY}; }
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if(mouseDown && scale>1){
+      panX = e.clientX - mouseStart.x;
+      panY = e.clientY - mouseStart.y;
+      clampPan();
+      applyTransform();
+    }
+  });
+  window.addEventListener('mouseup', ()=>{ mouseDown = false; });
 }
 async function render(){
   const app = document.getElementById('app');
@@ -1682,6 +1762,58 @@ const DEST_KEYWORDS = {
   kreta: ['Kreta','Crete','Heraklion','Chania']
 };
 const KNOWN_AIRLINES = ['Lufthansa','TAP Portugal','TAP Air','TAP','AIDA','Condor','Eurowings','Ryanair','easyJet','SAS','Norwegian Air','Icelandair','Swiss','Austrian Airlines','KLM','Air France','Vueling','Binter Canarias'];
+const MONTH_ABBR = {jan:1,feb:2,mar:3,mär:3,maer:3,apr:4,may:5,mai:5,jun:6,jul:7,aug:8,sep:9,oct:10,okt:10,nov:11,dec:12,dez:12};
+function parseFlexibleDate(text){
+  let m = text.match(/\b(\d{1,2})([A-Z]{3})(\d{2,4})\b/);
+  if(m && MONTH_ABBR[m[2].toLowerCase()]){
+    const mon = MONTH_ABBR[m[2].toLowerCase()];
+    let year = m[3];
+    if(year.length===2) year = (parseInt(year,10)<50?'20':'19')+year;
+    return `${year}-${String(mon).padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  }
+  m = text.match(/\b(\d{1,2})\.\s*([A-Za-zäÄ]{3,12})\.?\s*(\d{4})\b/);
+  if(m){
+    const mon = MONTH_ABBR[m[2].toLowerCase().slice(0,3)];
+    if(mon) return `${m[3]}-${String(mon).padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  }
+  m = text.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b/);
+  if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+  return '';
+}
+function parseFlightTicketText(text){
+  const result = {airline:'', flightNumber:'', date:'', from:'', to:'', departTime:'', arriveTime:'', passengerName:'', seat:'', bookingCode:''};
+  result.date = parseFlexibleDate(text);
+  const airlineMatch = KNOWN_AIRLINES.find(a=>text.toLowerCase().includes(a.toLowerCase()));
+  if(airlineMatch) result.airline = airlineMatch;
+  const flightMatch = text.match(/\b([A-Z]{2})\s?(\d{2,4})\b/);
+  if(flightMatch) result.flightNumber = flightMatch[1]+flightMatch[2];
+  const routeMatch = text.match(/\b([A-Z]{3})\s*[-–]\s*([A-Z]{3})\b/);
+  if(routeMatch){ result.from = routeMatch[1]; result.to = routeMatch[2]; }
+  const seatMatch = text.match(/Seat[:\s]+(\d{1,3}\s?[A-Za-z])/i) || text.match(/Sitz(?:platz)?[:\s]+(\d{1,3}\s?[A-Za-z])/i);
+  if(seatMatch) result.seat = seatMatch[1].replace(/\s/g,'');
+  const passengerMatch = text.match(/Passenger[:\s]+([A-Za-z]+\/[A-Za-z\s]+)/i)
+    || text.match(/Passagier[:\s]+([A-Za-zÄÖÜäöüß\s]+)/i)
+    || text.match(/\b([A-Z][a-z]+\/[A-Z][a-z]+(?:\s[A-Za-z]+)?)\b/);
+  if(passengerMatch) result.passengerName = passengerMatch[1].trim().replace(/\s{2,}/g,' ');
+  const codeMatch = text.match(/(?:Buchungscode|Booking\s*ref(?:erence)?|PNR|Bestätigungsnummer|Confirmation(?:\s*number)?)[:\s]+([A-Z0-9]{4,8})/i);
+  if(codeMatch) result.bookingCode = codeMatch[1];
+  const timeMatches = [...text.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)].map(mm=>mm[0]);
+  if(timeMatches[0]) result.departTime = timeMatches[0];
+  if(timeMatches[1]) result.arriveTime = timeMatches[1];
+  return result;
+}
+function parseActivityTicketText(text){
+  const result = {date:'', time:'', bookingCode:''};
+  result.date = parseFlexibleDate(text);
+  const timeMatches = [...text.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)].map(mm=>mm[0]);
+  if(timeMatches[0]) result.time = timeMatches[0];
+  const gygMatch = text.match(/\bGYG[A-Z0-9]{6,10}\b/);
+  const genericCodeMatch = text.match(/(?:Voucher|Ticket-?(?:Nr\.?|Nummer|ID)|Referenz|Booking\s*ID)[:\s]+([A-Z0-9]{4,12})/i);
+  result.bookingCode = gygMatch ? gygMatch[0] : (genericCodeMatch ? genericCodeMatch[1] : '');
+  return result;
+}
 async function extractPdfText(file){
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
@@ -2495,18 +2627,19 @@ async function onNewTicketFileSelected(file){
   try{
     const text = await extractTextFromAnyFile(file);
     if(!text){ showToast('Datei angehängt, es konnte aber nichts automatisch erkannt werden.'); return; }
-    const parsed = parseBookingText(text);
-    if(parsed.ticket){
-      if(parsed.ticket.airline) document.getElementById('new-ticket-airline').value = parsed.ticket.airline;
-      if(parsed.ticket.flightNumber) document.getElementById('new-ticket-flightnum').value = parsed.ticket.flightNumber;
-      if(parsed.ticket.bookingCode) document.getElementById('new-ticket-code').value = parsed.ticket.bookingCode;
-      if(parsed.ticket.departTime) document.getElementById('new-ticket-depart').value = parsed.ticket.departTime;
-      if(parsed.ticket.arriveTime) document.getElementById('new-ticket-arrive').value = parsed.ticket.arriveTime;
-      if(parsed.ticket.passengerName) document.getElementById('new-ticket-passenger').value = parsed.ticket.passengerName;
-      if(parsed.ticket.seat) document.getElementById('new-ticket-seat').value = parsed.ticket.seat;
-    }
-    if(parsed.dateFrom) document.getElementById('new-ticket-date').value = parsed.dateFrom;
-    showToast('Felder automatisch befüllt – bitte prüfen.');
+    const parsed = parseFlightTicketText(text);
+    if(parsed.airline) document.getElementById('new-ticket-airline').value = parsed.airline;
+    if(parsed.flightNumber) document.getElementById('new-ticket-flightnum').value = parsed.flightNumber;
+    if(parsed.date) document.getElementById('new-ticket-date').value = parsed.date;
+    if(parsed.from) document.getElementById('new-ticket-from').value = parsed.from;
+    if(parsed.to) document.getElementById('new-ticket-to').value = parsed.to;
+    if(parsed.departTime) document.getElementById('new-ticket-depart').value = parsed.departTime;
+    if(parsed.arriveTime) document.getElementById('new-ticket-arrive').value = parsed.arriveTime;
+    if(parsed.passengerName) document.getElementById('new-ticket-passenger').value = parsed.passengerName;
+    if(parsed.seat) document.getElementById('new-ticket-seat').value = parsed.seat;
+    if(parsed.bookingCode) document.getElementById('new-ticket-code').value = parsed.bookingCode;
+    const foundAny = parsed.airline||parsed.flightNumber||parsed.date||parsed.from||parsed.seat||parsed.bookingCode;
+    showToast(foundAny ? 'Felder automatisch befüllt – bitte prüfen.' : 'Datei angehängt, es konnte aber wenig erkannt werden.');
   }catch(e){
     showToast('Datei angehängt, automatische Erkennung ist fehlgeschlagen.');
   }
@@ -2516,11 +2649,12 @@ async function onNewActivityFileSelected(file){
   try{
     const text = await extractTextFromAnyFile(file);
     if(!text){ showToast('Datei angehängt, es konnte aber nichts automatisch erkannt werden.'); return; }
-    const parsed = parseBookingText(text);
-    if(parsed.dateFrom) document.getElementById('new-activity-date').value = parsed.dateFrom;
-    if(parsed.ticket && parsed.ticket.departTime) document.getElementById('new-activity-time').value = parsed.ticket.departTime;
-    if(parsed.ticket && parsed.ticket.bookingCode) document.getElementById('new-activity-code').value = parsed.ticket.bookingCode;
-    showToast('Felder automatisch befüllt (soweit erkennbar) – bitte prüfen.');
+    const parsed = parseActivityTicketText(text);
+    if(parsed.date) document.getElementById('new-activity-date').value = parsed.date;
+    if(parsed.time) document.getElementById('new-activity-time').value = parsed.time;
+    if(parsed.bookingCode) document.getElementById('new-activity-code').value = parsed.bookingCode;
+    const foundAny = parsed.date||parsed.time||parsed.bookingCode;
+    showToast(foundAny ? 'Datum/Uhrzeit/Code automatisch befüllt (soweit erkannt) – Bezeichnung und Ort bitte selbst eintragen.' : 'Datei angehängt, es konnte aber wenig erkannt werden.');
   }catch(e){
     showToast('Datei angehängt, automatische Erkennung ist fehlgeschlagen.');
   }
@@ -2838,7 +2972,7 @@ function renderLightbox(){
     <div class="lightbox-fullscreen-overlay" data-action="close-lightbox-fullscreen">
       <button type="button" class="lightbox-fs-close" data-action="close-lightbox-fullscreen">✕</button>
       <img src="${p.dataUrl}" class="lightbox-fullscreen-img" id="lightbox-fs-img" data-action="noop">
-      <div class="lightbox-fs-hint">Doppeltippen zum Zoomen</div>
+      <div class="lightbox-fs-hint">Zwei Finger zum Zoomen · Ziehen zum Verschieben · Doppeltippen für Schnellzoom</div>
     </div>` : '';
   return `
     <div class="lightbox-overlay" data-action="close-lightbox">
