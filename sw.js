@@ -1,7 +1,9 @@
-const CACHE_NAME = 'reisebaerchi-shell-v1';
+const CACHE_NAME = 'reisebaerchi-shell-v2';
 const APP_SHELL = [
   './',
   './index.html',
+  './icon-192.png',
+  './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
   'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
