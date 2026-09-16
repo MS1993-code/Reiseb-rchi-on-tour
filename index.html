@@ -17,7 +17,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F7F1E3;
+    --bg:#F0EADC;
     --surface:#FBF7EE;
     --surface-alt:#EDE3CC;
     --ink:#332C22;
@@ -64,7 +64,7 @@
   .mascot-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
   .mascot-fx .fx-muzzle,.mascot-fx .fx-lip,.mascot-fx .fx-lids,.mascot-fx .fx-hat{opacity:0;}
   .splash-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.35s ease;}
-  .splash-video{width:min(64vw,260px);height:auto;border-radius:var(--radius-lg);box-shadow:var(--shadow);object-fit:cover;}
+  .splash-video{width:min(64vw,260px);height:auto;object-fit:cover;mix-blend-mode:multiply;}
   .splash-title{margin-top:18px;font-size:21px;font-weight:700;color:var(--ink);font-family:Georgia, serif;letter-spacing:0.02em;}
   .splash-subtitle{margin-top:4px;font-size:13px;color:var(--ink-muted);}
   @keyframes mascotWobble{
@@ -170,21 +170,19 @@
   .dest-checkbox-row{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;}
   .dest-checkbox-row input{width:18px;height:18px;flex:0 0 auto;}
   .dest-list{padding:18px 0 30px;}
-  .dest-card{
-    position:relative;display:flex;align-items:center;gap:14px;
-    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-    padding:16px;margin:0 16px 12px;
-    box-shadow:var(--shadow);cursor:pointer;transition:opacity 0.15s ease;
-  }
-  .dest-card:active{opacity:0.85;}
-  .dest-flag{font-size:28px;flex:0 0 auto;}
-  .dest-flag-photo{width:52px;height:52px;border-radius:12px;background-size:cover;background-position:center;flex:0 0 auto;}
-  .dest-name{font-size:17px;font-weight:700;letter-spacing:-0.01em;}
-  .dest-meta{font-size:13px;color:var(--ink-muted);margin-top:2px;}
-  .dest-countdown{font-size:12px;color:var(--brass);font-weight:700;margin-top:5px;}
-  .dest-delete{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--ink-muted);font-size:14px;cursor:pointer;padding:5px;line-height:1;}
-  .dest-card-add{border-style:dashed;box-shadow:none;color:var(--ink-muted);}
-  .dest-card-add .dest-name{color:var(--ink-muted);font-weight:600;font-size:15px;}
+  .filter-pills{display:flex;gap:8px;overflow-x:auto;padding:0 16px 16px;-ms-overflow-style:none;scrollbar-width:none;}
+  .filter-pills::-webkit-scrollbar{display:none;}
+  .filter-pill{flex:0 0 auto;padding:9px 18px;border-radius:999px;background:var(--surface-alt);border:none;font-size:14px;font-weight:600;color:var(--ink-muted);white-space:nowrap;cursor:pointer;font-family:inherit;}
+  .filter-pill.active{background:var(--navy);color:#FBF7EE;}
+  .dest-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 16px;}
+  .dest-grid-card{position:relative;background:var(--surface);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;}
+  .dest-grid-photo{position:relative;aspect-ratio:1/0.92;background-size:cover;background-position:center;background-color:var(--surface-alt);}
+  .dest-grid-flag-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;}
+  .dest-grid-badge{position:absolute;top:8px;left:8px;background:rgba(251,247,238,0.92);color:var(--ink);font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;}
+  .dest-grid-body{padding:10px 12px 12px;}
+  .dest-grid-name{font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:-0.01em;}
+  .dest-grid-sub{font-size:12px;color:var(--ink-muted);margin-top:3px;}
+  .dest-delete{position:absolute;top:8px;right:8px;z-index:2;background:rgba(51,44,34,0.55);border:none;color:#fff;font-size:12px;cursor:pointer;padding:5px;line-height:1;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
 
   /* Destination view */
   .dest-header{background:var(--navy);color:var(--on-navy);padding:18px 20px 16px;display:flex;flex-direction:column;align-items:center;}
@@ -371,6 +369,13 @@
   .confirm-message{font-size:14px;color:var(--ink);}
   .confirm-inline-block{background:var(--surface-alt);border-radius:var(--radius);padding:16px;margin-top:14px;}
   .trip-row-confirm{flex-direction:column;align-items:stretch;gap:10px;}
+  .trip-hero-card{position:relative;margin:0 16px 14px;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:16/11;background-size:cover;background-position:center;background-color:var(--surface-alt);cursor:pointer;box-shadow:var(--shadow);}
+  .trip-hero-badge{position:absolute;top:12px;left:12px;background:rgba(251,247,238,0.92);color:var(--ink);font-size:12px;font-weight:600;padding:5px 13px;border-radius:999px;}
+  .trip-hero-delete{position:absolute;top:10px;right:10px;width:32px;height:32px;padding:0;border-radius:50%;background:rgba(51,44,34,0.55);color:#fff;border:none;font-size:14px;display:flex;align-items:center;justify-content:center;}
+  .trip-hero-overlay{position:absolute;left:0;right:0;bottom:0;padding:16px 16px 14px;background:linear-gradient(180deg,rgba(51,44,34,0) 0%,rgba(40,34,26,0.78) 78%);color:#FBF7EE;}
+  .trip-hero-title{font-family:var(--font-display);font-size:22px;font-weight:600;line-height:1.2;}
+  .trip-hero-meta{font-size:13px;opacity:0.92;margin-top:4px;}
+  .trip-hero-countdown{font-size:13px;font-weight:600;margin-top:2px;color:#F3DFA8;}
 
   .app-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--surface);color:var(--ink);padding:12px 20px;border-radius:22px;font-size:14px;max-width:88%;text-align:center;opacity:0;pointer-events:none;transition:opacity 0.25s,transform 0.25s;z-index:2000;box-shadow:var(--shadow);border:1px solid var(--border);}
   .app-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -709,7 +714,7 @@ let state = {
   addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false, editingDayId:null, editingGuideField:null, confirmingResetGuide:false,
   showHikingSearch:false, hikingSearchLoading:false, hikingSearchResults:null, hikingSearchPoiIndex:0, expandedGuideFields:[],
   trackingDestId:null, trackingRouteId:null, trackingStartTime:null, trackingPoints:[], trackingDistanceKm:0, trackingWatchId:null, trackingTimerInterval:null,
-  collapsedContinents:[], confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
+  destFilterContinent:'Alle', confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
   addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
   recipeId:null, editingRecipe:false, recipeImportDraft:null,
   userLocation:null, currentRoute:null, pendingMascotMood:null, isDraftTrip:false,
@@ -839,7 +844,7 @@ function showSplashThenRender(){
     } else {
       render();
     }
-  }, 2400);
+  }, 2900);
 }
 
 /* ---------- Navigation ---------- */
@@ -1364,7 +1369,7 @@ const RECIPE_CATEGORIES = ['Fleisch','Fisch','Vegetarisch','Pasta','Süß','Getr
 async function renderDestCard(d){
   const confirming = state.confirmingDelete && state.confirmingDelete.type==='dest' && state.confirmingDelete.id===d.id;
   if(confirming){
-    return `<div class="dest-card dest-card-confirm">
+    return `<div class="dest-grid-card dest-card-confirm">
       <div class="confirm-message">${d.flag} ${escapeHtml(d.name)} inkl. aller Inhalte wirklich löschen?</div>
       <div class="form-actions">
         <button type="button" class="btn btn-danger" data-action="do-delete" data-type="dest" data-id="${d.id}">Ja, löschen</button>
@@ -1373,23 +1378,26 @@ async function renderDestCard(d){
     </div>`;
   }
   const linkedTrip = getNextTripForDest(d.id);
-  let countdown = '';
+  let subLine = d.continent;
   if(linkedTrip){
     const days = daysUntil(linkedTrip.dateFrom);
-    countdown = `<div class="dest-countdown">${days===0 ? 'Reise beginnt heute!' : days+' Tage bis zur Reise'}</div>`;
+    subLine = days===0 ? 'Reise beginnt heute!' : days+' Tage bis zur Reise';
   }
   const coverPhotoId = await getDestCoverPhotoId(d.id);
   const photoUrl = coverPhotoId ? await loadPhotoDataUrl(coverPhotoId) : null;
-  const visualHtml = photoUrl
-    ? `<div class="dest-flag-photo" style="background-image:url('${photoUrl}')"></div>`
-    : `<div class="dest-flag">${d.flag}</div>`;
-  return `<div class="dest-card" data-action="open-dest" data-id="${d.id}">
+  const photoInner = photoUrl
+    ? `style="background-image:url('${photoUrl}')"`
+    : '';
+  const fallbackFlag = photoUrl ? '' : `<div class="dest-grid-flag-fallback">${d.flag}</div>`;
+  return `<div class="dest-grid-card" data-action="open-dest" data-id="${d.id}">
     <button type="button" class="dest-delete" data-action="ask-delete" data-type="dest" data-id="${d.id}" title="Ziel entfernen">✕</button>
-    ${visualHtml}
-    <div>
-      <div class="dest-name">${escapeHtml(d.name)}</div>
-      <div class="dest-meta">${d.lat.toFixed(2)}°, ${d.lng.toFixed(2)}°</div>
-      ${countdown}
+    <div class="dest-grid-photo" ${photoInner}>
+      ${fallbackFlag}
+      <div class="dest-grid-badge">${escapeHtml(d.continent)}</div>
+    </div>
+    <div class="dest-grid-body">
+      <div class="dest-grid-name">${escapeHtml(d.name)}</div>
+      <div class="dest-grid-sub">${escapeHtml(subLine)}</div>
     </div>
   </div>`;
 }
@@ -1399,6 +1407,14 @@ async function getDestCoverPhotoId(destId){
   }
   const linkedTrips = trips.filter(t=>t.destIds.includes(destId) && t.photoIds && t.photoIds.length);
   return linkedTrips.length ? linkedTrips[0].photoIds[0] : null;
+}
+function getTripStatusBadge(t){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const from = t.dateFrom ? new Date(t.dateFrom+'T00:00:00') : null;
+  const to = t.dateTo ? new Date(t.dateTo+'T00:00:00') : from;
+  if(from && to && today>=from && today<=to) return 'Unterwegs';
+  if(to && today>to) return 'Vergangen';
+  return 'Geplant';
 }
 async function renderTripRow(t){
   const confirming = state.confirmingDelete && state.confirmingDelete.type==='trip' && state.confirmingDelete.id===t.id;
@@ -1418,17 +1434,25 @@ async function renderTripRow(t){
     const destPhotoId = await getDestCoverPhotoId(linked[0].id);
     if(destPhotoId) photoUrl = await loadPhotoDataUrl(destPhotoId);
   }
-  const thumbHtml = photoUrl
-    ? `<div class="trip-row-thumb" style="background-image:url('${photoUrl}')"></div>`
-    : `<div class="trip-row-thumb trip-row-thumb-fallback">${linked.map(d=>d.flag).join(' ')||'🧳'}</div>`;
-  return `<div class="trip-row" data-action="edit-trip" data-id="${t.id}">
-    ${thumbHtml}
-    <div style="flex:1;min-width:0;">
-      <div class="trip-row-title">${escapeHtml(names)}</div>
-      <div class="trip-row-meta">${escapeHtml(formatDateRangeDe(t.dateFrom, t.dateTo))}</div>
-      <div class="trip-row-meta">${tripTypeIcon(t.type)} ${escapeHtml(t.type)}</div>
+  const badge = getTripStatusBadge(t);
+  let countdownLine = '';
+  if(!t.dateFrom){
+    countdownLine = 'Datum offen';
+  } else if(badge==='Geplant'){
+    const days = daysUntil(t.dateFrom);
+    countdownLine = days===0 ? 'Reise beginnt heute!' : `Noch ${days} Tage`;
+  } else if(badge==='Unterwegs'){
+    countdownLine = 'Reise läuft gerade';
+  }
+  const metaLine = t.dateFrom ? escapeHtml(formatDateRangeDe(t.dateFrom, t.dateTo)) : `${tripTypeIcon(t.type)} ${escapeHtml(t.type)}`;
+  return `<div class="trip-hero-card" data-action="edit-trip" data-id="${t.id}" style="${photoUrl?`background-image:url('${photoUrl}')`:''}">
+    <div class="trip-hero-badge">${badge}</div>
+    <button type="button" class="trip-hero-delete" data-action="ask-delete" data-type="trip" data-id="${t.id}">🗑️</button>
+    <div class="trip-hero-overlay">
+      <div class="trip-hero-title">${escapeHtml(names)}</div>
+      <div class="trip-hero-meta">${metaLine}</div>
+      ${countdownLine ? `<div class="trip-hero-countdown">${countdownLine}</div>` : ''}
     </div>
-    <button type="button" class="btn btn-danger" data-action="ask-delete" data-type="trip" data-id="${t.id}">🗑️</button>
   </div>`;
 }
 async function renderVergangeneReisen(){
@@ -1472,27 +1496,16 @@ function renderBackupView(){
 }
 async function renderZielauswahl(){
   const sorted = [...destinations].sort((a,b)=>a.name.localeCompare(b.name,'de'));
-  const groups = {};
-  CONTINENTS.forEach(c=>groups[c]=[]);
-  sorted.forEach(d=>{
-    const c = CONTINENTS.includes(d.continent) ? d.continent : 'Rest der Welt';
-    groups[c].push(d);
-  });
-  const groupsHtmlArray = await Promise.all(CONTINENTS.map(async continent=>{
-    const items = groups[continent];
-    if(!items.length) return '';
-    const collapsed = state.collapsedContinents.includes(continent);
-    const cards = (await Promise.all(items.map(renderDestCard))).join('');
-    return `
-      <div class="continent-group">
-        <div class="continent-header" data-action="toggle-continent" data-continent="${continent}">
-          <span>${continent} (${items.length})</span>
-          <span class="continent-caret">${collapsed?'▸':'▾'}</span>
-        </div>
-        ${collapsed? '' : `<div class="continent-items">${cards}</div>`}
-      </div>`;
-  }));
-  const groupsHtml = groupsHtmlArray.join('');
+  const presentContinents = CONTINENTS.filter(c=>sorted.some(d=>(CONTINENTS.includes(d.continent)?d.continent:'Rest der Welt')===c));
+  const filterOptions = ['Alle', ...presentContinents];
+  const active = filterOptions.includes(state.destFilterContinent) ? state.destFilterContinent : 'Alle';
+  const filtered = active==='Alle' ? sorted : sorted.filter(d=>(CONTINENTS.includes(d.continent)?d.continent:'Rest der Welt')===active);
+
+  const pillsHtml = filterOptions.map(opt=>`
+    <button type="button" class="filter-pill ${opt===active?'active':''}" data-action="filter-dest-continent" data-continent="${escapeHtml(opt)}">${escapeHtml(opt)}</button>
+  `).join('');
+
+  const cards = (await Promise.all(filtered.map(renderDestCard))).join('');
 
   const addForm = state.showAddDest ? `
     <div class="inline-form" style="margin:0 16px 14px;">
@@ -1523,15 +1536,11 @@ async function renderZielauswahl(){
       <div class="dest-header-title">Entdecken</div>
       <div class="dest-header-top" data-action="go-home">‹</div>
     </div>
-    <div class="dest-list">
-      ${groupsHtml}
-      ${addForm}
-      <div class="dest-card dest-card-add" data-action="show-add-dest" style="${state.showAddDest?'display:none;':''}">
-        <div class="dest-flag">➕</div>
-        <div class="dest-name">Neues Ziel</div>
-      </div>
-    </div>
-    <div style="height:calc(var(--tabbar-h) + 24px);"></div>
+    <div class="filter-pills">${pillsHtml}</div>
+    <div class="dest-grid">${cards}</div>
+    ${addForm}
+    <div style="height:calc(var(--tabbar-h) + 90px);"></div>
+    <button type="button" class="fab-button" data-action="show-add-dest" aria-label="Neues Ziel" style="${state.showAddDest?'display:none;':''}">+</button>
   `;
 }
 
@@ -5002,12 +5011,8 @@ async function onAppClick(e){
     case 'show-add-recipe': state.addingRecipe=true; render(); break;
     case 'cancel-add-recipe': state.addingRecipe=false; state.recipeImportDraft=null; render(); break;
     case 'confirm-add-recipe': await confirmAddRecipe(); break;
-    case 'toggle-continent':
-      if(state.collapsedContinents.includes(el.dataset.continent)){
-        state.collapsedContinents = state.collapsedContinents.filter(c=>c!==el.dataset.continent);
-      } else {
-        state.collapsedContinents = [...state.collapsedContinents, el.dataset.continent];
-      }
+    case 'filter-dest-continent':
+      state.destFilterContinent = el.dataset.continent;
       render();
       break;
     case 'go-zielauswahl': goToZielauswahl(); break;
