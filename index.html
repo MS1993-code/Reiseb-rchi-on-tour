@@ -157,6 +157,8 @@
   .bottom-nav{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;height:calc(var(--tabbar-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:500;box-shadow:0 -2px 10px rgba(51,44,34,0.07);}
   .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:var(--ink-muted);font-size:11px;font-weight:600;background:none;border:none;font-family:inherit;}
   .bottom-nav-item.active{color:var(--navy);}
+  .icon-inline{display:inline-flex;width:15px;height:15px;vertical-align:-2px;flex:0 0 auto;}
+  .icon-inline svg{width:100%;height:100%;display:block;}
   .bottom-nav-icon{width:22px;height:22px;line-height:1;}
   .bottom-nav-icon svg{width:100%;height:100%;display:block;}
   .fab-button{position:fixed;right:18px;bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px);width:56px;height:56px;border-radius:50%;background:var(--brass);color:var(--on-navy);display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1;box-shadow:0 6px 16px rgba(51,44,34,0.28);border:none;cursor:pointer;z-index:500;}
@@ -1105,6 +1107,41 @@ function setupImageZoomPan(img){
   });
   window.addEventListener('mouseup', ()=>{ mouseDown = false; });
 }
+function icon(path, viewBox, extra){
+  return `<span class="icon-inline" ${extra||''}><svg viewBox="0 0 ${viewBox} 512" fill="currentColor"><path d="${path}"/></svg></span>`;
+}
+const ICON = {
+  bookOpen: icon('M542.22 32.05c-54.8 3.11-163.72 14.43-230.96 55.59-4.64 2.84-7.27 7.89-7.27 13.17v363.87c0 11.55 12.63 18.85 23.28 13.49 69.18-34.82 169.23-44.32 218.7-46.92 16.89-.89 30.02-14.43 30.02-30.66V62.75c.01-17.71-15.35-31.74-33.77-30.7zM264.73 87.64C197.5 46.48 88.58 35.17 33.78 32.05 15.36 31.01 0 45.04 0 62.75V400.6c0 16.24 13.13 29.78 30.02 30.66 49.49 2.6 149.59 12.11 218.77 46.95 10.62 5.35 23.21-1.94 23.21-13.46V100.63c0-5.29-2.62-10.14-7.27-12.99z', 576),
+  map: icon('M566.6 9.4c-8.4-8.4-20.9-11.2-32.1-7.2L448 33.3 274.4 2.6c-8.7-1.5-17.6-.7-25.8 2.4L25.1 89.4C10 95.1 0 109.5 0 125.7V468c0 11 5.4 21.3 14.5 27.5s20.7 7.6 31 3.7L160 458.7l173.6 30.7c8.7 1.5 17.6.7 25.8-2.4l223.5-84.4c15.1-5.7 25.1-20.1 25.1-36.3V33.9c0-11-5.4-21.3-14.5-27.5zM192 74.6l128 22.6v340.2l-128-22.6V74.6zM48 132.9l112-42.3v339.9L48 472.7V132.9zM464 379.1l-112 42.3V81.5l112-42.3v339.9z', 576),
+  hiking: icon('M80.95 472.23c-4.28 17.16 6.14 34.53 23.28 38.81 2.61.66 5.22.95 7.8.95 14.33 0 27.37-9.7 31.02-24.23l25.24-100.97-52.78-52.78-34.56 138.22zm14.89-196.12L137 117c2.19-8.42-3.14-16.95-11.92-19.06-43.88-10.52-88.35 15.07-99.32 57.17L.49 253.24c-2.19 8.42 3.14 16.95 11.92 19.06l63.56 15.25c8.79 2.1 17.68-3.02 19.87-11.44zM368 160h-16c-8.84 0-16 7.16-16 16v16h-34.75l-46.78-46.78C243.38 134.11 228.61 128 212.91 128c-27.02 0-50.47 18.3-57.03 44.52l-26.92 107.72a32.012 32.012 0 008.42 30.39L224 397.25V480c0 17.67 14.33 32 32 32s32-14.33 32-32v-82.75c0-17.09-6.66-33.16-18.75-45.25l-46.82-46.82c.15-.5.49-.89.62-1.41l19.89-79.57 22.43 22.43c6 6 14.14 9.38 22.62 9.38h48v240c0 8.84 7.16 16 16 16h16c8.84 0 16-7.16 16-16V176c.01-8.84-7.15-16-15.99-16zM240 96c26.51 0 48-21.49 48-48S266.51 0 240 0s-48 21.49-48 48 21.49 48 48 48z', 384),
+  cloudSun: icon('M406.1 149.3C387.6 96.5 337.1 64 281.6 64c-59.3 0-113.5 37.4-131.7 89.9C61.5 164.4 0 232.8 0 314.3 0 397.4 68.6 464 152 464h280c66.3 0 120-53.7 120-120 0-71.1-56.6-127.6-125.9-134.7zM48 314.3c0-56.5 42.9-105.2 100.6-113.2l13.8-1.9 3.9-13.4c11.7-40.3 51.5-73.8 95.3-73.8 39.9 0 76.6 24.5 90.7 61.1l6 15.6 16.5 1c53.5 3.4 95.2 47.9 95.2 101.4 0 39.7-32.3 72-72 72H152c-57.3 0-104-46.7-104-104zM280 0c-13.3 0-24 10.7-24 24v40c0 13.3 10.7 24 24 24s24-10.7 24-24V24c0-13.3-10.7-24-24-24zM48 128c6.1 0 12.3-2.3 17-7l24-24c9.4-9.4 9.4-24.6 0-33.9-9.4-9.4-24.6-9.4-33.9 0l-24 24c-9.4 9.4-9.4 24.6 0 33.9 4.6 4.6 10.8 7 16.9 7z', 512),
+  listCheck: icon('M0 48C0 21.5 21.5 0 48 0H80c26.5 0 48 21.5 48 48V80c0 26.5-21.5 48-48 48H48C21.5 128 0 106.5 0 80V48zM192 64c0-17.7 14.3-32 32-32H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H224c-17.7 0-32-14.3-32-32zm0 192c0-17.7 14.3-32 32-32H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H224c-17.7 0-32-14.3-32-32zm0 192c0-17.7 14.3-32 32-32H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H224c-17.7 0-32-14.3-32-32zM0 240c0-26.5 21.5-48 48-48H80c26.5 0 48 21.5 48 48v32c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V240zM48 384H80c26.5 0 48 21.5 48 48v32c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V432c0-26.5 21.5-48 48-48z', 576),
+  language: icon('M0 128C0 92.7 28.7 64 64 64H256h48 32H480c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H336 304 256 64c-35.3 0-64-28.7-64-64V128zm123.7 39.9c-2-4.8-6.7-8-11.9-8s-9.9 3.1-11.9 8L59.3 284.9c-.4.9-.7 1.7-.9 2.6H32c-8.8 0-16 7.2-16 16s7.2 16 16 16H43c.1 0 .2 0 .3 0h47.4c.1 0 .2 0 .3 0h11c8.8 0 16-7.2 16-16s-7.2-16-16-16H91.3l14.3-34.3h55.3l14.3 34.3h-6.7c-8.8 0-16 7.2-16 16s7.2 16 16 16h11c.1 0 .2 0 .3 0h47.3c.1 0 .2 0 .3 0h11c8.8 0 16-7.2 16-16s-7.2-16-16-16H211.9c-.2-.9-.5-1.8-.9-2.6l-87.3-117zM118.9 235.7L136 194.7l17.1 41.1H118.9zM384 168v8c0 33.9-16.2 64-41.3 83.1 6 3.4 12.3 6.4 18.9 8.7l17.6 6.4c8.3 3 12.6 12.2 9.5 20.5s-12.2 12.6-20.5 9.5l-17.6-6.4c-13.8-5-26.4-12.2-37.4-21.1c-11.1 8.9-23.7 16.1-37.4 21.1l-17.6 6.4c-8.3 3-17.5-1.3-20.5-9.5s1.3-17.5 9.5-20.5l17.6-6.4c6.6-2.4 12.9-5.3 18.9-8.7C258.2 240 242 209.9 242 176v-8c0-8.8 7.2-16 16-16h48V136c0-8.8 7.2-16 16-16s16 7.2 16 16v16h48c8.8 0 16 7.2 16 16zm-64 79.3c17.4-13.9 28.5-33.4 30.9-55.3H289.1c2.4 21.9 13.5 41.4 30.9 55.3z', 512),
+  circleQuestion: icon('M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM169.8 165.3c7.9-22.3 29.1-37.3 52.8-37.3h58.3c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24V250.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1H222.6c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z', 512),
+  idCard: icon('M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM128 288a64 64 0 1 0 0-128 64 64 0 1 0 0 128zM80.9 385.9c-4.1 1.4-6.9 5.2-6.9 9.5c0 5.9 4.8 10.6 10.6 10.6H243.4c5.9 0 10.6-4.8 10.6-10.6c0-4.3-2.8-8.1-6.9-9.5c-16.1-5.4-33.1-11.9-52.4-11.9H133.3c-19.3 0-36.3 6.5-52.4 11.9zM352 128c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H352zm0 96c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H352z', 576),
+  calendar: icon('M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H64C28.7 64 0 92.7 0 128v16 48V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V192 144 128c0-35.3-28.7-64-64-64H336V24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H152V24zM48 192H400V448c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V192z', 448),
+  calendarDays: icon('M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H64C28.7 64 0 92.7 0 128v16 48V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V192 144 128c0-35.3-28.7-64-64-64H336V24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H152V24zM48 192H400V448c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V192zM120 256c-13.3 0-24 10.7-24 24v64c0 13.3 10.7 24 24 24h64c13.3 0 24-10.7 24-24V280c0-13.3-10.7-24-24-24H120z', 448),
+  ticket: icon('M64 64C28.7 64 0 92.7 0 128v64c0 8.8 7.4 15.7 15.7 18.6C34.5 217.1 48 235 48 256s-13.5 38.9-32.3 45.4C7.4 304.3 0 311.2 0 320v64c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V320c0-8.8-7.4-15.7-15.7-18.6C477.5 294.9 464 277 464 256s13.5-38.9 32.3-45.4c8.3-2.9 15.7-9.8 15.7-18.6V128c0-35.3-28.7-64-64-64H64z', 512),
+  euroSign: icon('M414.4 114.9c11.2-9 12.9-25.5 3.9-36.7s-25.5-12.9-36.7-3.9c-40.7 32.9-65.4 79.9-70.7 130.6H272c-13.3 0-24 10.7-24 24s10.7 24 24 24h35.8c-.1 2.7-.2 5.3-.2 8v16c0 2.7 .1 5.3 .2 8H272c-13.3 0-24 10.7-24 24s10.7 24 24 24h39.7c5.3 50.7 30 97.7 70.7 130.6c11.2 9 27.6 7.3 36.7-3.9s7.3-27.6-3.9-36.7c-27-21.8-45.1-51.8-51.9-84.9H392c13.3 0 24-10.7 24-24s-10.7-24-24-24H358.7c-.2-2.7-.3-5.3-.3-8V256c0-2.7 .1-5.3 .3-8H392c13.3 0 24-10.7 24-24s-10.7-24-24-24H363.5c6.8-33.1 24.9-63.1 51.9-84.9v-.2z', 512),
+  book: icon('M96 0C43 0 0 43 0 96V416c0 53 43 96 96 96H384h32c17.7 0 32-14.3 32-32s-14.3-32-32-32V384c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H384 96zm0 384H352v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16H336c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16zm16 48H336c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16z', 448),
+  camera: icon('M149.1 64.8L138.7 96H64C28.7 96 0 124.7 0 160V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64H373.3L362.9 64.8C356.4 45.2 338.1 32 317.4 32H194.6c-20.7 0-39 13.2-45.5 32.8zM256 192a96 96 0 1 1 0 192 96 96 0 1 1 0-192z', 512),
+  trash: icon('M135.2 17.7C140.6 6.8 151.7 0 163.8 0H284.2c12.1 0 23.2 6.8 28.6 17.7L320 32h96c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 96 0 81.7 0 64S14.3 32 32 32h96l7.2-14.3zM32 128H416V448c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V128zm96 64c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16z', 448),
+  pen: icon('M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z', 512),
+  floppyDisk: icon('M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V173.3c0-17-6.7-33.3-18.7-45.3L365.3 18.7C353.3 6.7 337 0 320 0H64zm0 96c0-17.7 14.3-32 32-32H288c17.7 0 32 14.3 32 32v64c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V128zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z', 448),
+  download: icon('M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V274.7l-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7V32zM64 352c-35.3 0-64 28.7-64 64v32c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V416c0-35.3-28.7-64-64-64H346.5l-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352H64zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z', 512),
+  locationDot: icon('M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z', 384),
+  magnifyingGlass: icon('M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z', 512),
+  volumeHigh: icon('M533.6 32.5C598.5 85.3 640 165.8 640 256s-41.5 170.8-106.4 223.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C557.5 398.2 592 331.2 592 256s-34.5-142.2-88.7-186.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM473.1 107c43.2 35.2 70.9 88.9 70.9 149s-27.7 113.8-70.9 149c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C475.3 341.3 496 301.1 496 256s-20.7-85.3-53.2-111.8c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM412.6 181.5C434.1 199.1 448 225.9 448 256s-13.9 56.9-35.4 74.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C393.1 284.4 400 271 400 256s-6.9-28.4-17.7-37.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM301.1 34.8C312.6 40 320 51.4 320 64V448c0 12.6-7.4 24-18.9 29.2s-25 3.1-34.4-5.3L131.8 352H64c-35.3 0-64-28.7-64-64V224c0-35.3 28.7-64 64-64h67.8L266.7 40.1c9.4-8.4 22.9-10.4 34.4-5.3z', 640),
+  link: icon('M579.8 267.7c56.5-56.5 56.5-148 0-204.5c-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6c31.5 31.5 31.5 82.5 0 114L422.3 334.8c-31.5 31.5-82.5 31.5-114 0c-27.9-27.9-31.5-71.8-8.6-103.8l1.1-1.6c10.3-14.4 6.9-34.4-7.4-44.6s-34.4-6.9-44.6 7.4l-1.1 1.6C206.5 251.2 213 330 263 380c56.5 56.5 148 56.5 204.5 0L579.8 267.7zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5c50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5L217.7 177.2c31.5-31.5 82.5-31.5 114 0c27.9 27.9 31.5 71.8 8.6 103.9l-1.1 1.6c-10.3 14.4-6.9 34.4 7.4 44.6s34.4 6.9 44.6-7.4l1.1-1.6C433.5 260.8 427 182 377 132c-56.5-56.5-148-56.5-204.5 0L60.2 244.3z', 640),
+  lightbulb: icon('M272 384c9.6-31.9 29.5-59.1 49.2-86.2c0 0 0 0 0 0c5.2-7.1 10.4-14.2 15.4-21.4c19.8-28.5 31.4-63 31.4-100.3C368 78.8 289.2 0 192 0S16 78.8 16 176c0 37.3 11.6 71.9 31.4 100.3c5 7.2 10.2 14.3 15.4 21.4c0 0 0 0 0 0c19.8 27.1 39.7 54.4 49.2 86.2H272zM192 512c44.2 0 80-35.8 80-80V416H112v16c0 44.2 35.8 80 80 80zM112 176c0 8.8-7.2 16-16 16s-16-7.2-16-16c0-61.9 50.1-112 112-112c8.8 0 16 7.2 16 16s-7.2 16-16 16c-44.2 0-80 35.8-80 80z', 384),
+  file: icon('M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128z', 384),
+  paperclip: icon('M43.1 342.6c-14.6-14.6-14.6-38.2 0-52.7L246.4 86.6c30.5-30.5 80-30.5 110.5 0s30.5 80 0 110.5L200.3 353.7c-11.6 11.6-30.5 11.6-42.1 0s-11.6-30.5 0-42.1L302.7 167.1c6.2-6.2 6.2-16.4 0-22.6s-16.4-6.2-22.6 0L135.6 289c-24.6 24.6-24.6 64.6 0 89.2s64.6 24.6 89.2 0L380.3 222.7c43.1-43.1 43.1-113 0-156.1s-113-43.1-156.1 0L20.9 267.1c-27.3 27.3-27.3 71.7 0 99s71.7 27.3 99 0L311.1 174.9c6.2-6.2 6.2-16.4 0-22.6s-16.4-6.2-22.6 0L97.3 343.5c-14.9 14.9-39.1 14.9-54 0z', 448),
+  suitcase: icon('M184 48H328c4.4 0 8 3.6 8 8V96H176V56c0-4.4 3.6-8 8-8zm-56 8V96H64C28.7 96 0 124.7 0 160v96H512V160c0-35.3-28.7-64-64-64H384V56c0-30.9-25.1-56-56-56H184c-30.9 0-56 25.1-56 56zM512 288H0V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V288z', 512),
+  city: icon('M480 448V32c0-17.7-14.3-32-32-32H272c-17.7 0-32 14.3-32 32V128H160c-17.7 0-32 14.3-32 32v96H64c-17.7 0-32 14.3-32 32V448H0v32H512V448H480zm-320-32H96V336h64v80zm0-128H96V208h64v80zm128 128H224V336h64v80zm0-128H224V208h64v80zm128 0H352V208h64v80zm0-128H352V80h64v80zm0 256H352V336h64v80z', 512),
+  car: icon('M135.2 117.4L109.1 192H402.9l-26.1-74.6C372.3 104.6 360.2 96 346.6 96H165.4c-13.6 0-25.7 8.6-30.2 21.4zM39.6 196.8L74.8 96.3C88.3 57.8 124.6 32 165.4 32H346.6c40.8 0 77.1 25.8 90.6 64.3l35.2 100.5c23.2 9.6 39.6 32.5 39.6 59.2V400v48c0 17.7-14.3 32-32 32H448c-17.7 0-32-14.3-32-32V400H96v48c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V400 256c0-26.7 16.4-49.6 39.6-59.2zM128 288a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm288 32a32 32 0 1 0 0-64 32 32 0 1 0 0 64z', 512),
+  umbrellaBeach: icon('M292.4 32.5c9.9-4.7 13-17.2 5.3-25C280.9 .2 255 0 231.4 0c-30.4 0-58.5 10-81 26.9C129.9 45.8 128 78.6 128 112c0 6.9 .1 13.5 .2 19.8c-1.5-6.4-3.6-13-6.5-19.5C107.5 79.5 79.5 61.8 51.7 61.8c-13.3 0-23.2 12.7-19.5 25.5c8.9 30.6 32.1 55.1 62.3 65.9c15.3 5.5 30.8 6.5 44.5 3.7C129.6 174.6 128 192.9 128 208c0 8.5 .5 16.5 1.5 24.1C67.9 264.5 24 328.9 24 400v88c0 13.3 10.7 24 24 24s24-10.7 24-24V400c0-53.1 30.5-98.9 75-121.5C161.4 322.4 200.4 352 244.7 352c48.6 0 90.1-35.6 96.9-83.7c1.3-9.2-6.6-16.3-15.9-16.3H201.3c-9.3 0-17.2 7.1-15.9 16.3c1.1 7.8 3.5 15.3 7 22.1C167.2 285.8 152 302.2 152 320V400c0-71.1-43.9-135.5-105.5-167.9C47.5 224.5 48 216.5 48 208c0-15.1-1.6-33.4-5.5-58.6c13.7 2.8 29.2 1.8 44.5-3.7c30.2-10.8 53.4-35.3 62.3-65.9C152.9 66.9 143.1 54.2 129.7 54.2c-27.8 0-55.8 17.7-70 51.7c-2.9 6.5-5 13.1-6.5 19.5C53.1 119.1 53 112.5 53 105.6c0-33.4-1.9-66.2 22.4-85.1C98 3.6 126.1-6.5 156.6-6.5', 384),
+  ship: icon('M177.4 5.3c-6.1-7-15-11.1-24.4-11.1s-18.3 4.1-24.4 11.1L88.9 51.9C77 65.5 64.2 78.1 50.6 89.7L20.5 115.4C7.5 126.5 0 142.8 0 160V320c0 88.4 71.6 160 160 160h60.3c46.9 0 93.1-10.5 135.4-30.7l114.4-54.9c15.4-7.4 27.7-19.9 34.7-35.6l19.4-43.5c8.2-18.4-.1-40-18.5-48.1s-40 .1-48.1 18.5l-19.4 43.5c-1.7 3.9-4.7 7-8.5 8.8l-38.1 18.3V160c0-17.2-7.5-33.5-20.5-44.6l-30.1-25.7c-13.6-11.6-26.4-24.2-38.3-37.8L177.4 5.3zM160 320c-35.3 0-64-28.7-64-64V177.1c9.4-8.9 18.5-18.1 27.4-27.5l24.5-26.2 26.6 30.5c5.1 5.8 10.5 11.4 16.1 16.7L160 320zm144-16c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V240c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v64zm-448 96c-8.8 0-16 7.2-16 16v16c0 53 43 96 96 96H480c53 0 96-43 96-96V416c0-8.8-7.2-16-16-16H16c-8.8 0-16 7.2-16 16z', 576),
+};
 const NAV_ICONS = {
   home:'<svg viewBox="0 0 576 512" fill="currentColor"><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>',
   zielauswahl:'<svg viewBox="0 0 512 512" fill="currentColor"><path d="M256 512c141.4 0 256-114.6 256-256S397.4 0 256 0 0 114.6 0 256s114.6 256 256 256zm50.7-186.9-144.3 55.5c-19.4 7.5-38.5-11.6-31-31l55.5-144.3c3.3-8.5 9.9-15.1 18.4-18.4l144.3-55.5c19.4-7.5 38.5 11.6 31 31l-55.5 144.3c-3.2 8.5-9.9 15.1-18.4 18.4zM288 256c0-17.7-14.3-32-32-32s-32 14.3-32 32 14.3 32 32 32 32-14.3 32-32z"/></svg>',
@@ -1127,8 +1164,24 @@ function renderBottomNav(){
         </button>`).join('')}
     </div>`;
 }
+let appHistoryDepth = 0;
+window.addEventListener('popstate', ()=>{
+  if(appHistoryDepth>0){
+    appHistoryDepth = 0;
+    if(state.view==='recipe'){ goToKochbuch(); }
+    else { goHome(); }
+  }
+  // Bereits auf einer Hauptseite: normales Verhalten zulassen (App schließt/geht zurück, wie erwartet).
+});
 async function render(){
   const app = document.getElementById('app');
+  const isDeepView = !!(state.destId || state.tripId || state.view==='recipe');
+  if(isDeepView && appHistoryDepth===0){
+    history.pushState({appDeep:true}, '', '');
+    appHistoryDepth = 1;
+  } else if(!isDeepView && appHistoryDepth>0){
+    appHistoryDepth = 0;
+  }
   if(state.view==='home'){
     app.innerHTML = await renderHomeDashboard() + renderBottomNav();
     loadHomeWeatherWidget();
@@ -1174,8 +1227,8 @@ async function render(){
 
 /* ---------- Home dashboard ---------- */
 function tripTypeIcon(type){
-  const map = {'Städtetrip':'🏙️','Rundreise':'🚗','Strandurlaub':'🏖️','Schiffsreise':'🚢'};
-  return map[type] || '🧳';
+  const map = {'Städtetrip':ICON.city,'Rundreise':ICON.car,'Strandurlaub':ICON.umbrellaBeach,'Schiffsreise':ICON.ship};
+  return map[type] || ICON.suitcase;
 }
 function getNextTrip(){
   const today = new Date(); today.setHours(0,0,0,0);
@@ -1337,7 +1390,7 @@ async function renderHomeDashboard(){
   const nextTrip = getNextTrip();
   let cardInner = `
     <div class="countdown-empty">
-      <div class="countdown-empty-icon">🧳</div>
+      <div class="countdown-empty-icon">${ICON.suitcase}</div>
       <div>Noch keine Reise geplant.</div>
     </div>`;
   if(nextTrip){
@@ -1349,7 +1402,7 @@ async function renderHomeDashboard(){
     if(!img && linkedDests.length) img = await getDestStaticPhotoPath(linkedDests[0]);
     const imageHtml = img
       ? `<div class="countdown-image" style="background-image:url('${img}')"></div>`
-      : `<div class="countdown-image countdown-image-fallback">${linkedDests.map(d=>d.flag).join(' ') || '🧳'}</div>`;
+      : `<div class="countdown-image countdown-image-fallback">${linkedDests.map(d=>d.flag).join(' ') || ICON.suitcase}</div>`;
     const durationDays = calcDurationDays(nextTrip.dateFrom, nextTrip.dateTo);
     let weatherHtml = '';
     if(linkedDests.length){
@@ -1512,7 +1565,7 @@ async function renderTripRow(t){
   const metaLine = t.dateFrom ? escapeHtml(formatDateRangeDe(t.dateFrom, t.dateTo)) : `${tripTypeIcon(t.type)} ${escapeHtml(t.type)}`;
   return `<div class="trip-hero-card" data-action="edit-trip" data-id="${t.id}" style="${photoUrl?`background-image:url('${photoUrl}')`:''}">
     <div class="trip-hero-badge">${badge}</div>
-    <button type="button" class="trip-hero-delete" data-action="ask-delete" data-type="trip" data-id="${t.id}">🗑️</button>
+    <button type="button" class="trip-hero-delete" data-action="ask-delete" data-type="trip" data-id="${t.id}">${ICON.trash}</button>
     <div class="trip-hero-overlay">
       <div class="trip-hero-title">${escapeHtml(names)}</div>
       <div class="trip-hero-meta">${metaLine}</div>
@@ -1528,19 +1581,19 @@ function renderBackupView(){
       <div class="dest-header-top" data-action="go-home">‹</div>
     </div>
     <div class="panel">
-      <h3 class="section-title">📖 Reiseführer &amp; Rezepte</h3>
+      <h3 class="section-title">${ICON.bookOpen} Reiseführer &amp; Rezepte</h3>
       <p class="hint-text" style="margin-top:0;">Sichert alle Reiseziele (Reiseführer-Texte, Karten, Routen, Wanderrouten, Listen, Sprache, FAQ) und alle Rezepte in einer Datei. Beim Einlesen wird dieser Bereich komplett ersetzt – deine Reisen bleiben unberührt.</p>
       <div style="display:flex;gap:10px;">
-        <button type="button" class="btn btn-add" data-action="export-guides-backup" style="flex:1;">💾 Sichern</button>
-        <button type="button" class="btn" data-action="trigger-guides-import" style="flex:1;">📥 Einlesen</button>
+        <button type="button" class="btn btn-add" data-action="export-guides-backup" style="flex:1;">${ICON.floppyDisk} Sichern</button>
+        <button type="button" class="btn" data-action="trigger-guides-import" style="flex:1;">${ICON.download} Einlesen</button>
       </div>
       <input type="file" id="guides-import-input" accept=".json,application/json" style="display:none">
 
-      <h3 class="section-title" style="margin-top:32px;">🧳 Meine Reisen</h3>
+      <h3 class="section-title" style="margin-top:32px;">${ICON.suitcase} Meine Reisen</h3>
       <p class="hint-text" style="margin-top:0;">Sichert alle deine Reisen (Termine, Tagesplaner, Budget, Tickets, Tagebuch, Fotos) in einer Datei. Beim Einlesen wird dieser Bereich komplett ersetzt – Reiseführer und Rezepte bleiben unberührt.</p>
       <div style="display:flex;gap:10px;">
-        <button type="button" class="btn btn-add" data-action="export-trips-backup" style="flex:1;">💾 Sichern</button>
-        <button type="button" class="btn" data-action="trigger-trips-import" style="flex:1;">📥 Einlesen</button>
+        <button type="button" class="btn btn-add" data-action="export-trips-backup" style="flex:1;">${ICON.floppyDisk} Sichern</button>
+        <button type="button" class="btn" data-action="trigger-trips-import" style="flex:1;">${ICON.download} Einlesen</button>
       </div>
       <input type="file" id="trips-import-input" accept=".json,application/json" style="display:none">
     </div>
@@ -1630,7 +1683,7 @@ function renderRecipeAddForm(){
 }
 function renderRecipeCard(r){
   const dest = destinations.find(d=>d.id===r.destId);
-  const flag = dest ? dest.flag : '🍽️';
+  const flag = dest ? dest.flag : ICON.utensils;
   const destName = dest ? dest.name : 'Unbekanntes Ziel';
   return `<div class="recipe-card" data-action="open-recipe" data-id="${r.id}">
     <div class="recipe-card-header">
@@ -1659,7 +1712,7 @@ async function openRecipeDetail(id){
 function renderRecipeDetail(){
   const r = recipes.find(x=>x.id===state.recipeId);
   const dest = destinations.find(d=>d.id===r.destId);
-  const flag = dest ? dest.flag : '🍽️';
+  const flag = dest ? dest.flag : ICON.utensils;
   const destName = dest ? dest.name : 'Unbekanntes Ziel';
   const confirming = state.confirmingDelete && state.confirmingDelete.type==='recipe' && state.confirmingDelete.id===r.id;
 
@@ -1723,8 +1776,8 @@ function renderRecipeDetail(){
       ${photoHtml}
       <div class="recipe-dest-tag" style="margin-top:14px;">${escapeHtml(destName)}</div>
       <div class="recipe-meta">${r.servings? `<span>${escapeHtml(r.servings)}</span>`:''}${r.time? `<span>${escapeHtml(r.time)}</span>`:''}</div>
-      ${ingredientsList? `<div class="recipe-section-title">🍅 Zutaten</div><ul class="recipe-list">${ingredientsList}</ul>`:''}
-      ${stepsList? `<div class="recipe-section-title">👨‍🍳 Zubereitung</div><ol class="recipe-list">${stepsList}</ol>`:''}
+      ${ingredientsList? `<div class="recipe-section-title">${ICON.utensils} Zutaten</div><ul class="recipe-list">${ingredientsList}</ul>`:''}
+      ${stepsList? `<div class="recipe-section-title">${ICON.book} Zubereitung</div><ol class="recipe-list">${stepsList}</ol>`:''}
     `;
   }
 
@@ -1854,7 +1907,7 @@ function renderKochbuch(){
   const addForm = state.addingRecipe ? renderRecipeAddForm() : `
     <div style="display:flex;gap:8px;margin:0 16px 14px;flex-wrap:wrap;">
       <button type="button" class="btn btn-add" data-action="show-add-recipe">+ Neues Rezept</button>
-      <button type="button" class="btn" data-action="trigger-recipe-file-upload">📄 Rezeptkarte importieren</button>
+      <button type="button" class="btn" data-action="trigger-recipe-file-upload">${ICON.file} Rezeptkarte importieren</button>
     </div>
     <input type="file" id="recipe-file-input" accept=".docx" style="display:none">`;
 
@@ -2191,8 +2244,8 @@ function renderTrip(){
   const dateRange = formatDateRangeDe(trip.dateFrom, trip.dateTo);
 
   const tabs = [
-    ['reisedaten','📅','Reisedaten'],['tagesplaner','🗓️','Tagesplaner'],['unterlagen','🎫','Unterlagen'],
-    ['budget','💶','Budget'],['tagebuch','📔','Tagebuch'],['bilder','📷','Bilder']
+    ['reisedaten',ICON.calendar,'Reisedaten'],['tagesplaner',ICON.calendarDays,'Tagesplaner'],['unterlagen',ICON.ticket,'Unterlagen'],
+    ['budget',ICON.euroSign,'Budget'],['tagebuch',ICON.book,'Tagebuch'],['bilder',ICON.camera,'Bilder']
   ];
   const activeTab = tabs.find(([key])=>key===state.tripTab) || tabs[0];
 
@@ -2206,15 +2259,15 @@ function renderTrip(){
 
   const draftBanner = state.isDraftTrip ? `
     <div class="draft-banner">
-      <span>📝 Noch nicht gespeichert</span>
+      <span>${ICON.pen} Noch nicht gespeichert</span>
       <div class="form-actions">
-        <button type="button" class="btn btn-add" data-action="save-draft-trip">💾 Speichern</button>
+        <button type="button" class="btn btn-add" data-action="save-draft-trip">${ICON.floppyDisk} Speichern</button>
         <button type="button" class="btn btn-danger" data-action="discard-draft-trip">Verwerfen</button>
       </div>
     </div>` : '';
 
   const linkedDestsForSidebar = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
-  const guideJumpTabs = [['wetter','⛅','Wetter'],['karte','🗺️','Karte'],['wanderrouten','🥾','Wanderrouten'],['sprache','🗣️','Sprache']];
+  const guideJumpTabs = [['wetter',ICON.cloudSun,'Wetter'],['karte',ICON.map,'Karte'],['wanderrouten',ICON.hiking,'Wanderrouten'],['sprache',ICON.language,'Sprache']];
   const guideJumpsHtml = linkedDestsForSidebar.length ? `
     <div class="toc-sidebar-title" style="margin-top:16px;">Aus dem Reiseführer</div>
     ${linkedDestsForSidebar.map(d=>`
@@ -2237,7 +2290,7 @@ function renderTrip(){
 
   return `
     <div class="dest-header">
-      <div class="dest-header-icon-row">${state.isDraftTrip ? `<span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span>` : (flags || '🧳')}</div>
+      <div class="dest-header-icon-row">${state.isDraftTrip ? `<span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span>` : (flags || ICON.suitcase)}</div>
       <div class="dest-header-title">${escapeHtml(title)}</div>
       <div class="dest-header-coords">${escapeHtml(dateRange)}</div>
       <div class="dest-header-top" data-action="go-home">‹</div>
@@ -2260,7 +2313,7 @@ function renderTripReisedatenTab(trip){
   const bucketlistHtml = renderTripBucketlistSection(trip);
 
   return `
-    <button type="button" class="btn" data-action="trigger-booking-upload" style="margin-bottom:6px;">📄 Aus Buchungsunterlagen befüllen</button>
+    <button type="button" class="btn" data-action="trigger-booking-upload" style="margin-bottom:6px;">${ICON.file} Aus Buchungsunterlagen befüllen</button>
     <p class="hint-text" style="margin-top:0;margin-bottom:18px;">PDF, Word oder Screenshot – Texterkennung bei Screenshots kann etwas dauern.</p>
     <input type="file" id="booking-file-input" accept=".pdf,.docx,image/*" style="display:none">
     <div class="field-group">
@@ -2367,7 +2420,7 @@ function renderTripBucketlistSection(trip){
       <div class="list-item ${it.checked?'checked':''}">
         <div class="checkbox ${it.checked?'checked':''}" data-action="toggle-guide-bucket-item" data-dest-id="${destId}" data-id="${it.id}">${it.checked?'✓':''}</div>
         <div class="list-item-text">${escapeHtml(it.text)}</div>
-        <button type="button" class="btn btn-danger" data-action="delete-guide-bucket-item" data-dest-id="${destId}" data-id="${it.id}">🗑️</button>
+        <button type="button" class="btn btn-danger" data-action="delete-guide-bucket-item" data-dest-id="${destId}" data-id="${it.id}">${ICON.trash}</button>
       </div>`).join('') : '<p class="empty-state">Noch keine Einträge.</p>';
     const addForm = state.addingList===('bucket:'+destId) ? `
       <div class="inline-form">
@@ -2410,7 +2463,7 @@ async function confirmAddGuideBucketItem(destId){
 /* --- Unterlagen tab (inkl. Flugticket- und Ausflugsticket-Wallet) --- */
 function renderTicketPhotoLink(t, listKey){
   return t.photoId
-    ? `<div class="ticket-photo-link" data-action="view-ticket-photo" data-photo-id="${t.photoId}" data-list="${listKey}" data-id="${t.id}">📎 Ticket-Foto ansehen</div>`
+    ? `<div class="ticket-photo-link" data-action="view-ticket-photo" data-photo-id="${t.photoId}" data-list="${listKey}" data-id="${t.id}">${ICON.paperclip} Ticket-Foto ansehen</div>`
     : `<div class="ticket-photo-link" data-action="add-ticket-photo" data-list="${listKey}" data-id="${t.id}">+ Foto/Screenshot hinzufügen</div>`;
 }
 function renderTicketCard(t){
@@ -2427,11 +2480,11 @@ function renderTicketCard(t){
       ${subLine? `<div class="ticket-sub">${subLine}</div>`:''}
       ${t.date? `<div class="ticket-sub">${formatDateDe(t.date)}</div>` : ''}
       ${timesHtml}
-      ${passengerLine? `<div class="ticket-sub">👤 ${passengerLine}</div>`:''}
+      ${passengerLine? `<div class="ticket-sub">${ICON.idCard} ${passengerLine}</div>`:''}
       ${renderTicketPhotoLink(t,'tickets')}
     </div>
     <div class="ticket-stub">${t.bookingCode? escapeHtml(t.bookingCode) : '—'}</div>
-    <button type="button" class="ticket-edit" data-action="edit-ticket" data-id="${t.id}">✏️</button>
+    <button type="button" class="ticket-edit" data-action="edit-ticket" data-id="${t.id}">${ICON.pen}</button>
     <button type="button" class="ticket-delete" data-action="delete-ticket" data-id="${t.id}">✕</button>
   </div>`;
 }
@@ -2477,7 +2530,7 @@ function renderActivityTicketCard(t){
       ${renderTicketPhotoLink(t,'activityTickets')}
     </div>
     <div class="ticket-stub">${t.bookingCode? escapeHtml(t.bookingCode) : '—'}</div>
-    <button type="button" class="ticket-edit" data-action="edit-ticket" data-id="${t.id}">✏️</button>
+    <button type="button" class="ticket-edit" data-action="edit-ticket" data-id="${t.id}">${ICON.pen}</button>
     <button type="button" class="ticket-delete" data-action="delete-activity-ticket" data-id="${t.id}">✕</button>
   </div>`;
 }
@@ -2514,7 +2567,7 @@ function getRouteDays(route){
 }
 function renderDayImportPanel(trip){
   if(!state.showDayImport){
-    return `<button type="button" class="btn" data-action="toggle-day-import">📥 Aus Reiseführer importieren</button>`;
+    return `<button type="button" class="btn" data-action="toggle-day-import">${ICON.download} Aus Reiseführer importieren</button>`;
   }
   const linkedDests = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
   if(!linkedDests.length){
@@ -2608,7 +2661,7 @@ function renderTripTagesplanerTab(trip){
       <div class="day-card">
         <div class="day-card-title">Tag ${idx+1} – ${dateLabel}</div>
         <div class="day-plan-box">${day.ort? `<div style="font-weight:700;margin-bottom:6px;">${escapeHtml(day.ort)}</div>`:''}${day.plan ? escapeHtml(day.plan).replace(/\n/g,'<br>') : '<span class="hint-text">Noch kein Plan für diesen Tag.</span>'}</div>
-        <button type="button" class="btn" data-action="edit-day" data-id="${day.id}" style="margin-top:10px;">✏️ Bearbeiten</button>
+        <button type="button" class="btn" data-action="edit-day" data-id="${day.id}" style="margin-top:10px;">${ICON.pen} Bearbeiten</button>
       </div>`;
   }).join('');
   return `${importPanel}<div style="margin-top:16px;">${daysHtml}</div>`;
@@ -2706,7 +2759,7 @@ function renderTripUnterlagenTab(trip){
         <div class="doc-value">${escapeHtml(d.value)}</div>
         <div style="margin-top:6px;">${renderTripDocFileButton(d)}</div>
       </div>
-      <button type="button" class="btn btn-danger" data-action="delete-trip-doc" data-id="${d.id}">🗑️</button>
+      <button type="button" class="btn btn-danger" data-action="delete-trip-doc" data-id="${d.id}">${ICON.trash}</button>
     </div>`).join('') : '<p class="empty-state">Noch keine Unterlagen hinterlegt.</p>';
   const docForm = state.addingTripDoc ? `
     <div class="inline-form">
@@ -2724,7 +2777,7 @@ function renderTripUnterlagenTab(trip){
   const gygQuery = linkedDestNames.length ? linkedDestNames[0].name : '';
   const gygLink = gygQuery ? `
     <div style="margin:6px 0 14px;">
-      <a href="https://www.getyourguide.com/s/?q=${encodeURIComponent(gygQuery)}" target="_blank" rel="noopener" class="btn" style="text-decoration:none;display:inline-block;">🔗 Ausflüge bei GetYourGuide (${escapeHtml(gygQuery)})</a>
+      <a href="https://www.getyourguide.com/s/?q=${encodeURIComponent(gygQuery)}" target="_blank" rel="noopener" class="btn" style="text-decoration:none;display:inline-block;">${ICON.link} Ausflüge bei GetYourGuide (${escapeHtml(gygQuery)})</a>
     </div>` : '';
 
   return `
@@ -2964,14 +3017,14 @@ async function onTripDocFileSelected(file, docId){
 }
 function renderTripDocFileButton(d){
   if(!d.fileId){
-    return `<button type="button" class="btn" data-action="add-tripdoc-file" data-id="${d.id}" style="padding:6px 10px;font-size:12px;">📎 Datei anhängen</button>`;
+    return `<button type="button" class="btn" data-action="add-tripdoc-file" data-id="${d.id}" style="padding:6px 10px;font-size:12px;">${ICON.paperclip} Datei anhängen</button>`;
   }
   const f = photoCache[d.fileId];
   const isImage = f && f.dataUrl && f.dataUrl.startsWith('data:image');
   if(isImage){
-    return `<button type="button" class="btn" data-action="view-tripdoc-file" data-id="${d.id}" data-file-id="${d.fileId}" style="padding:6px 10px;font-size:12px;">📎 Ansehen</button>`;
+    return `<button type="button" class="btn" data-action="view-tripdoc-file" data-id="${d.id}" data-file-id="${d.fileId}" style="padding:6px 10px;font-size:12px;">${ICON.paperclip} Ansehen</button>`;
   }
-  return `<a href="${f?f.dataUrl:'#'}" download="${escapeHtml(f&&f.filename?f.filename:'Datei')}" class="btn" style="padding:6px 10px;font-size:12px;text-decoration:none;display:inline-block;">📎 ${escapeHtml(f&&f.filename?f.filename:'Datei öffnen')}</a>`;
+  return `<a href="${f?f.dataUrl:'#'}" download="${escapeHtml(f&&f.filename?f.filename:'Datei')}" class="btn" style="padding:6px 10px;font-size:12px;text-decoration:none;display:inline-block;">${ICON.paperclip} ${escapeHtml(f&&f.filename?f.filename:'Datei öffnen')}</a>`;
 }
 async function confirmAddTripDoc(){
   const label = document.getElementById('new-tripdoc-label').value.trim();
@@ -3001,7 +3054,7 @@ function renderTripTagebuchTab(trip){
   const list = entries.length ? entries.map(e=>`
     <div class="diary-entry">
       <div class="diary-date">${formatDateDe(e.date)}</div>
-      ${e.place? `<div class="diary-place">📍 ${escapeHtml(e.place)}</div>` : ''}
+      ${e.place? `<div class="diary-place">${ICON.locationDot} ${escapeHtml(e.place)}</div>` : ''}
       <div class="diary-text">${escapeHtml(e.text)}</div>
       <button type="button" class="btn btn-danger" data-action="delete-diary" data-id="${e.id}">Eintrag löschen</button>
     </div>`).join('') : '<p class="empty-state">Noch keine Einträge. Halte deine Reise-Erlebnisse fest.</p>';
@@ -3214,8 +3267,8 @@ function renderDestination(){
     </div>`;
 
   const tabs = [
-    ['guide','📖','Reiseführer'],['karte','🗺️','Karte'],['routen','🧭','Routen'],['wanderrouten','🥾','Wanderrouten'],['wetter','⛅','Wetter'],
-    ['listen','✅','Listen'],['sprache','🗣️','Sprache'],['faq','❓','FAQ'],['dokumente','🛂','Dokumente']
+    ['guide',ICON.bookOpen,'Reiseführer'],['karte',ICON.map,'Karte'],['routen',ICON.locationDot,'Routen'],['wanderrouten',ICON.hiking,'Wanderrouten'],['wetter',ICON.cloudSun,'Wetter'],
+    ['listen',ICON.listCheck,'Listen'],['sprache',ICON.language,'Sprache'],['faq',ICON.circleQuestion,'FAQ'],['dokumente',ICON.idCard,'Dokumente']
   ];
   const activeTab = tabs.find(([key])=>key===state.tab) || tabs[0];
 
@@ -3356,7 +3409,7 @@ function renderGuideTab(dd){
     const confirming = state.confirmingRevertGuide;
     return `
       ${coverSelector}
-      <div class="imported-guide-meta">📄 Importiert aus <strong>${escapeHtml(dd.guide.importedFileName||'Datei')}</strong> – Text ist automatisch übernommen und hier nicht bearbeitbar.</div>
+      <div class="imported-guide-meta">${ICON.file} Importiert aus <strong>${escapeHtml(dd.guide.importedFileName||'Datei')}</strong> – Text ist automatisch übernommen und hier nicht bearbeitbar.</div>
       <div class="imported-guide-text">${escapeHtml(dd.guide.importedText)}</div>
       ${confirming ? `
         <div class="confirm-inline-block">
@@ -3395,7 +3448,7 @@ function renderGuideTab(dd){
         ${expanded ? `
           <div class="guide-card-body">
             <div class="diary-text">${renderGuideCalloutText(value)}</div>
-            <button type="button" class="btn" data-action="edit-guide-field" data-field="${key}" style="margin-top:10px;">✏️ Bearbeiten</button>
+            <button type="button" class="btn" data-action="edit-guide-field" data-field="${key}" style="margin-top:10px;">${ICON.pen} Bearbeiten</button>
           </div>` : ''}
       </div>`;
   }).join('');
@@ -3403,7 +3456,7 @@ function renderGuideTab(dd){
     ${coverSelector}
     ${cards}
     <p class="hint-text">Fertige Routen findest du im Tab „Routen", häufige Fragen im Tab „FAQ", Bucketliste und Packliste im Tab „Listen". Rezepte aus „Essen &amp; Trinken" landen automatisch in der Kulinarischen Weltreise. Zeilen mit „Tipp:", „Geheimtipp:" oder „Achtung:" werden farbig hervorgehoben.</p>
-    <button type="button" class="btn" data-action="trigger-guide-file-upload">📄 Reiseführer-Datei importieren (.docx)</button>
+    <button type="button" class="btn" data-action="trigger-guide-file-upload">${ICON.file} Reiseführer-Datei importieren (.docx)</button>
     ${state.confirmingResetGuide ? `
       <div class="confirm-inline-block" style="margin-top:10px;">
         <div class="confirm-message">Wirklich alle Reiseführer-Felder, die Routen und die Listen (Packliste, Todos, Bucketliste) dieses Ziels leeren? FAQ, Sprache und Wanderrouten bleiben unberührt. Das kann nicht rückgängig gemacht werden.</div>
@@ -3412,7 +3465,7 @@ function renderGuideTab(dd){
           <button type="button" class="btn" data-action="cancel-reset-guide">Abbrechen</button>
         </div>
       </div>` : `
-      <button type="button" class="btn btn-danger" data-action="ask-reset-guide" style="margin-top:10px;">🗑️ Reiseführer zurücksetzen</button>`}
+      <button type="button" class="btn btn-danger" data-action="ask-reset-guide" style="margin-top:10px;">${ICON.trash} Reiseführer zurücksetzen</button>`}
     <input type="file" id="guide-file-input" accept=".docx" style="display:none">
   `;
 }
@@ -3424,27 +3477,27 @@ function renderKarteTab(dd){
       <div>
         <div class="poi-name">
           <span class="poi-geheimtipp-toggle ${p.geheimtipp?'active':''}" data-action="toggle-poi-geheimtipp" data-id="${p.id}" title="Als Geheimtipp markieren">🤫</span>
-          📍 ${escapeHtml(p.name)}
+          ${ICON.locationDot} ${escapeHtml(p.name)}
         </div>
         ${p.region? `<div class="poi-region">${escapeHtml(p.region)}</div>`:''}
         <div class="poi-desc">${escapeHtml(p.desc||'')}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
         <button type="button" class="btn btn-danger" data-action="delete-poi" data-id="${p.id}">Entfernen</button>
-        <button type="button" class="btn" data-action="show-route" data-id="${p.id}" style="padding:6px 12px;font-size:12px;">🧭 Route</button>
+        <button type="button" class="btn" data-action="show-route" data-id="${p.id}" style="padding:6px 12px;font-size:12px;">${ICON.map} Route</button>
       </div>
     </div>`).join('') : '<p class="empty-state">Noch keine Sehenswürdigkeiten eingetragen.</p>';
 
   const routeInfo = state.currentRoute ? `
     <div class="route-info-banner">
-      <span><span>🧭 ${state.currentRoute.distanceKm} km</span><span>ca. ${state.currentRoute.durationMin} Min.</span></span>
+      <span><span>${ICON.map} ${state.currentRoute.distanceKm} km</span><span>ca. ${state.currentRoute.durationMin} Min.</span></span>
       <button type="button" class="btn" data-action="clear-route" style="padding:6px 12px;font-size:12px;">Zurücksetzen</button>
     </div>` : '';
 
   return `
     <div id="leaflet-map" class="map-container"></div>
     <div class="map-tools-row">
-      <button type="button" class="btn" data-action="locate-me">📍 Mein Standort</button>
+      <button type="button" class="btn" data-action="locate-me">${ICON.locationDot} Mein Standort</button>
       ${state.userLocation ? '<span class="hint-text" style="margin:0;">Standort aktiv</span>' : ''}
     </div>
     ${routeInfo}
@@ -3454,11 +3507,11 @@ function renderKarteTab(dd){
       <button type="button" class="btn" data-action="search-poi">Suchen</button>
     </div>
     <div id="poi-search-results"></div>
-    <button type="button" class="btn" data-action="discover-nearby" style="margin:4px 0 8px;">🔍 In der Nähe entdecken</button>
+    <button type="button" class="btn" data-action="discover-nearby" style="margin:4px 0 8px;">${ICON.magnifyingGlass} In der Nähe entdecken</button>
     <div id="nearby-results"></div>
     <div id="poi-pending-container"></div>
     <div class="csv-upload-row">
-      <button type="button" class="btn" data-action="trigger-poi-csv-upload">📄 CSV importieren</button>
+      <button type="button" class="btn" data-action="trigger-poi-csv-upload">${ICON.file} CSV importieren</button>
       <input type="file" id="poi-csv-input" accept=".csv,text/csv" style="display:none">
     </div>
     <p class="hint-text">CSV-Format: Name, Breitengrad, Längengrad, Region, Beschreibung, Geheimtipp ja/nein (beides optional) – eine Zeile pro Ort.</p>
@@ -3528,7 +3581,7 @@ async function discoverNearby(){
     const items = (data.elements||[]).filter(el=>el.tags && el.tags.name);
     if(!items.length){ resultsEl.innerHTML = '<p class="hint-text">Nichts in der Nähe gefunden.</p>'; return; }
     resultsEl.innerHTML = items.slice(0,15).map(el=>{
-      const category = el.tags.amenity==='restaurant' ? '🍴' : (el.tags.tourism==='viewpoint' ? '🌄' : '📍');
+      const category = el.tags.amenity==='restaurant' ? '🍴' : (el.tags.tourism==='viewpoint' ? '🌄' : ICON.locationDot);
       return `<div class="poi-search-result">
         <div class="poi-search-name">${category} ${escapeHtml(el.tags.name)}</div>
         <button type="button" class="btn btn-add" data-action="add-searched-poi" data-lat="${el.lat}" data-lon="${el.lon}" data-name="${escapeHtml(el.tags.name)}" style="padding:6px 12px;font-size:12px;">+ Hinzufügen</button>
@@ -3654,7 +3707,7 @@ function initMap(dest, dd){
     if(state.userLocation){
       const um = L.circleMarker([state.userLocation.lat, state.userLocation.lng], {
         radius:8, color:'#3F9C97', fillColor:'#3F9C97', fillOpacity:0.9, weight:2
-      }).addTo(leafletMap).bindPopup('📍 Dein Standort');
+      }).addTo(leafletMap).bindPopup(`${ICON.locationDot} Dein Standort`);
       markers.push(um);
     }
     const boundsLayers = [...markers];
@@ -3806,7 +3859,7 @@ function renderHikingRouteForm(r){
       </select>
       <label class="field-label">Beschreibung</label>
       <textarea class="textarea" id="hr-description">${isEdit?escapeHtml(r.description||''):''}</textarea>
-      ${isEdit && r.gpxTrack && r.gpxTrack.length ? `<p class="hint-text">📍 GPX-Track vorhanden (${r.gpxTrack.length} Punkte)${r.elevationGain?', ca. '+r.elevationGain+' Hm Anstieg':''}.</p>` : ''}
+      ${isEdit && r.gpxTrack && r.gpxTrack.length ? `<p class="hint-text">${ICON.locationDot} GPX-Track vorhanden (${r.gpxTrack.length} Punkte)${r.elevationGain?', ca. '+r.elevationGain+' Hm Anstieg':''}.</p>` : ''}
       <div class="form-actions">
         <button type="button" class="btn btn-add" data-action="${isEdit?'confirm-edit-hiking-route':'confirm-add-hiking-route'}" data-id="${isEdit?r.id:''}">Speichern</button>
         <button type="button" class="btn" data-action="${isEdit?'cancel-edit-hiking-route':'cancel-add-hiking-route'}">Abbrechen</button>
@@ -3833,7 +3886,7 @@ function renderHikingRouteCard(r){
           <span>${escapeHtml(l.startTime)}–${escapeHtml(l.stopTime)} Uhr</span>
           <span>${l.durationMin} Min.</span>
           <span>${l.distanceKm} km</span>
-          <span class="hike-log-delete" data-action="delete-hike-log" data-route-id="${r.id}" data-log-id="${l.id}" title="Löschen">🗑️</span>
+          <span class="hike-log-delete" data-action="delete-hike-log" data-route-id="${r.id}" data-log-id="${l.id}" title="Löschen">${ICON.trash}</span>
         </div>`).join('')}
     </div>` : '';
   return `
@@ -3841,9 +3894,9 @@ function renderHikingRouteCard(r){
       <div class="diary-date">${escapeHtml(r.title)}</div>
       ${(r.distanceKm || r.durationText || r.difficulty || r.elevationGain) ? `
         <div class="route-meta">
-          ${r.distanceKm? `<span>📏 ${escapeHtml(String(r.distanceKm))} km</span>`:''}
+          ${r.distanceKm? `<span>${ICON.map} ${escapeHtml(String(r.distanceKm))} km</span>`:''}
           ${r.durationText? `<span>⏱️ ${escapeHtml(r.durationText)}</span>`:''}
-          ${r.difficulty? `<span>⛰️ ${escapeHtml(r.difficulty)}</span>`:''}
+          ${r.difficulty? `<span>${ICON.hiking} ${escapeHtml(r.difficulty)}</span>`:''}
           ${r.elevationGain? `<span>📈 ${r.elevationGain} Hm</span>`:''}
         </div>` : ''}
       ${r.description? `<div class="diary-text">${escapeHtml(r.description)}</div>`:''}
@@ -3859,7 +3912,7 @@ function renderHikingRouteCard(r){
 const GPS_WANDERATLAS_SLUGS = {kreta:'kreta', madeira:'madeira', sardinien:'sardinien'};
 function renderHikingSearchPanel(dd){
   if(!state.showHikingSearch){
-    return `<button type="button" class="btn" data-action="toggle-hiking-search">🔍 Wanderwege in der Nähe suchen</button>`;
+    return `<button type="button" class="btn" data-action="toggle-hiking-search">${ICON.magnifyingGlass} Wanderwege in der Nähe suchen</button>`;
   }
   const dest = getCurrentDest();
   const pois = dd.pois || [];
@@ -3877,7 +3930,7 @@ function renderHikingSearchPanel(dd){
         <button type="button" class="btn btn-add" data-action="import-searched-hiking-trail" data-id="${r.id}" style="padding:7px 10px;font-size:12px;">+ Importieren</button>
       </div>`).join('');
   }
-  const poiOptions = `<option value="mylocation" ${state.hikingSearchPoiIndex==='mylocation'?'selected':''}>📍 Mein aktueller Standort</option>` +
+  const poiOptions = `<option value="mylocation" ${state.hikingSearchPoiIndex==='mylocation'?'selected':''}>${ICON.locationDot} Mein aktueller Standort</option>` +
     pois.map((p,i)=>`<option value="${i}" ${state.hikingSearchPoiIndex===i?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
   const wanderatlasSlug = GPS_WANDERATLAS_SLUGS[dest.id];
   const wanderatlasUrl = wanderatlasSlug ? `https://www.ich-geh-wandern.de/${wanderatlasSlug}` : 'https://www.ich-geh-wandern.de/tourensuche';
@@ -3891,7 +3944,7 @@ function renderHikingSearchPanel(dd){
       ${resultsHtml}
       <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px;">
         <p class="hint-text" style="margin-top:0;">Nichts Passendes dabei? Beim GPS-Wanderatlas gibt's von Wanderern geprüfte Touren zum kostenlosen GPX-Download – einfach dort eine Route suchen, herunterladen und hier oben über „GPX-Datei importieren" einlesen.</p>
-        <a href="${wanderatlasUrl}" target="_blank" rel="noopener" class="btn" style="text-decoration:none;display:inline-block;">🔗 Beim GPS-Wanderatlas suchen</a>
+        <a href="${wanderatlasUrl}" target="_blank" rel="noopener" class="btn" style="text-decoration:none;display:inline-block;">${ICON.link} Beim GPS-Wanderatlas suchen</a>
       </div>
       <button type="button" class="btn" data-action="toggle-hiking-search" style="margin-top:14px;">Schließen</button>
     </div>`;
@@ -3902,7 +3955,7 @@ function renderWanderroutenTab(dd){
   const addForm = state.addingHikingRoute ? renderHikingRouteForm(null) : `
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
       <button type="button" class="btn btn-add" data-action="show-add-hiking-route">+ Neue Wanderroute</button>
-      <button type="button" class="btn" data-action="trigger-gpx-upload">📍 GPX-Datei importieren</button>
+      <button type="button" class="btn" data-action="trigger-gpx-upload">${ICON.locationDot} GPX-Datei importieren</button>
       <input type="file" id="gpx-file-input" accept=".gpx" style="display:none">
     </div>`;
   return `${addForm}<div style="margin:10px 0 4px;">${renderHikingSearchPanel(dd)}</div><div style="margin-top:16px;">${list}</div>`;
@@ -4226,7 +4279,7 @@ async function doTranslate(){
     resultEl.innerHTML = `
       <div class="translate-result-box">
         <div>${escapeHtml(translated)}</div>
-        <button type="button" class="btn" data-action="speak-translation" style="padding:6px 12px;font-size:12px;">🔊 Anhören</button>
+        <button type="button" class="btn" data-action="speak-translation" style="padding:6px 12px;font-size:12px;">${ICON.volumeHigh} Anhören</button>
       </div>`;
   }catch(e){
     resultEl.innerHTML = '<p class="hint-text">Übersetzung fehlgeschlagen (keine Verbindung zum Dienst).</p>';
@@ -4241,7 +4294,7 @@ function renderPhrasesTab(dd){
       <div class="diary-date">${escapeHtml(p.local)}</div>
       <div class="diary-text">${escapeHtml(p.german)}</div>
       <div class="form-actions" style="margin-top:8px;">
-        <button type="button" class="btn" data-action="speak-phrase" data-text="${escapeHtml(p.local)}" style="padding:6px 12px;font-size:12px;">🔊 Anhören</button>
+        <button type="button" class="btn" data-action="speak-phrase" data-text="${escapeHtml(p.local)}" style="padding:6px 12px;font-size:12px;">${ICON.volumeHigh} Anhören</button>
         <button type="button" class="btn btn-danger" data-action="delete-phrase" data-id="${p.id}">Löschen</button>
       </div>
     </div>`).join('') : '<p class="empty-state">Noch keine Vokabeln eingetragen.</p>';
@@ -4656,7 +4709,7 @@ async function revertGuideToManual(){
 function renderWetterTab(){
   return `
     <div class="map-tools-row">
-      <button type="button" class="btn" data-action="locate-me-weather">📍 Mein Standort</button>
+      <button type="button" class="btn" data-action="locate-me-weather">${ICON.locationDot} Mein Standort</button>
     </div>
     <div id="weather-content" class="weather-loading">Lade Wetterdaten…</div>`;
 }
@@ -4685,7 +4738,7 @@ async function loadWeather(lat, lng, locationName){
     }
     el.innerHTML = `
       <div class="weather-location-row">
-        <span>📍 ${escapeHtml(locationName)}</span>
+        <span>${ICON.locationDot} ${escapeHtml(locationName)}</span>
         ${localTime? `<span>🕐 ${localTime} Uhr Ortszeit</span>`:''}
       </div>
       <div class="weather-now">
@@ -4748,7 +4801,7 @@ function renderCheckList(items, listKey){
     <div class="list-item ${it.checked?'checked':''}">
       <div class="checkbox ${it.checked?'checked':''}" data-action="toggle-check" data-list="${listKey}" data-id="${it.id}">${it.checked?'✓':''}</div>
       <div class="list-item-text">${escapeHtml(it.text)}</div>
-      <button type="button" class="btn btn-danger" data-action="delete-item" data-list="${listKey}" data-id="${it.id}">🗑️</button>
+      <button type="button" class="btn btn-danger" data-action="delete-item" data-list="${listKey}" data-id="${it.id}">${ICON.trash}</button>
     </div>`).join('');
 }
 function renderAddItemForm(listKey, placeholder){
@@ -4808,7 +4861,7 @@ function renderBudgetTab(trip){
         <div class="budget-cat">${escapeHtml(b.category)}${b.note? ' – '+escapeHtml(b.note):''}</div>
         <div class="budget-amount">${Number(b.amount).toFixed(2)} ${b.currency}</div>
       </div>
-      <button type="button" class="btn btn-danger" data-action="delete-budget" data-id="${b.id}">🗑️</button>
+      <button type="button" class="btn btn-danger" data-action="delete-budget" data-id="${b.id}">${ICON.trash}</button>
     </div>`).join('') : '<p class="empty-state">Noch keine Ausgaben erfasst.</p>';
 
   const addForm = state.addingBudget ? `
@@ -4932,13 +4985,13 @@ function renderDokumenteTab(dd){
   const docsList = dd.docs.length ? dd.docs.map(d=>`
     <div class="doc-row">
       <div><div class="doc-label">${escapeHtml(d.label)}</div><div class="doc-value">${escapeHtml(d.value)}</div></div>
-      <button type="button" class="btn btn-danger" data-action="delete-doc" data-kind="docs" data-id="${d.id}">🗑️</button>
+      <button type="button" class="btn btn-danger" data-action="delete-doc" data-kind="docs" data-id="${d.id}">${ICON.trash}</button>
     </div>`).join('') : '<p class="empty-state">Noch keine Infos hinterlegt.</p>';
 
   const emergencyList = dd.emergency.length ? dd.emergency.map(d=>`
     <div class="doc-row">
       <div><div class="doc-label">${escapeHtml(d.label)}</div><a class="doc-value doc-tel" href="tel:${escapeHtml(d.number)}">${escapeHtml(d.number)}</a></div>
-      <button type="button" class="btn btn-danger" data-action="delete-doc" data-kind="emergency" data-id="${d.id}">🗑️</button>
+      <button type="button" class="btn btn-danger" data-action="delete-doc" data-kind="emergency" data-id="${d.id}">${ICON.trash}</button>
     </div>`).join('') : '<p class="empty-state">Noch keine Kontakte hinterlegt.</p>';
 
   const docForm = state.addingDoc==='docs' ? `
@@ -4991,7 +5044,7 @@ async function deleteDoc(kind,id){
 /* ---------- Add / delete destination ---------- */
 async function confirmAddDest(){
   const name = document.getElementById('new-dest-name').value.trim();
-  const flag = document.getElementById('new-dest-flag').value.trim() || '📍';
+  const flag = document.getElementById('new-dest-flag').value.trim() || ICON.locationDot;
   const continent = document.getElementById('new-dest-continent').value;
   const lat = parseFloat(document.getElementById('new-dest-lat').value);
   const lng = parseFloat(document.getElementById('new-dest-lng').value);
