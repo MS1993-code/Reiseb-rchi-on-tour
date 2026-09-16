@@ -170,7 +170,11 @@
   .dest-checkbox-row{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:14px;cursor:pointer;}
   .dest-checkbox-row input{width:18px;height:18px;flex:0 0 auto;}
   .dest-list{padding:18px 0 30px;}
-  .filter-pills{display:flex;gap:8px;overflow-x:auto;padding:0 16px 16px;-ms-overflow-style:none;scrollbar-width:none;}
+  .filter-pills{display:flex;gap:8px;overflow-x:auto;padding:16px 16px 16px;-ms-overflow-style:none;scrollbar-width:none;}
+  .trips-filter-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:24px 16px 6px;}
+  .trips-filter-row .filter-pills{padding:0;flex:1;min-width:0;}
+  .home-weather-widget{display:none;align-items:center;gap:5px;font-size:14px;font-weight:700;color:var(--ink);flex:0 0 auto;background:var(--surface);padding:7px 13px;border-radius:999px;box-shadow:var(--shadow-sm);}
+  .dest-grid-sub-planned{font-weight:700;color:var(--navy);}
   .filter-pills::-webkit-scrollbar{display:none;}
   .filter-pill{flex:0 0 auto;padding:9px 18px;border-radius:999px;background:var(--surface-alt);border:none;font-size:14px;font-weight:600;color:var(--ink-muted);white-space:nowrap;cursor:pointer;font-family:inherit;}
   .filter-pill.active{background:var(--navy);color:#FBF7EE;}
@@ -714,7 +718,7 @@ let state = {
   addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false, editingDayId:null, editingGuideField:null, confirmingResetGuide:false,
   showHikingSearch:false, hikingSearchLoading:false, hikingSearchResults:null, hikingSearchPoiIndex:0, expandedGuideFields:[],
   trackingDestId:null, trackingRouteId:null, trackingStartTime:null, trackingPoints:[], trackingDistanceKm:0, trackingWatchId:null, trackingTimerInterval:null,
-  destFilterContinent:'Alle', confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
+  destFilterContinent:'Alle', tripFilter:'Alle', confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
   addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
   recipeId:null, editingRecipe:false, recipeImportDraft:null,
   userLocation:null, currentRoute:null, pendingMascotMood:null, isDraftTrip:false,
@@ -878,12 +882,6 @@ function goToKochbuch(){
   if(leafletMap){ leafletMap.remove(); leafletMap=null; }
   state.view='kochbuch'; state.addingRecipe=false; state.recipeImportDraft=null;
   render();
-}
-function goToVergangeneReisen(){
-  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
-  state.view='vergangene-reisen';
-  render();
-  triggerMascotAnim('sleepy', 2400);
 }
 function goToBackup(){
   if(leafletMap){ leafletMap.remove(); leafletMap=null; }
@@ -1133,6 +1131,7 @@ async function render(){
   const app = document.getElementById('app');
   if(state.view==='home'){
     app.innerHTML = await renderHomeDashboard() + renderBottomNav();
+    loadHomeWeatherWidget();
     if(state.pendingMascotMood){
       triggerMascotAnim(state.pendingMascotMood, 1600);
       state.pendingMascotMood = null;
@@ -1145,10 +1144,6 @@ async function render(){
   }
   if(state.view==='kochbuch'){
     app.innerHTML = renderKochbuch() + renderBottomNav();
-    return;
-  }
-  if(state.view==='vergangene-reisen'){
-    app.innerHTML = await renderVergangeneReisen();
     return;
   }
   if(state.view==='backup'){
@@ -1308,6 +1303,36 @@ function triggerMascotAnim(mood, duration){
     document.querySelectorAll('.mascot-svg').forEach(el=>{ el.classList.remove('mood-'+mood); });
   }, duration);
 }
+function getTripsForFilter(filter, excludeId){
+  let list;
+  if(filter==='Vergangen'){
+    list = getPastTrips();
+  } else {
+    list = getUpcomingTrips();
+    if(filter==='Unterwegs') list = list.filter(t=>getTripStatusBadge(t)==='Unterwegs');
+    else if(filter==='Geplant') list = list.filter(t=>getTripStatusBadge(t)==='Geplant');
+  }
+  if(excludeId) list = list.filter(t=>t.id!==excludeId);
+  return list;
+}
+async function loadHomeWeatherWidget(){
+  const el = document.getElementById('home-weather-widget');
+  if(!el) return;
+  try{
+    if(!state.userLocation){
+      if(!navigator.geolocation) return;
+      const pos = await new Promise((resolve,reject)=>{
+        navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:false, timeout:8000});
+      });
+      state.userLocation = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+    }
+    const w = await loadQuickWeather(state.userLocation);
+    if(w){
+      el.innerHTML = `<span>${w.emoji}</span><span>${w.temp}°</span>`;
+      el.style.display = 'flex';
+    }
+  }catch(e){ /* Wetter ist ein Nice-to-have, bei Fehlern einfach ausgeblendet lassen */ }
+}
 async function renderHomeDashboard(){
   const nextTrip = getNextTrip();
   let cardInner = `
@@ -1320,7 +1345,8 @@ async function renderHomeDashboard(){
     const placeText = linkedDests.map(d=>d.name).join(' & ') || 'Neue Reise';
     const days = daysUntil(nextTrip.dateFrom);
     const countdownText = days===0 ? 'Reise beginnt heute!' : days+' Tage bis zur Reise';
-    const img = await loadCountdownImage(nextTrip);
+    let img = await loadCountdownImage(nextTrip);
+    if(!img && linkedDests.length) img = await getDestStaticPhotoPath(linkedDests[0]);
     const imageHtml = img
       ? `<div class="countdown-image" style="background-image:url('${img}')"></div>`
       : `<div class="countdown-image countdown-image-fallback">${linkedDests.map(d=>d.flag).join(' ') || '🧳'}</div>`;
@@ -1340,10 +1366,14 @@ async function renderHomeDashboard(){
       </div>`;
   }
 
-  const upcoming = getUpcomingTrips();
-  const otherUpcoming = nextTrip ? upcoming.filter(t=>t.id!==nextTrip.id) : upcoming;
+  const otherUpcoming = getTripsForFilter(state.tripFilter, nextTrip ? nextTrip.id : null);
   const otherTripsHtml = otherUpcoming.length ? `
-    <div style="padding:0 16px;">${(await Promise.all(otherUpcoming.map(renderTripRow))).join('')}</div>` : (nextTrip ? '' : '<p class="empty-state" style="padding:0 16px;">Noch keine anstehenden Reisen.</p>');
+    <div style="padding:0 16px;">${(await Promise.all(otherUpcoming.map(renderTripRow))).join('')}</div>` : `<p class="empty-state" style="padding:0 16px;">Keine Reisen in dieser Ansicht.</p>`;
+
+  const tripFilters = ['Alle','Unterwegs','Geplant','Vergangen'];
+  const filterPillsHtml = tripFilters.map(f=>`
+    <button type="button" class="filter-pill ${f===state.tripFilter?'active':''}" data-action="filter-trip-status" data-status="${f}">${f}</button>
+  `).join('');
 
   return `
     <div class="header-home">
@@ -1353,9 +1383,9 @@ async function renderHomeDashboard(){
       <div class="app-title">Reisebärchi on Tour</div>
     </div>
     <div class="countdown-card" ${nextTrip? `data-action="edit-trip" data-id="${nextTrip.id}" style="cursor:pointer;"` : ''}>${cardInner}</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin:22px 16px 10px;">
-      <h3 class="section-title" style="margin:0;">Deine Reisen</h3>
-      <button type="button" class="btn" style="padding:6px 14px;font-size:13px;" data-action="go-vergangene-reisen">Vergangene Reisen</button>
+    <div class="trips-filter-row">
+      <div class="filter-pills">${filterPillsHtml}</div>
+      <div class="home-weather-widget" id="home-weather-widget"></div>
     </div>
     ${otherTripsHtml}
     <div style="height:calc(var(--tabbar-h) + 90px);"></div>
@@ -1379,12 +1409,15 @@ async function renderDestCard(d){
   }
   const linkedTrip = getNextTripForDest(d.id);
   let subLine = d.continent;
+  let subClass = 'dest-grid-sub';
   if(linkedTrip){
     const days = daysUntil(linkedTrip.dateFrom);
     subLine = days===0 ? 'Reise beginnt heute!' : days+' Tage bis zur Reise';
+    subClass = 'dest-grid-sub dest-grid-sub-planned';
   }
   const coverPhotoId = await getDestCoverPhotoId(d.id);
-  const photoUrl = coverPhotoId ? await loadPhotoDataUrl(coverPhotoId) : null;
+  let photoUrl = coverPhotoId ? await loadPhotoDataUrl(coverPhotoId) : null;
+  if(!photoUrl) photoUrl = await getDestStaticPhotoPath(d);
   const photoInner = photoUrl
     ? `style="background-image:url('${photoUrl}')"`
     : '';
@@ -1397,9 +1430,40 @@ async function renderDestCard(d){
     </div>
     <div class="dest-grid-body">
       <div class="dest-grid-name">${escapeHtml(d.name)}</div>
-      <div class="dest-grid-sub">${escapeHtml(subLine)}</div>
+      <div class="${subClass}">${escapeHtml(subLine)}</div>
     </div>
   </div>`;
+}
+const COUNTRY_PHOTO_FILES = ['Aegypten.jpg','Aequatorialguinea.jpg','Aethiopien.jpg','Afghanistan.jpg','Albanien.jpg','Algerien.jpg','Andorra.jpg','Angola.jpg','Antigua_und_Barbuda.jpg','Argentinien.jpg','Armenien.jpg','Aserbaidschan.jpg','Australien.jpg','Azoren.jpg','Bahamas.jpg','Bahrain.jpg','Bangladesch.jpg','Barbados.jpg','Belgien.jpg','Belize.jpg','Benin.jpg','Bhutan.jpg','Bolivien.jpg','Bora_Bora.jpg','Bosnien_und_Herzegowina.jpg','Botswana.jpg','Brasilien.jpg','Brunei.jpg','Bulgarien.jpg','Burkina_Faso.jpg','Burundi.jpg','Chile.jpg','China.jpg','Costa_Rica.jpg','Daenemark.jpg','Deutschland.jpg','Dominica.jpg','Dominikanische_Republik.jpg','Dschibuti.jpg','Ecuador.jpg','El_Salvador.jpg','Elfenbeinkueste.jpg','Eritrea.jpg','Estland.jpg','Eswatini.jpg','Faeroeer.jpg','Fidschi.jpg','Finnland.jpg','Frankreich.jpg','Gabun.jpg','Gambia.jpg','Georgien.jpg','Ghana.jpg','Grenada.jpg','Griechenland.jpg','Guatemala.jpg','Guinea.jpg','Guinea_Bissau.jpg','Guyana.jpg','Haiti.jpg','Honduras.jpg','Indien.jpg','Indonesien.jpg','Irak.jpg','Iran.jpg','Irland.jpg','Island.jpg','Israel.jpg','Italien.jpg','Jamaika.jpg','Japan.jpg','Jemen.jpg','Jordanien.jpg','Kambodscha.jpg','Kamerun.jpg','Kanada.jpg','Kanaren.jpg','Kap_Verde.jpg','Kasachstan.jpg','Katar.jpg','Kenia.jpg','Kirgisistan.jpg','Kiribati.jpg','Kolumbien.jpg','Komoren.jpg','Kongo_DRC.jpg','Kongo_Republik.jpg','Kosovo.jpg','Kreta.jpg','Kroatien.jpg','Kuba.jpg','Kuwait.jpg','Laos.jpg','Lesotho.jpg','Lettland.jpg','Libanon.jpg','Liberia.jpg','Libyen.jpg','Liechtenstein.jpg','Litauen.jpg','Luxemburg.jpg','Madagaskar.jpg','Madeira.jpg','Malawi.jpg','Malaysia.jpg','Malediven.jpg','Mali.jpg','Malta.jpg','Marokko.jpg','Marshallinseln.jpg','Mauretanien.jpg','Mauritius.jpg','Mexiko.jpg','Mikronesien.jpg','Moldau.jpg','Monaco.jpg','Mongolei.jpg','Montenegro.jpg','Mosambik.jpg','Myanmar.jpg','Namibia.jpg','Nauru.jpg','Nepal.jpg','Neuseeland.jpg','Nicaragua.jpg','Niederlande.jpg','Niger.jpg','Nigeria.jpg','Nordkorea.jpg','Nordmazedonien.jpg','Norwegen.jpg','Oesterreich.jpg','Oman.jpg','Osttimor.jpg','Pakistan.jpg','Palau.jpg','Panama.jpg','Papua_Neuguinea.jpg','Paraguay.jpg','Peru.jpg','Philippinen.jpg','Polen.jpg','Portugal.jpg','Ruanda.jpg','Rumaenien.jpg','Russland.jpg','Salomonen.jpg','Sambia.jpg','Samoa.jpg','San_Marino.jpg','Sao_Tome_und_Principe.jpg','Sardinien.jpg','Saudi_Arabien.jpg','Schweden.jpg','Schweiz.jpg','Senegal.jpg','Serbien.jpg','Seychellen.jpg','Sierra_Leone.jpg','Simbabwe.jpg','Singapur.jpg','Slowakei.jpg','Slowenien.jpg','Somalia.jpg','Spanien.jpg','Sri_Lanka.jpg','St_Kitts_und_Nevis.jpg','St_Lucia.jpg','St_Vincent_und_die_Grenadinen.jpg','Sudan.jpg','Suedafrika.jpg','Suedkorea.jpg','Suedsudan.jpg','Suriname.jpg','Syrien.jpg','Tadschikistan.jpg','Taiwan.jpg','Tansania.jpg','Thailand.jpg','Togo.jpg','Tonga.jpg','Trinidad_und_Tobago.jpg','Tschad.jpg','Tschechien.jpg','Tuerkei.jpg','Tunesien.jpg','Turkmenistan.jpg','Tuvalu.jpg','USA.jpg','Uganda.jpg','Ukraine.jpg','Ungarn.jpg','Uruguay.jpg','Usbekistan.jpg','Vanuatu.jpg','Vatikan.jpg','Venezuela.jpg','Vereinigte_Arabische_Emirate.jpg','Vereinigtes_Koenigreich.jpg','Vietnam.jpg','Weissrussland.jpg','Zentralafrikanische_Republik.jpg','Zypern.jpg'];
+function normalizeForFilename(name){
+  return (name||'')
+    .replace(/[äÄ]/g,'ae').replace(/[öÖ]/g,'oe').replace(/[üÜ]/g,'ue').replace(/ß/g,'ss')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9]+/g,'_')
+    .replace(/^_+|_+$/g,'');
+}
+function findCountryPhotoFile(name){
+  const norm = normalizeForFilename(name).toLowerCase();
+  if(!norm) return null;
+  const match = COUNTRY_PHOTO_FILES.find(f=>f.slice(0,-4).toLowerCase()===norm);
+  return match ? './laender-fotos/'+match : null;
+}
+async function getDestStaticPhotoPath(d){
+  const direct = findCountryPhotoFile(d.name);
+  if(direct) return direct;
+  if(d.country){
+    const byCountry = findCountryPhotoFile(d.country);
+    if(byCountry) return byCountry;
+  }
+  if(d._resolvedCountry===undefined){
+    try{
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${d.lat}&lon=${d.lng}&format=json&accept-language=de`, {headers:{'Accept':'application/json'}});
+      const data = await res.json();
+      d._resolvedCountry = (data.address && data.address.country) || null;
+    }catch(e){ d._resolvedCountry = null; }
+  }
+  if(d._resolvedCountry) return findCountryPhotoFile(d._resolvedCountry);
+  return null;
 }
 async function getDestCoverPhotoId(destId){
   if(destDataCache[destId] && destDataCache[destId].coverPhotoId){
@@ -1434,6 +1498,7 @@ async function renderTripRow(t){
     const destPhotoId = await getDestCoverPhotoId(linked[0].id);
     if(destPhotoId) photoUrl = await loadPhotoDataUrl(destPhotoId);
   }
+  if(!photoUrl && linked.length) photoUrl = await getDestStaticPhotoPath(linked[0]);
   const badge = getTripStatusBadge(t);
   let countdownLine = '';
   if(!t.dateFrom){
@@ -1454,18 +1519,6 @@ async function renderTripRow(t){
       ${countdownLine ? `<div class="trip-hero-countdown">${countdownLine}</div>` : ''}
     </div>
   </div>`;
-}
-async function renderVergangeneReisen(){
-  const past = getPastTrips();
-  const list = past.length ? (await Promise.all(past.map(renderTripRow))).join('') : '<p class="empty-state" style="padding:0 16px;">Noch keine vergangenen Reisen.</p>';
-  return `
-    <div class="dest-header">
-      <div class="dest-header-icon-row"><span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span></div>
-      <div class="dest-header-title">Vergangene Reisen</div>
-      <div class="dest-header-top" data-action="go-home">‹</div>
-    </div>
-    <div style="padding:16px 0;">${list}</div>
-  `;
 }
 function renderBackupView(){
   return `
@@ -4988,7 +5041,11 @@ async function onAppClick(e){
       break;
     }
     case 'pet-mascot': triggerMascotAnim('giggle', 1600); break;
-    case 'go-vergangene-reisen': goToVergangeneReisen(); break;
+    case 'filter-trip-status':
+      state.tripFilter = el.dataset.status;
+      if(el.dataset.status==='Vergangen') triggerMascotAnim('sleepy', 2400);
+      render();
+      break;
     case 'go-backup': goToBackup(); break;
     case 'export-guides-backup': await exportGuidesBackup(); break;
     case 'trigger-guides-import': document.getElementById('guides-import-input').click(); break;
