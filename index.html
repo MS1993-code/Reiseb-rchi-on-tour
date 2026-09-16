@@ -393,11 +393,20 @@
   .recipe-subname{font-size:12px;color:var(--ink-muted);margin-top:2px;}
   .recipe-dest-tag{font-size:11px;color:var(--brass);font-weight:700;margin-top:4px;}
   .recipe-details{padding:0 16px 16px;border-top:1px solid var(--border);}
-  .recipe-meta{display:flex;gap:14px;font-size:13px;color:var(--ink-muted);margin:12px 0;}
-  .recipe-section-title{font-size:14px;font-weight:700;margin:14px 0 8px;}
-  .recipe-list{margin:0 0 6px;padding-left:20px;font-size:14px;line-height:1.6;}
+  .recipe-section-title{font-family:var(--font-display);font-size:20px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px;}
+  .recipe-section-title .icon-inline{width:19px;height:19px;vertical-align:0;}
+  .recipe-list{margin:8px 0 0;padding-left:20px;font-size:14px;line-height:1.7;list-style-type:disc;}
+  .recipe-list-numbered{list-style-type:decimal;}
   .recipe-list li{margin-bottom:4px;}
-  .recipe-photo{height:180px;border-radius:var(--radius);background-size:cover;background-position:center;cursor:pointer;border:1px solid var(--border);}
+  .recipe-hero{position:relative;aspect-ratio:16/10;background-size:cover;background-position:center;background-color:var(--surface-alt);overflow:hidden;}
+  .recipe-hero-overlay-bg{position:absolute;inset:0;background:linear-gradient(180deg, rgba(40,34,26,0) 0%, rgba(40,34,26,0.3) 45%, rgba(40,34,26,0.88) 100%);}
+  .recipe-hero-back{position:absolute;top:12px;left:12px;width:40px;height:40px;border-radius:50%;background:rgba(251,247,238,0.92);border:none;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--ink);cursor:pointer;z-index:2;line-height:1;}
+  .recipe-hero-mascot{position:absolute;top:8px;right:12px;z-index:2;width:40px;height:40px;}
+  .recipe-hero-text{position:absolute;left:0;right:0;bottom:0;padding:18px 20px;color:#FBF7EE;z-index:1;}
+  .recipe-hero-kicker{font-size:14px;opacity:0.88;margin:0;}
+  .recipe-hero-title{font-family:var(--font-display);font-size:32px;line-height:1.15;margin:2px 0 0;font-weight:600;}
+  .recipe-hero-meta{font-size:14px;opacity:0.88;margin:4px 0 0;}
+  .recipe-hero-extra{font-size:14px;opacity:0.88;margin:8px 0 0;font-weight:600;}
 </style>
 </head>
 <body>
@@ -1122,7 +1131,8 @@ const ICON = {
   calendar: icon('M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H64C28.7 64 0 92.7 0 128v16 48V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V192 144 128c0-35.3-28.7-64-64-64H336V24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H152V24zM48 192H400V448c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V192z', 448),
   calendarDays: icon('M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H64C28.7 64 0 92.7 0 128v16 48V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V192 144 128c0-35.3-28.7-64-64-64H336V24c0-13.3-10.7-24-24-24s-24 10.7-24 24V64H152V24zM48 192H400V448c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V192zM120 256c-13.3 0-24 10.7-24 24v64c0 13.3 10.7 24 24 24h64c13.3 0 24-10.7 24-24V280c0-13.3-10.7-24-24-24H120z', 448),
   ticket: icon('M64 64C28.7 64 0 92.7 0 128v64c0 8.8 7.4 15.7 15.7 18.6C34.5 217.1 48 235 48 256s-13.5 38.9-32.3 45.4C7.4 304.3 0 311.2 0 320v64c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V320c0-8.8-7.4-15.7-15.7-18.6C477.5 294.9 464 277 464 256s13.5-38.9 32.3-45.4c8.3-2.9 15.7-9.8 15.7-18.6V128c0-35.3-28.7-64-64-64H64z', 512),
-  euroSign: icon('M414.4 114.9c11.2-9 12.9-25.5 3.9-36.7s-25.5-12.9-36.7-3.9c-40.7 32.9-65.4 79.9-70.7 130.6H272c-13.3 0-24 10.7-24 24s10.7 24 24 24h35.8c-.1 2.7-.2 5.3-.2 8v16c0 2.7 .1 5.3 .2 8H272c-13.3 0-24 10.7-24 24s10.7 24 24 24h39.7c5.3 50.7 30 97.7 70.7 130.6c11.2 9 27.6 7.3 36.7-3.9s7.3-27.6-3.9-36.7c-27-21.8-45.1-51.8-51.9-84.9H392c13.3 0 24-10.7 24-24s-10.7-24-24-24H358.7c-.2-2.7-.3-5.3-.3-8V256c0-2.7 .1-5.3 .3-8H392c13.3 0 24-10.7 24-24s-10.7-24-24-24H363.5c6.8-33.1 24.9-63.1 51.9-84.9v-.2z', 512),
+  wallet: icon('M64 32C28.7 32 0 60.7 0 96v320c0 35.3 28.7 64 64 64h384c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16h368c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zm352 304c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32-14.3 32-32 32z', 512),
+  utensils: icon('M416 0c-16 0-128 32-128 176v112c0 35.3 28.7 64 64 64h32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V32c0-17.7-14.3-32-32-32zM64 16C64 7.8 57.9 1 49.7.1S34.2 4.6 32.4 12.5L2.1 148.8C.7 155.1 0 161.5 0 167.9c0 45.9 35.1 83.6 80 87.7V480c0 17.7 14.3 32 32 32s32-14.3 32-32V255.6c44.9-4.1 80-41.8 80-87.7 0-6.4-.7-12.8-2.1-19.1L191.6 12.5c-1.8-8-9.3-13.3-17.4-12.4S160 7.8 160 16v134.2c0 5.4-4.4 9.8-9.8 9.8-5.1 0-9.3-3.9-9.8-9L127.9 14.6C127.2 6.3 120.3 0 112 0S96.8 6.3 96.1 14.6L83.7 151c-.5 5.1-4.7 9-9.8 9-5.4 0-9.8-4.4-9.8-9.8V16zm48.3 152h-.6l.3-.7.3.7z', 416),
   book: icon('M96 0C43 0 0 43 0 96V416c0 53 43 96 96 96H384h32c17.7 0 32-14.3 32-32s-14.3-32-32-32V384c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H384 96zm0 384H352v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16H336c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16zm16 48H336c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16z', 448),
   camera: icon('M149.1 64.8L138.7 96H64C28.7 96 0 124.7 0 160V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64H373.3L362.9 64.8C356.4 45.2 338.1 32 317.4 32H194.6c-20.7 0-39 13.2-45.5 32.8zM256 192a96 96 0 1 1 0 192 96 96 0 1 1 0-192z', 512),
   trash: icon('M135.2 17.7C140.6 6.8 151.7 0 163.8 0H284.2c12.1 0 23.2 6.8 28.6 17.7L320 32h96c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 96 0 81.7 0 64S14.3 32 32 32h96l7.2-14.3zM32 128H416V448c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V128zm96 64c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16z', 448),
@@ -1139,8 +1149,8 @@ const ICON = {
   suitcase: icon('M184 48H328c4.4 0 8 3.6 8 8V96H176V56c0-4.4 3.6-8 8-8zm-56 8V96H64C28.7 96 0 124.7 0 160v96H512V160c0-35.3-28.7-64-64-64H384V56c0-30.9-25.1-56-56-56H184c-30.9 0-56 25.1-56 56zM512 288H0V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V288z', 512),
   city: icon('M480 448V32c0-17.7-14.3-32-32-32H272c-17.7 0-32 14.3-32 32V128H160c-17.7 0-32 14.3-32 32v96H64c-17.7 0-32 14.3-32 32V448H0v32H512V448H480zm-320-32H96V336h64v80zm0-128H96V208h64v80zm128 128H224V336h64v80zm0-128H224V208h64v80zm128 0H352V208h64v80zm0-128H352V80h64v80zm0 256H352V336h64v80z', 512),
   car: icon('M135.2 117.4L109.1 192H402.9l-26.1-74.6C372.3 104.6 360.2 96 346.6 96H165.4c-13.6 0-25.7 8.6-30.2 21.4zM39.6 196.8L74.8 96.3C88.3 57.8 124.6 32 165.4 32H346.6c40.8 0 77.1 25.8 90.6 64.3l35.2 100.5c23.2 9.6 39.6 32.5 39.6 59.2V400v48c0 17.7-14.3 32-32 32H448c-17.7 0-32-14.3-32-32V400H96v48c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V400 256c0-26.7 16.4-49.6 39.6-59.2zM128 288a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm288 32a32 32 0 1 0 0-64 32 32 0 1 0 0 64z', 512),
-  umbrellaBeach: icon('M292.4 32.5c9.9-4.7 13-17.2 5.3-25C280.9 .2 255 0 231.4 0c-30.4 0-58.5 10-81 26.9C129.9 45.8 128 78.6 128 112c0 6.9 .1 13.5 .2 19.8c-1.5-6.4-3.6-13-6.5-19.5C107.5 79.5 79.5 61.8 51.7 61.8c-13.3 0-23.2 12.7-19.5 25.5c8.9 30.6 32.1 55.1 62.3 65.9c15.3 5.5 30.8 6.5 44.5 3.7C129.6 174.6 128 192.9 128 208c0 8.5 .5 16.5 1.5 24.1C67.9 264.5 24 328.9 24 400v88c0 13.3 10.7 24 24 24s24-10.7 24-24V400c0-53.1 30.5-98.9 75-121.5C161.4 322.4 200.4 352 244.7 352c48.6 0 90.1-35.6 96.9-83.7c1.3-9.2-6.6-16.3-15.9-16.3H201.3c-9.3 0-17.2 7.1-15.9 16.3c1.1 7.8 3.5 15.3 7 22.1C167.2 285.8 152 302.2 152 320V400c0-71.1-43.9-135.5-105.5-167.9C47.5 224.5 48 216.5 48 208c0-15.1-1.6-33.4-5.5-58.6c13.7 2.8 29.2 1.8 44.5-3.7c30.2-10.8 53.4-35.3 62.3-65.9C152.9 66.9 143.1 54.2 129.7 54.2c-27.8 0-55.8 17.7-70 51.7c-2.9 6.5-5 13.1-6.5 19.5C53.1 119.1 53 112.5 53 105.6c0-33.4-1.9-66.2 22.4-85.1C98 3.6 126.1-6.5 156.6-6.5', 384),
-  ship: icon('M177.4 5.3c-6.1-7-15-11.1-24.4-11.1s-18.3 4.1-24.4 11.1L88.9 51.9C77 65.5 64.2 78.1 50.6 89.7L20.5 115.4C7.5 126.5 0 142.8 0 160V320c0 88.4 71.6 160 160 160h60.3c46.9 0 93.1-10.5 135.4-30.7l114.4-54.9c15.4-7.4 27.7-19.9 34.7-35.6l19.4-43.5c8.2-18.4-.1-40-18.5-48.1s-40 .1-48.1 18.5l-19.4 43.5c-1.7 3.9-4.7 7-8.5 8.8l-38.1 18.3V160c0-17.2-7.5-33.5-20.5-44.6l-30.1-25.7c-13.6-11.6-26.4-24.2-38.3-37.8L177.4 5.3zM160 320c-35.3 0-64-28.7-64-64V177.1c9.4-8.9 18.5-18.1 27.4-27.5l24.5-26.2 26.6 30.5c5.1 5.8 10.5 11.4 16.1 16.7L160 320zm144-16c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V240c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v64zm-448 96c-8.8 0-16 7.2-16 16v16c0 53 43 96 96 96H480c53 0 96-43 96-96V416c0-8.8-7.2-16-16-16H16c-8.8 0-16 7.2-16 16z', 576),
+  umbrellaBeach: icon('M346.3 271.8-60.1-21.9L214 448H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h512c17.7 0 32-14.3 32-32s-14.3-32-32-32H282.1l64.1-176.2zm121.1-.2-3.3 9.1 67.7 24.6c18.1 6.6 38-4.2 39.6-23.4 6.5-78.5-23.9-155.5-80.8-208.5 2 8 3.2 16.3 3.4 24.8l.2 6c1.8 57-7.3 113.8-26.8 167.4zM462 99.1c-1.1-34.4-22.5-64.8-54.4-77.4-.9-.4-1.9-.7-2.8-1.1-33-11.7-69.8-2.4-93.1 23.8l-4 4.5C272.4 88.3 245 134.2 226.8 184l-3.3 9.1L434 269.7l3.3-9.1c18.1-49.8 26.6-102.5 24.9-155.5l-.2-6zm-354.8 13.8c-11.1 15.7-2.8 36.8 15.3 43.4l71 25.8 3.3-9.1c19.5-53.6 49.1-103 87.1-145.5l4-4.5c6.2-6.9 13.1-13 20.5-18.2-79.6 2.5-154.7 42.2-201.2 108z', 576),
+  ship: icon('M496.616 372.639 566.628 302.627c16.899-16.9 9.942-45.771-12.836-53.092L512 236.102V96c0-17.673-14.327-32-32-32h-64V24c0-13.255-10.745-24-24-24H248c-13.255 0-24 10.745-24 24v40h-64c-17.673 0-32 14.327-32 32v140.102l-41.792 13.433c-22.753 7.313-29.754 36.173-12.836 53.092l70.012 70.012C125.828 416.287 85.587 448 24 448c-13.255 0-24 10.745-24 24v16c0 13.255 10.745 24 24 24 61.023 0 107.499-20.61 143.258-59.396C181.677 487.432 216.021 512 256 512h128c39.979 0 74.323-24.568 88.742-59.396C508.495 491.384 554.968 512 616 512c13.255 0 24-10.745 24-24v-16c0-13.255-10.745-24-24-24-60.817 0-101.542-31.001-119.384-75.361zM192 128h256v87.531l-118.208-37.995a31.995 31.995 0 00-19.584 0L192 215.531V128z', 640),
 };
 const NAV_ICONS = {
   home:'<svg viewBox="0 0 576 512" fill="currentColor"><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>',
@@ -1204,7 +1214,7 @@ async function render(){
     return;
   }
   if(state.view==='recipe'){
-    app.innerHTML = renderRecipeDetail();
+    app.innerHTML = await renderRecipeDetail();
     setupLightboxPostRender();
     return;
   }
@@ -1709,26 +1719,32 @@ async function openRecipeDetail(id){
   await render();
   triggerMascotAnim('nom', 1600);
 }
-function renderRecipeDetail(){
+async function renderRecipeDetail(){
   const r = recipes.find(x=>x.id===state.recipeId);
   const dest = destinations.find(d=>d.id===r.destId);
-  const flag = dest ? dest.flag : ICON.utensils;
   const destName = dest ? dest.name : 'Unbekanntes Ziel';
   const confirming = state.confirmingDelete && state.confirmingDelete.type==='recipe' && state.confirmingDelete.id===r.id;
 
-  let photoHtml = '';
-  if(r.photoId && photoCache[r.photoId]){
-    photoHtml = `<div class="recipe-photo" style="background-image:url('${photoCache[r.photoId].dataUrl}')" data-action="view-recipe-photo" data-photo-id="${r.photoId}"></div>`;
+  let heroPhotoUrl = null;
+  if(r.photoId){
+    heroPhotoUrl = await loadPhotoDataUrl(r.photoId);
   }
+  if(!heroPhotoUrl && dest){
+    const coverId = await getDestCoverPhotoId(dest.id);
+    heroPhotoUrl = coverId ? await loadPhotoDataUrl(coverId) : null;
+    if(!heroPhotoUrl) heroPhotoUrl = await getDestStaticPhotoPath(dest);
+  }
+
+  let photoEditHtml = '';
   if(state.editingRecipe){
-    photoHtml += `<button type="button" class="btn" data-action="trigger-recipe-photo-upload" style="margin-top:8px;">${r.photoId? 'Foto ändern':'+ Foto hinzufügen'}</button>
+    photoEditHtml = `<button type="button" class="btn" data-action="trigger-recipe-photo-upload" style="margin:14px 16px 0;">${r.photoId? 'Foto ändern':'+ Foto hinzufügen'}</button>
       <input type="file" id="recipe-photo-input" accept="image/*" style="display:none">`;
   }
 
   let body;
   if(state.editingRecipe){
     body = `
-      ${photoHtml}
+      ${photoEditHtml}
       <div class="field-group" style="margin-top:14px;">
         <label class="field-label">Reiseführer</label>
         <select class="input" data-recipe-field="destId" data-recipe-id="${r.id}">
@@ -1773,11 +1789,8 @@ function renderRecipeDetail(){
     const ingredientsList = (r.ingredients||'').split('\n').filter(l=>l.trim()).map(l=>`<li>${escapeHtml(l.trim())}</li>`).join('');
     const stepsList = (r.steps||'').split('\n').filter(l=>l.trim()).map(l=>`<li>${escapeHtml(l.trim())}</li>`).join('');
     body = `
-      ${photoHtml}
-      <div class="recipe-dest-tag" style="margin-top:14px;">${escapeHtml(destName)}</div>
-      <div class="recipe-meta">${r.servings? `<span>${escapeHtml(r.servings)}</span>`:''}${r.time? `<span>${escapeHtml(r.time)}</span>`:''}</div>
-      ${ingredientsList? `<div class="recipe-section-title">${ICON.utensils} Zutaten</div><ul class="recipe-list">${ingredientsList}</ul>`:''}
-      ${stepsList? `<div class="recipe-section-title">${ICON.book} Zubereitung</div><ol class="recipe-list">${stepsList}</ol>`:''}
+      ${ingredientsList? `<h2 class="recipe-section-title">${ICON.utensils} Zutaten</h2><ul class="recipe-list">${ingredientsList}</ul>`:''}
+      ${stepsList? `<h2 class="recipe-section-title" style="margin-top:24px;">${ICON.book} Zubereitung</h2><ol class="recipe-list recipe-list-numbered">${stepsList}</ol>`:''}
     `;
   }
 
@@ -1794,15 +1807,19 @@ function renderRecipeDetail(){
       <button type="button" class="btn btn-danger" data-action="ask-delete" data-type="recipe" data-id="${r.id}">Rezept löschen</button>
     </div>`;
 
+  const extraLine = (r.servings||r.time) ? `<p class="recipe-hero-extra">${[r.servings,r.time].filter(Boolean).map(escapeHtml).join(' · ')}</p>` : '';
+
   return `
-    <div class="dest-header">
-      <div class="dest-header-icon-row" style="display:flex;align-items:center;justify-content:center;gap:8px;">
-        <span>${flag}</span>
-        <span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span>
+    <div class="recipe-hero" ${heroPhotoUrl?`style="background-image:url('${heroPhotoUrl}')"`:''}>
+      <div class="recipe-hero-overlay-bg"></div>
+      <button type="button" class="recipe-hero-back" data-action="go-kochbuch" aria-label="Zurück">‹</button>
+      <span class="recipe-hero-mascot logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</span>
+      <div class="recipe-hero-text">
+        <p class="recipe-hero-kicker">${escapeHtml(destName)} · ${escapeHtml(r.category)}</p>
+        <h1 class="recipe-hero-title">${escapeHtml(r.nameNative)}</h1>
+        ${r.nameGerman? `<p class="recipe-hero-meta">${escapeHtml(r.nameGerman)}</p>`:''}
+        ${extraLine}
       </div>
-      <div class="dest-header-title">${escapeHtml(r.nameNative)}</div>
-      <div class="dest-header-coords">${escapeHtml(r.nameGerman||'')}</div>
-      <div class="dest-header-top" data-action="go-kochbuch">‹</div>
     </div>
     <div class="panel">
       ${body}
@@ -2245,7 +2262,7 @@ function renderTrip(){
 
   const tabs = [
     ['reisedaten',ICON.calendar,'Reisedaten'],['tagesplaner',ICON.calendarDays,'Tagesplaner'],['unterlagen',ICON.ticket,'Unterlagen'],
-    ['budget',ICON.euroSign,'Budget'],['tagebuch',ICON.book,'Tagebuch'],['bilder',ICON.camera,'Bilder']
+    ['budget',ICON.wallet,'Budget'],['tagebuch',ICON.book,'Tagebuch'],['bilder',ICON.camera,'Bilder']
   ];
   const activeTab = tabs.find(([key])=>key===state.tripTab) || tabs[0];
 
