@@ -730,7 +730,7 @@ let state = {
   showHikingSearch:false, hikingSearchLoading:false, hikingSearchResults:null, hikingSearchPoiIndex:0, expandedGuideFields:[],
   trackingDestId:null, trackingRouteId:null, trackingStartTime:null, trackingPoints:[], trackingDistanceKm:0, trackingWatchId:null, trackingTimerInterval:null,
   destFilterContinent:'Alle', tripFilter:'Alle', confirmingDelete:null, confirmingRevertGuide:false, addingRoute:false,
-  addingFaq:false, addingRecipe:false, collapsedRecipeCats:[], addingPhrase:false,
+  addingFaq:false, addingRecipe:false, recipeFilterCategory:'Alle', addingPhrase:false,
   recipeId:null, editingRecipe:false, recipeImportDraft:null,
   userLocation:null, currentRoute:null, pendingMascotMood:null, isDraftTrip:false,
   showDayImport:false, dayImportDestId:null, dayImportRouteId:null,
@@ -1206,7 +1206,7 @@ async function render(){
     return;
   }
   if(state.view==='kochbuch'){
-    app.innerHTML = renderKochbuch() + renderBottomNav();
+    app.innerHTML = (await renderKochbuch()) + renderBottomNav();
     return;
   }
   if(state.view==='backup'){
@@ -1691,19 +1691,25 @@ function renderRecipeAddForm(){
     </div>
   </div>`;
 }
-function renderRecipeCard(r){
+async function renderRecipeCard(r){
   const dest = destinations.find(d=>d.id===r.destId);
-  const flag = dest ? dest.flag : ICON.utensils;
   const destName = dest ? dest.name : 'Unbekanntes Ziel';
-  return `<div class="recipe-card" data-action="open-recipe" data-id="${r.id}">
-    <div class="recipe-card-header">
-      <span class="recipe-flag">${flag}</span>
-      <div style="flex:1;">
-        <div class="recipe-name">${escapeHtml(r.nameNative)}</div>
-        <div class="recipe-subname">${escapeHtml(r.nameGerman)}</div>
-        <div class="recipe-dest-tag">${escapeHtml(destName)}</div>
-      </div>
-      <span class="continent-caret">›</span>
+  let photoUrl = r.photoId ? await loadPhotoDataUrl(r.photoId) : null;
+  if(!photoUrl && dest){
+    const coverId = await getDestCoverPhotoId(dest.id);
+    photoUrl = coverId ? await loadPhotoDataUrl(coverId) : null;
+    if(!photoUrl) photoUrl = await getDestStaticPhotoPath(dest);
+  }
+  const photoInner = photoUrl ? `style="background-image:url('${photoUrl}')"` : '';
+  const fallbackIcon = photoUrl ? '' : `<div class="dest-grid-flag-fallback">${ICON.utensils}</div>`;
+  return `<div class="dest-grid-card" data-action="open-recipe" data-id="${r.id}">
+    <div class="dest-grid-photo" ${photoInner}>
+      ${fallbackIcon}
+      <div class="dest-grid-badge">${escapeHtml(r.category)}</div>
+    </div>
+    <div class="dest-grid-body">
+      <div class="dest-grid-name">${escapeHtml(r.nameNative)}</div>
+      <div class="dest-grid-sub">${escapeHtml(destName)}</div>
     </div>
   </div>`;
 }
@@ -1895,38 +1901,20 @@ async function onRecipeFileSelected(file){
     showToast('Datei konnte nicht gelesen werden. Bitte eine .docx-Datei verwenden.');
   }
 }
-function renderKochbuch(){
-  const groups = {};
-  RECIPE_CATEGORIES.forEach(c=>groups[c]=[]);
-  const extra = [];
-  recipes.forEach(r=>{
-    if(RECIPE_CATEGORIES.includes(r.category)) groups[r.category].push(r);
-    else extra.push(r);
-  });
-  const catList = extra.length ? [...RECIPE_CATEGORIES,'Sonstiges'] : RECIPE_CATEGORIES;
-  if(extra.length) groups['Sonstiges'] = extra;
+async function renderKochbuch(){
+  const catsPresent = [...new Set(recipes.map(r=>RECIPE_CATEGORIES.includes(r.category)?r.category:'Sonstiges'))];
+  const orderedCats = [...RECIPE_CATEGORIES.filter(c=>catsPresent.includes(c)), ...(catsPresent.includes('Sonstiges')?['Sonstiges']:[])];
+  const filterOptions = ['Alle', ...orderedCats];
+  const active = filterOptions.includes(state.recipeFilterCategory) ? state.recipeFilterCategory : 'Alle';
+  const filtered = active==='Alle' ? recipes : recipes.filter(r=>(RECIPE_CATEGORIES.includes(r.category)?r.category:'Sonstiges')===active);
 
-  const groupsHtml = catList.map(cat=>{
-    const items = groups[cat] || [];
-    if(!items.length) return '';
-    const collapsed = state.collapsedRecipeCats.includes(cat);
-    const cards = items.map(renderRecipeCard).join('');
-    return `
-      <div class="continent-group">
-        <div class="continent-header" data-action="toggle-recipe-cat" data-cat="${cat}">
-          <span>${cat} (${items.length})</span>
-          <span class="continent-caret">${collapsed?'▸':'▾'}</span>
-        </div>
-        ${collapsed? '' : `<div class="continent-items">${cards}</div>`}
-      </div>`;
-  }).join('');
+  const pillsHtml = filterOptions.map(opt=>`
+    <button type="button" class="filter-pill ${opt===active?'active':''}" data-action="filter-recipe-category" data-cat="${escapeHtml(opt)}">${escapeHtml(opt)}</button>
+  `).join('');
 
-  const addForm = state.addingRecipe ? renderRecipeAddForm() : `
-    <div style="display:flex;gap:8px;margin:0 16px 14px;flex-wrap:wrap;">
-      <button type="button" class="btn btn-add" data-action="show-add-recipe">+ Neues Rezept</button>
-      <button type="button" class="btn" data-action="trigger-recipe-file-upload">${ICON.file} Rezeptkarte importieren</button>
-    </div>
-    <input type="file" id="recipe-file-input" accept=".docx" style="display:none">`;
+  const cards = (await Promise.all(filtered.map(renderRecipeCard))).join('');
+
+  const addForm = state.addingRecipe ? renderRecipeAddForm() : '';
 
   return `
     <div class="dest-header">
@@ -1934,12 +1922,13 @@ function renderKochbuch(){
       <div class="dest-header-title">Kulinarische Weltreise</div>
       <div class="dest-header-top" data-action="go-home">‹</div>
     </div>
-    <div class="dest-list">
-      ${recipes.length ? '' : '<p class="empty-state" style="padding:0 16px 14px;">Noch keine Rezepte hinterlegt.</p>'}
-      ${groupsHtml}
-      ${addForm}
-    </div>
-    <div style="height:calc(var(--tabbar-h) + 24px);"></div>
+    ${state.addingRecipe ? '' : `<div style="text-align:right;padding:14px 16px 0;"><button type="button" class="btn" style="padding:6px 14px;font-size:13px;" data-action="trigger-recipe-file-upload">${ICON.file} Rezeptkarte importieren</button><input type="file" id="recipe-file-input" accept=".docx" style="display:none"></div>`}
+    <div class="filter-pills">${pillsHtml}</div>
+    ${recipes.length ? '' : '<p class="empty-state" style="padding:0 16px 14px;">Noch keine Rezepte hinterlegt.</p>'}
+    <div class="dest-grid">${cards}</div>
+    ${addForm}
+    <div style="height:calc(var(--tabbar-h) + 90px);"></div>
+    <button type="button" class="fab-button" data-action="show-add-recipe" aria-label="Neues Rezept" style="${state.addingRecipe?'display:none;':''}">+</button>
   `;
 }
 async function confirmAddRecipe(){
@@ -5127,12 +5116,8 @@ async function onAppClick(e){
     case 'trigger-recipe-photo-upload': document.getElementById('recipe-photo-input').click(); break;
     case 'view-recipe-photo': await openLightbox(el.dataset.photoId, {type:'recipe', recipeId: state.recipeId}); break;
     case 'trigger-recipe-file-upload': document.getElementById('recipe-file-input').click(); break;
-    case 'toggle-recipe-cat':
-      if(state.collapsedRecipeCats.includes(el.dataset.cat)){
-        state.collapsedRecipeCats = state.collapsedRecipeCats.filter(c=>c!==el.dataset.cat);
-      } else {
-        state.collapsedRecipeCats = [...state.collapsedRecipeCats, el.dataset.cat];
-      }
+    case 'filter-recipe-category':
+      state.recipeFilterCategory = el.dataset.cat;
       render();
       break;
     case 'show-add-recipe': state.addingRecipe=true; render(); break;
