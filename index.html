@@ -270,6 +270,9 @@
   .form-actions{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}
 
   .list-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .checklist-group{margin-top:16px;}
+  .checklist-group:first-child{margin-top:0;}
+  .checklist-group-title{font-family:var(--font-display);font-size:15px;font-weight:600;margin-bottom:4px;color:var(--navy);}
   .list-item-text{flex:1;font-size:14px;}
   .list-item.checked .list-item-text{text-decoration:line-through;color:var(--ink-muted);}
   .checkbox{width:20px;height:20px;border:2px solid var(--teal);border-radius:6px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;cursor:pointer;font-size:13px;color:#fff;}
@@ -745,9 +748,12 @@ let state = {
 /* ---------- Data loading ---------- */
 async function loadDestData(id){
   if(destDataCache[id]) return destDataCache[id];
-  const fallback = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[], coverPhotoId:null};
+  const fallback = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[], coverPhotoId:null};
   const data = await sGet('dest-data:'+id, fallback);
   if(!data.bucketlist) data.bucketlist = [];
+  if(!data.checklist) data.checklist = [];
+  if(data.packingIntro===undefined) data.packingIntro = '';
+  if(data.checklistIntro===undefined) data.checklistIntro = '';
   if(!data.routes) data.routes = [];
   if(!data.hikingRoutes) data.hikingRoutes = [];
   if(!data.faq) data.faq = [];
@@ -3513,8 +3519,9 @@ function renderGuideTab(dd){
   return `
     ${coverSelector}
     ${cards}
-    <p class="hint-text">Fertige Routen findest du im Tab „Routen", häufige Fragen im Tab „FAQ", Bucketliste und Packliste im Tab „Listen". Rezepte aus „Essen &amp; Trinken" landen automatisch in der Kulinarischen Weltreise. Zeilen mit „Tipp:", „Geheimtipp:" oder „Achtung:" werden farbig hervorgehoben.</p>
+    <p class="hint-text">Fertige Routen findest du im Tab „Routen", häufige Fragen im Tab „FAQ", Packliste, Checklisten und Bucketliste im Tab „Listen". Rezepte aus „Essen &amp; Trinken" landen automatisch in der Kulinarischen Weltreise. Zeilen mit „Tipp:", „Geheimtipp:" oder „Achtung:" werden farbig hervorgehoben.</p>
     <button type="button" class="btn" data-action="trigger-guide-file-upload">${ICON.file} Reiseführer-Datei importieren (.docx)</button>
+    <button type="button" class="btn" style="margin-top:8px;" data-action="trigger-guide-md-upload">${ICON.file} Reiseführer-Datei importieren (.md)</button>
     ${state.confirmingResetGuide ? `
       <div class="confirm-inline-block" style="margin-top:10px;">
         <div class="confirm-message">Wirklich alle Reiseführer-Felder, die Routen und die Listen (Packliste, Todos, Bucketliste) dieses Ziels leeren? FAQ, Sprache und Wanderrouten bleiben unberührt. Das kann nicht rückgängig gemacht werden.</div>
@@ -3525,6 +3532,7 @@ function renderGuideTab(dd){
       </div>` : `
       <button type="button" class="btn btn-danger" data-action="ask-reset-guide" style="margin-top:10px;">${ICON.trash} Reiseführer zurücksetzen</button>`}
     <input type="file" id="guide-file-input" accept=".docx" style="display:none">
+    <input type="file" id="guide-md-file-input" accept=".md,.markdown,.txt" style="display:none">
   `;
 }
 
@@ -4414,7 +4422,7 @@ const CHAPTER_FIELD_MAP = [
   {pattern:/packliste/i, field:'PACKING'},
   {pattern:/praktisches a.z/i, field:'tips'},
   {pattern:/natur.*sicherheit.*wanderregeln/i, field:'natureSafety'},
-  {pattern:/checklisten/i, field:'BUCKETLIST'},
+  {pattern:/checklisten/i, field:'CHECKLIST_CH16'},
   {pattern:/häufig gestellte fragen/i, field:'FAQ'},
   {pattern:/zum schluss/i, field:null},
   {pattern:/mein reisetagebuch/i, field:null}
@@ -4599,7 +4607,7 @@ async function onGuideFileSelected(file){
         inSpracheSubsection = false;
         const field = findChapterField(headingText);
         currentMode = null; currentField = null;
-        if(field==='ROUTES' || field==='FAQ' || field==='BUCKETLIST' || field==='PACKING' || field==='RECIPES'){ currentMode = field; }
+        if(field==='ROUTES' || field==='FAQ' || field==='BUCKETLIST' || field==='CHECKLIST_CH16' || field==='PACKING' || field==='RECIPES'){ currentMode = field; }
         else if(field!==null){ currentMode = 'field'; currentField = field; }
         continue;
       }
@@ -4658,16 +4666,17 @@ async function onGuideFileSelected(file){
             anyImported = true;
           }
         }
-      } else if(currentMode==='BUCKETLIST' || currentMode==='PACKING'){
+      } else if(currentMode==='BUCKETLIST' || currentMode==='PACKING' || currentMode==='CHECKLIST_CH16'){
+        const bucketKey = currentMode==='CHECKLIST_CH16' ? 'BUCKETLIST' : currentMode;
         if(node.tagName==='UL' || node.tagName==='OL'){
           [...node.querySelectorAll('li')].forEach(li=>{
             const t = li.textContent.trim();
-            if(t) listBuckets[currentMode].push(t);
+            if(t) listBuckets[bucketKey].push(t);
           });
         } else {
           let t = node.textContent.trim();
           t = t.replace(/^[•\-\*▪]\s*/, '').replace(/^\d+[\.\)]\s*/, '');
-          if(t) listBuckets[currentMode].push(t);
+          if(t) listBuckets[bucketKey].push(t);
         }
       } else if(currentMode==='field' && currentField){
         if(inChapter2){
@@ -4740,6 +4749,226 @@ async function onGuideFileSelected(file){
     showToast(anyImported ? 'Reiseführer eingelesen und auf die Reiter verteilt – bitte prüfen.' : 'Es konnte nichts eindeutig zugeordnet werden – bitte manuell prüfen.');
   }catch(e){
     showToast('Datei konnte nicht gelesen werden. Bitte eine .docx-Datei verwenden.');
+  }
+}
+function parseMarkdownTable(block){
+  const lines = block.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length < 2 || !lines[0].startsWith('|') || !/^\|[\s:|-]+\|$/.test(lines[1])) return null;
+  return lines.filter((l,idx)=>idx!==1).map(line=>line.replace(/^\||\|$/g,'').split('|').map(c=>c.trim()));
+}
+function convertMarkdownListLines(block){
+  return block.split('\n').map(line=>{
+    let m = line.match(/^\s*[-*]\s+(.*)$/);
+    if(m) return '• ' + m[1];
+    m = line.match(/^\s*(\d+)\.\s+(.*)$/);
+    if(m) return m[1] + '. ' + m[2];
+    return line;
+  }).join('\n');
+}
+function parseMarkdownRecipe(name, destId, blocks){
+  let subtitle = '', servingsTime = '';
+  const ingredientGroups = [];
+  let steps = [];
+  const headerLines = blocks.length ? blocks[0].split('\n').map(l=>l.trim()).filter(Boolean) : [];
+  const remainingBlocks = blocks.slice(1);
+  let li = 0;
+  if(headerLines[li] && /^\*[^*]+\*$/.test(headerLines[li])){ subtitle = headerLines[li].replace(/^\*|\*$/g,''); li++; }
+  if(headerLines[li] && !/^\*\*/.test(headerLines[li]) && !/^[-*]\s/.test(headerLines[li])){ servingsTime = headerLines[li]; li++; }
+  const leftover = headerLines.slice(li).join('\n');
+  const scanBlocks = leftover ? [leftover, ...remainingBlocks] : remainingBlocks;
+  for(const rawB of scanBlocks){
+    const b = rawB.trim();
+    const headM = b.match(/^\*\*(.+?)\*\*\s*\n?([\s\S]*)$/);
+    if(headM){
+      const heading = headM[1].trim();
+      const items = headM[2].trim().split('\n').map(l=>l.replace(/^[-*]\s+/,'').trim()).filter(Boolean);
+      if(/zutaten/i.test(heading)) ingredientGroups.push({heading, items});
+      else if(/zubereitung/i.test(heading)) steps = items.map(l=>l.replace(/^\d+\.\s*/,''));
+    }
+  }
+  if(!ingredientGroups.length && !steps.length) return null;
+  const ingredients = ingredientGroups.length===1 ? ingredientGroups[0].items.join('\n')
+    : ingredientGroups.map(g=>g.heading+':\n'+g.items.join('\n')).join('\n\n');
+  return {
+    id: genId(), destId, category:'Sonstiges', nameNative: name, nameGerman: subtitle,
+    servings: (servingsTime.split('·')[0]||'').trim(), time: servingsTime.split('·').slice(1).join('·').trim(),
+    ingredients, steps: steps.join('\n')
+  };
+}
+function parseMarkdownGuide(text, destId){
+  const fieldBuckets = {understanding:[], overview:[], bestTime:[], entryHealth:[], arrival:[], gettingAround:[], accommodation:[], regions:[], highlights:[], foodDrink:[], budgetInfo:[], natureSafety:[], tips:[]};
+  const packingItems = [], checklistItems = [], bucketlistItems = [], faqItems = [], newRecipes = [], newRoutes = [];
+  let packingIntro = '', checklistIntro = '';
+  let currentMode = null, currentField = null;
+  let inRecipeSection = false, currentGroup = null, inBucketPart = false;
+  let subBuffer = null;
+  let anyImported = false;
+
+  function flushRouteSub(){
+    if(subBuffer){
+      if(subBuffer.currentDay) subBuffer.days.push(subBuffer.currentDay);
+      newRoutes.push({id:genId(), title:subBuffer.title, description:subBuffer.descLines.join('\n\n'),
+        days: subBuffer.days.map(d=>({id:genId(), title:d.title, description:d.lines.join('\n\n')}))});
+      subBuffer = null;
+    }
+  }
+
+  const blocks = text.split(/\n{2,}/);
+  let i = 0;
+  while(i < blocks.length){
+    const block = blocks[i].trim();
+    if(!block){ i++; continue; }
+
+    let m = block.match(/^##\s+(.+)$/);
+    if(m && !/^##\s+#/.test(block)){
+      if(currentMode==='ROUTES') flushRouteSub();
+      const title = m[1].trim();
+      const field = findChapterField(title);
+      currentMode = null; currentField = null;
+      inRecipeSection = false; currentGroup = null; inBucketPart = false;
+      if(field==='ROUTES'||field==='FAQ'||field==='PACKING'||field==='RECIPES'||field==='CHECKLIST_CH16'){ currentMode = field; }
+      else if(field!==null){ currentMode = 'field'; currentField = field; }
+      i++; continue;
+    }
+
+    let subM = block.match(/^(#{3,4})\s+([^\n]+)\n?([\s\S]*)$/);
+    if(subM){
+      const level = subM[1].length;
+      const subTitle = subM[2].trim();
+      const restOfBlock = subM[3].trim();
+
+      if(currentMode==='RECIPES'){
+        if(/^zum nachkochen/i.test(subTitle)){ inRecipeSection = true; i++; continue; }
+        if(inRecipeSection && level===4){
+          let j = i+1;
+          const recipeBlocks = restOfBlock ? [restOfBlock] : [];
+          while(j<blocks.length && !/^#{2,4}\s/.test(blocks[j].trim())){ recipeBlocks.push(blocks[j]); j++; }
+          const recipe = parseMarkdownRecipe(subTitle, destId, recipeBlocks);
+          if(recipe){ newRecipes.push(recipe); anyImported = true; }
+          i = j; continue;
+        }
+        i++; continue;
+      }
+
+      if(currentMode==='ROUTES'){
+        if(level===3 && /^Route\s*\d+/i.test(subTitle)){
+          flushRouteSub();
+          subBuffer = {title:subTitle, descLines: restOfBlock?[restOfBlock]:[], days:[], currentDay:null};
+        } else if(level===4 && subBuffer){
+          if(subBuffer.currentDay) subBuffer.days.push(subBuffer.currentDay);
+          subBuffer.currentDay = {title:subTitle, lines: restOfBlock?[restOfBlock]:[]};
+        } else if(level===3 && subBuffer){
+          if(subBuffer.currentDay) subBuffer.days.push(subBuffer.currentDay);
+          subBuffer.currentDay = null;
+          subBuffer.descLines.push('**'+subTitle+'**');
+          if(restOfBlock) subBuffer.descLines.push(restOfBlock);
+        }
+        i++; continue;
+      }
+
+      if(currentMode==='PACKING' || currentMode==='CHECKLIST_CH16'){
+        if(currentMode==='CHECKLIST_CH16' && /bucket/i.test(subTitle)){ inBucketPart = true; currentGroup = null; }
+        else { currentGroup = subTitle.replace(/^checkliste:\s*/i,''); inBucketPart = false; }
+        if(restOfBlock){
+          const bulletLines = restOfBlock.split('\n').map(l=>l.replace(/^[-*]\s+/,'').replace(/\*\*/g,'').trim()).filter(Boolean);
+          bulletLines.forEach(lineText=>{
+            const item = {id:genId(), text:lineText, checked:false};
+            if(inBucketPart){ bucketlistItems.push(item); }
+            else { item.group = currentGroup; (currentMode==='PACKING'?packingItems:checklistItems).push(item); }
+          });
+          anyImported = true;
+        }
+        i++; continue;
+      }
+
+      if(currentMode==='field'){
+        fieldBuckets[currentField].push('###SUBHEAD###'+subTitle);
+        if(restOfBlock) fieldBuckets[currentField].push(convertMarkdownListLines(restOfBlock));
+        anyImported = true;
+      }
+      i++; continue;
+    }
+
+    if(currentMode==='ROUTES' && subBuffer){
+      if(subBuffer.currentDay) subBuffer.currentDay.lines.push(block);
+      else subBuffer.descLines.push(block);
+      i++; continue;
+    }
+
+    if(currentMode==='FAQ'){
+      const qaMatch = block.match(/^\*\*F:?\s*(.+?)\*\*\s*\n\*\*A:?\*\*\s*([\s\S]*)$/i);
+      if(qaMatch){ faqItems.push({id:genId(), question:qaMatch[1].trim(), answer:qaMatch[2].trim()}); anyImported = true; }
+      i++; continue;
+    }
+
+    if(currentMode==='RECIPES' && !inRecipeSection){
+      const text = convertMarkdownListLines(block);
+      if(text){ fieldBuckets.foodDrink.push(text); anyImported = true; }
+      i++; continue;
+    }
+
+    if(currentMode==='field'){
+      const tableRows = parseMarkdownTable(block);
+      if(tableRows){ fieldBuckets[currentField].push('###TABLE###'+JSON.stringify(tableRows)); anyImported = true; i++; continue; }
+      const calloutM = block.match(/^>\s*\*\*[^*A-Za-zÄÖÜäöü]*(Tipp|Geheimtipp|Achtung)\s*:?\s*\*\*\s*:?\s*([\s\S]*)$/i);
+      const text = calloutM ? (calloutM[1] + ': ' + calloutM[2].trim()) : convertMarkdownListLines(block);
+      if(text){ fieldBuckets[currentField].push(text); anyImported = true; }
+      i++; continue;
+    }
+
+    if(currentMode==='PACKING' || currentMode==='CHECKLIST_CH16'){
+      if(!currentGroup && !inBucketPart){
+        const introText = block.replace(/\*\*/g,'');
+        if(currentMode==='PACKING') packingIntro += (packingIntro?'\n\n':'')+introText;
+        else checklistIntro += (checklistIntro?'\n\n':'')+introText;
+        i++; continue;
+      }
+      const bulletLines = block.split('\n').map(l=>l.replace(/^[-*]\s+/,'').replace(/\*\*/g,'').trim()).filter(Boolean);
+      bulletLines.forEach(lineText=>{
+        const item = {id:genId(), text:lineText, checked:false};
+        if(inBucketPart){ bucketlistItems.push(item); }
+        else { item.group = currentGroup; (currentMode==='PACKING'?packingItems:checklistItems).push(item); }
+      });
+      anyImported = true;
+      i++; continue;
+    }
+    i++;
+  }
+  if(currentMode==='ROUTES') flushRouteSub();
+
+  const guideFields = {};
+  for(const key in fieldBuckets){ guideFields[key] = fieldBuckets[key].join('\n\n'); }
+  return {guideFields, packingItems, checklistItems, bucketlistItems, faqItems, newRecipes, newRoutes, packingIntro, checklistIntro, anyImported};
+}
+async function onGuideMarkdownSelected(file){
+  try{
+    const text = await file.text();
+    if(!text.trim()){ showToast('Aus dieser Datei konnte kein Text extrahiert werden.'); return; }
+    const dd = destDataCache[state.destId];
+    const result = parseMarkdownGuide(text, state.destId);
+
+    Object.keys(result.guideFields).forEach(field=>{
+      if(result.guideFields[field]){
+        dd.guide[field] = dd.guide[field] ? dd.guide[field]+'\n\n'+result.guideFields[field] : result.guideFields[field];
+      }
+    });
+    result.bucketlistItems.forEach(it=>dd.bucketlist.push(it));
+    result.packingItems.forEach(it=>dd.packing.push(it));
+    result.checklistItems.forEach(it=>dd.checklist.push(it));
+    if(result.packingIntro) dd.packingIntro = dd.packingIntro ? dd.packingIntro+'\n\n'+result.packingIntro : result.packingIntro;
+    if(result.checklistIntro) dd.checklistIntro = dd.checklistIntro ? dd.checklistIntro+'\n\n'+result.checklistIntro : result.checklistIntro;
+    result.faqItems.forEach(it=>dd.faq.push(it));
+    result.newRoutes.forEach(r=>dd.routes.push(r));
+    result.newRecipes.forEach(r=>recipes.push(r));
+
+    dd.guide.imported = false;
+    dd.guide.importedFileName = file.name;
+    await saveDestData(state.destId);
+    await sSet('recipes', recipes);
+    render();
+    showToast(result.anyImported ? 'Reiseführer eingelesen und auf die Reiter verteilt – bitte prüfen.' : 'Es konnte nichts eindeutig zugeordnet werden – bitte manuell prüfen.');
+  }catch(e){
+    showToast('Datei konnte nicht gelesen werden. Bitte eine .md-Datei im vereinbarten Format verwenden.');
   }
 }
 async function resetGuide(){
@@ -4843,11 +5072,16 @@ async function locateMeForWeather(){
 function renderListenTab(dd){
   return `
     <h3 class="section-title">Packliste</h3>
+    ${dd.packingIntro ? `<p class="hint-text" style="margin-top:0;">${escapeHtml(dd.packingIntro)}</p>` : ''}
     ${renderCheckList(dd.packing,'packing')}
     ${renderAddItemForm('packing','Gegenstand hinzufügen')}
     <h3 class="section-title" style="margin-top:28px;">To-Do</h3>
     ${renderCheckList(dd.todos,'todos')}
     ${renderAddItemForm('todos','Aufgabe hinzufügen')}
+    <h3 class="section-title" style="margin-top:28px;">Checklisten</h3>
+    ${dd.checklistIntro ? `<p class="hint-text" style="margin-top:0;">${escapeHtml(dd.checklistIntro)}</p>` : ''}
+    ${renderCheckList(dd.checklist,'checklist')}
+    ${renderAddItemForm('checklist','Punkt hinzufügen')}
     <h3 class="section-title" style="margin-top:28px;">Bucketliste</h3>
     ${renderCheckList(dd.bucketlist,'bucketlist')}
     ${renderAddItemForm('bucketlist','Bucketlist-Eintrag hinzufügen')}
@@ -4855,12 +5089,30 @@ function renderListenTab(dd){
 }
 function renderCheckList(items, listKey){
   if(!items.length) return '<p class="empty-state">Noch nichts eingetragen.</p>';
-  return items.map(it=>`
+  const hasGroups = items.some(it=>it.group);
+  if(!hasGroups){
+    return items.map(it=>renderCheckItem(it, listKey)).join('');
+  }
+  const groups = [];
+  items.forEach(it=>{
+    const g = it.group || '';
+    let bucket = groups.find(b=>b.name===g);
+    if(!bucket){ bucket = {name:g, items:[]}; groups.push(bucket); }
+    bucket.items.push(it);
+  });
+  return groups.map(g=>`
+    <div class="checklist-group">
+      ${g.name ? `<div class="checklist-group-title">${escapeHtml(g.name)}</div>` : ''}
+      ${g.items.map(it=>renderCheckItem(it, listKey)).join('')}
+    </div>`).join('');
+}
+function renderCheckItem(it, listKey){
+  return `
     <div class="list-item ${it.checked?'checked':''}">
       <div class="checkbox ${it.checked?'checked':''}" data-action="toggle-check" data-list="${listKey}" data-id="${it.id}">${it.checked?'✓':''}</div>
       <div class="list-item-text">${escapeHtml(it.text)}</div>
       <button type="button" class="btn btn-danger" data-action="delete-item" data-list="${listKey}" data-id="${it.id}">${ICON.trash}</button>
-    </div>`).join('');
+    </div>`;
 }
 function renderAddItemForm(listKey, placeholder){
   if(state.addingList===listKey){
@@ -5110,7 +5362,7 @@ async function confirmAddDest(){
   const id = genId();
   destinations.push({id,name,flag,lat,lng,currency:'EUR',continent});
   await sSet('destinations', destinations);
-  destDataCache[id] = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[]};
+  destDataCache[id] = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[]};
   await saveDestData(id);
   state.showAddDest = false;
   render();
@@ -5315,6 +5567,7 @@ async function onAppClick(e){
     case 'show-route': await showRouteTo(el.dataset.id); break;
     case 'clear-route': state.currentRoute=null; render(); break;
     case 'trigger-guide-file-upload': document.getElementById('guide-file-input').click(); break;
+    case 'trigger-guide-md-upload': document.getElementById('guide-md-file-input').click(); break;
     case 'ask-revert-guide': state.confirmingRevertGuide=true; render(); break;
     case 'cancel-revert-guide': state.confirmingRevertGuide=false; render(); break;
     case 'do-revert-guide': await revertGuideToManual(); break;
@@ -5444,6 +5697,11 @@ document.getElementById('app').addEventListener('change', async function(e){
   if(e.target.id==='guide-file-input'){
     const file = e.target.files[0];
     if(file) await onGuideFileSelected(file);
+    e.target.value='';
+  }
+  if(e.target.id==='guide-md-file-input'){
+    const file = e.target.files[0];
+    if(file) await onGuideMarkdownSelected(file);
     e.target.value='';
   }
   if(e.target.classList && e.target.classList.contains('trip-guide-select')){
