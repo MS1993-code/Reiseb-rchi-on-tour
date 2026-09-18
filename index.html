@@ -518,6 +518,13 @@ async function sDelete(key){
 
 /* ---------- Utilities ---------- */
 function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function pushIfNew(arr, item, keyFn){
+  const key = keyFn(item);
+  if(!key) { arr.push(item); return true; }
+  const exists = arr.some(x=>keyFn(x)===key);
+  if(!exists){ arr.push(item); return true; }
+  return false;
+}
 function showToast(message){
   let toastEl = document.getElementById('app-toast');
   if(!toastEl){
@@ -748,12 +755,13 @@ let state = {
 /* ---------- Data loading ---------- */
 async function loadDestData(id){
   if(destDataCache[id]) return destDataCache[id];
-  const fallback = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[], coverPhotoId:null};
+  const fallback = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', bucketlistIntro:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[], coverPhotoId:null};
   const data = await sGet('dest-data:'+id, fallback);
   if(!data.bucketlist) data.bucketlist = [];
   if(!data.checklist) data.checklist = [];
   if(data.packingIntro===undefined) data.packingIntro = '';
   if(data.checklistIntro===undefined) data.checklistIntro = '';
+  if(data.bucketlistIntro===undefined) data.bucketlistIntro = '';
   if(!data.routes) data.routes = [];
   if(!data.hikingRoutes) data.hikingRoutes = [];
   if(!data.faq) data.faq = [];
@@ -4472,8 +4480,20 @@ async function onGuideFileSelected(file){
     const nodes = [...doc.body.children];
     const dd = destDataCache[state.destId];
     const fieldBuckets = {understanding:[], overview:[], bestTime:[], entryHealth:[], arrival:[], gettingAround:[], accommodation:[], regions:[], highlights:[], foodDrink:[], budgetInfo:[], natureSafety:[], tips:[]};
-    const listBuckets = {BUCKETLIST:[], PACKING:[]};
-    let currentMode = null; // 'field' | 'ROUTES' | 'FAQ' | 'BUCKETLIST' | 'PACKING' | 'RECIPES' | null
+    const packingItemsBuf = [], checklistItemsBuf = [], bucketlistItemsBuf = [];
+    let packingIntroBuf = '', checklistIntroBuf = '', bucketlistIntroBuf = '';
+    let currentGroup = null, inBucketPart = false;
+    function extractCalloutFromNode(node){
+      const txt = node.textContent.trim();
+      let m = txt.match(/^(Tipp|Geheimtipp|Achtung)\s*:?\s*(.+)$/i);
+      if(m) return m[1]+': '+m[2].trim();
+      if(node.tagName==='TABLE'){
+        m = txt.match(/^[^\wÄÖÜäöü]{0,3}(Tipp|Geheimtipp|Achtung)\s*:?\s*(.+)$/i);
+        if(m) return m[1]+': '+m[2].trim();
+      }
+      return null;
+    }
+    let currentMode = null; // 'field' | 'ROUTES' | 'FAQ' | 'BUCKETLIST' | 'PACKING' | 'CHECKLIST_CH16' | 'RECIPES' | null
     let currentField = null;
     let inChapter2 = false;
     let inRecipeSection = false;
@@ -4490,8 +4510,7 @@ async function onGuideFileSelected(file){
           const days = (subBuffer.days||[]).map(d=>({label:d.label, place:d.place||'', text:d.lines.join('\n').trim()})).filter(d=>d.text);
           if(/^route\s*\d+/i.test(subBuffer.title)){
             if(descText || days.length){
-              dd.routes.push({id:genId(), title:subBuffer.title, text:descText, days});
-              anyImported = true;
+              if(pushIfNew(dd.routes, {id:genId(), title:subBuffer.title, text:descText, days}, r=>r.title.trim().toLowerCase())) anyImported = true;
             }
           } else {
             const combined = [descText, ...days.map(d=>d.label+'\n'+d.text)].filter(Boolean).join('\n\n');
@@ -4585,13 +4604,13 @@ async function onGuideFileSelected(file){
         const blockText = recipeBuffer.title + '\n' + recipeBuffer.lines.join('\n');
         const parsed = parseRecipeText(blockText);
         if(parsed.ingredients || parsed.steps){
-          recipes.push({
+          const newRecipe = {
             id:genId(), destId: dest.id, category:'Sonstiges',
             nameNative: parsed.nameNative || recipeBuffer.title, nameGerman: parsed.nameGerman||'',
             servings: parsed.servings||'', time: parsed.time||'',
             ingredients: parsed.ingredients||'', steps: parsed.steps||''
-          });
-          anyImported = true;
+          };
+          if(pushIfNew(recipes, newRecipe, r=>r.destId+'|'+r.nameNative.trim().toLowerCase())) anyImported = true;
         }
       }
       recipeBuffer = null;
@@ -4605,6 +4624,7 @@ async function onGuideFileSelected(file){
         inChapter2 = /verstehen/i.test(headingText);
         inRecipeSection = false;
         inSpracheSubsection = false;
+        currentGroup = null; inBucketPart = false;
         const field = findChapterField(headingText);
         currentMode = null; currentField = null;
         if(field==='ROUTES' || field==='FAQ' || field==='BUCKETLIST' || field==='CHECKLIST_CH16' || field==='PACKING' || field==='RECIPES'){ currentMode = field; }
@@ -4618,13 +4638,13 @@ async function onGuideFileSelected(file){
         } else if(node.tagName==='TABLE' && inRecipeSection){
           const parsed = parseRecipeTableFull(node);
           if(parsed && (parsed.ingredients || parsed.steps)){
-            recipes.push({
+            const newRecipe = {
               id:genId(), destId: dest.id, category:'Sonstiges',
               nameNative: parsed.name || 'Rezept', nameGerman: parsed.subtitle || '',
               servings: parsed.servings, time: parsed.time,
               ingredients: parsed.ingredients, steps: parsed.steps
-            });
-            anyImported = true;
+            };
+            if(pushIfNew(recipes, newRecipe, r=>r.destId+'|'+r.nameNative.trim().toLowerCase())) anyImported = true;
           }
         } else if(!inRecipeSection){
           const t = node.tagName==='P' ? extractFormattedText(node) : node.textContent.trim();
@@ -4667,16 +4687,41 @@ async function onGuideFileSelected(file){
           }
         }
       } else if(currentMode==='BUCKETLIST' || currentMode==='PACKING' || currentMode==='CHECKLIST_CH16'){
-        const bucketKey = currentMode==='CHECKLIST_CH16' ? 'BUCKETLIST' : currentMode;
+        const isChecklist16 = currentMode==='CHECKLIST_CH16';
+        const bucketKey = currentMode==='BUCKETLIST' ? 'BUCKETLIST' : (isChecklist16 ? 'CHECKLIST' : 'PACKING');
+        const targetItems = bucketKey==='BUCKETLIST' ? bucketlistItemsBuf : (bucketKey==='CHECKLIST' ? checklistItemsBuf : packingItemsBuf);
+        const subHeading = getSubHeadingText(node);
+        if(subHeading){
+          if(isChecklist16 && /bucket/i.test(subHeading)){ inBucketPart = true; currentGroup = null; }
+          else { currentGroup = subHeading.replace(/^checkliste:\s*/i,''); inBucketPart = false; }
+          continue;
+        }
+        const callout = extractCalloutFromNode(node);
+        if(callout){
+          if(bucketKey==='BUCKETLIST' || (isChecklist16 && inBucketPart)) bucketlistIntroBuf += (bucketlistIntroBuf?'\n\n':'')+callout;
+          else if(bucketKey==='CHECKLIST') checklistIntroBuf += (checklistIntroBuf?'\n\n':'')+callout;
+          else packingIntroBuf += (packingIntroBuf?'\n\n':'')+callout;
+          continue;
+        }
         if(node.tagName==='UL' || node.tagName==='OL'){
           [...node.querySelectorAll('li')].forEach(li=>{
             const t = li.textContent.trim();
-            if(t) listBuckets[bucketKey].push(t);
+            if(!t) return;
+            if(isChecklist16 && inBucketPart){ bucketlistItemsBuf.push({text:t}); }
+            else if(bucketKey==='BUCKETLIST'){ bucketlistItemsBuf.push({text:t}); }
+            else { targetItems.push({text:t, group:currentGroup}); }
           });
         } else {
           let t = node.textContent.trim();
           t = t.replace(/^[•\-\*▪]\s*/, '').replace(/^\d+[\.\)]\s*/, '');
-          if(t) listBuckets[bucketKey].push(t);
+          if(!t) { /* nothing */ }
+          else if(isChecklist16 && inBucketPart){ bucketlistItemsBuf.push({text:t}); }
+          else if(bucketKey==='BUCKETLIST'){ bucketlistItemsBuf.push({text:t}); }
+          else if(!currentGroup){
+            if(bucketKey==='CHECKLIST') checklistIntroBuf += (checklistIntroBuf?'\n\n':'')+t;
+            else packingIntroBuf += (packingIntroBuf?'\n\n':'')+t;
+          }
+          else { targetItems.push({text:t, group:currentGroup}); }
         }
       } else if(currentMode==='field' && currentField){
         if(inChapter2){
@@ -4737,9 +4782,12 @@ async function onGuideFileSelected(file){
         dd.guide[field] = dd.guide[field] ? dd.guide[field]+'\n\n'+newText : newText;
       }
     });
-    listBuckets.BUCKETLIST.forEach(text=>{ dd.bucketlist.push({id:genId(), text, checked:false}); });
-    listBuckets.PACKING.forEach(text=>{ dd.packing.push({id:genId(), text, checked:false}); });
-    if(listBuckets.BUCKETLIST.length || listBuckets.PACKING.length) anyImported = true;
+    bucketlistItemsBuf.forEach(it=>{ if(pushIfNew(dd.bucketlist, {id:genId(), text:it.text, checked:false}, x=>x.text.trim().toLowerCase())) anyImported = true; });
+    packingItemsBuf.forEach(it=>{ if(pushIfNew(dd.packing, {id:genId(), text:it.text, checked:false, group:it.group}, x=>x.text.trim().toLowerCase())) anyImported = true; });
+    checklistItemsBuf.forEach(it=>{ if(pushIfNew(dd.checklist, {id:genId(), text:it.text, checked:false, group:it.group}, x=>x.text.trim().toLowerCase())) anyImported = true; });
+    if(packingIntroBuf && !dd.packingIntro.includes(packingIntroBuf)){ dd.packingIntro = dd.packingIntro ? dd.packingIntro+'\n\n'+packingIntroBuf : packingIntroBuf; anyImported = true; }
+    if(checklistIntroBuf && !dd.checklistIntro.includes(checklistIntroBuf)){ dd.checklistIntro = dd.checklistIntro ? dd.checklistIntro+'\n\n'+checklistIntroBuf : checklistIntroBuf; anyImported = true; }
+    if(bucketlistIntroBuf && !dd.bucketlistIntro.includes(bucketlistIntroBuf)){ dd.bucketlistIntro = dd.bucketlistIntro ? dd.bucketlistIntro+'\n\n'+bucketlistIntroBuf : bucketlistIntroBuf; anyImported = true; }
 
     dd.guide.imported = false;
     dd.guide.importedFileName = file.name;
@@ -4798,7 +4846,7 @@ function parseMarkdownRecipe(name, destId, blocks){
 function parseMarkdownGuide(text, destId){
   const fieldBuckets = {understanding:[], overview:[], bestTime:[], entryHealth:[], arrival:[], gettingAround:[], accommodation:[], regions:[], highlights:[], foodDrink:[], budgetInfo:[], natureSafety:[], tips:[]};
   const packingItems = [], checklistItems = [], bucketlistItems = [], faqItems = [], newRecipes = [], newRoutes = [];
-  let packingIntro = '', checklistIntro = '';
+  let packingIntro = '', checklistIntro = '', bucketlistIntro = '';
   let currentMode = null, currentField = null;
   let inRecipeSection = false, currentGroup = null, inBucketPart = false;
   let subBuffer = null;
@@ -4807,8 +4855,8 @@ function parseMarkdownGuide(text, destId){
   function flushRouteSub(){
     if(subBuffer){
       if(subBuffer.currentDay) subBuffer.days.push(subBuffer.currentDay);
-      newRoutes.push({id:genId(), title:subBuffer.title, description:subBuffer.descLines.join('\n\n'),
-        days: subBuffer.days.map(d=>({id:genId(), title:d.title, description:d.lines.join('\n\n')}))});
+      newRoutes.push({id:genId(), title:subBuffer.title, text:subBuffer.descLines.join('\n\n'),
+        days: subBuffer.days.map(d=>({label:d.title, place:'', text:d.lines.join('\n\n')}))});
       subBuffer = null;
     }
   }
@@ -4917,10 +4965,22 @@ function parseMarkdownGuide(text, destId){
     }
 
     if(currentMode==='PACKING' || currentMode==='CHECKLIST_CH16'){
+      const calloutM = block.match(/^>\s*\*\*[^*A-Za-zÄÖÜäöü]*(Tipp|Geheimtipp|Achtung)\s*:?\s*\*\*\s*:?\s*([\s\S]*)$/i);
+      if(calloutM){
+        const noteText = calloutM[1] + ': ' + calloutM[2].trim();
+        if(currentMode==='PACKING') packingIntro += (packingIntro?'\n\n':'')+noteText;
+        else checklistIntro += (checklistIntro?'\n\n':'')+noteText;
+        anyImported = true;
+        i++; continue;
+      }
       if(!currentGroup && !inBucketPart){
         const introText = block.replace(/\*\*/g,'');
         if(currentMode==='PACKING') packingIntro += (packingIntro?'\n\n':'')+introText;
         else checklistIntro += (checklistIntro?'\n\n':'')+introText;
+        i++; continue;
+      }
+      if(inBucketPart && !/^[-*]\s/.test(block)){
+        bucketlistIntro += (bucketlistIntro?'\n\n':'')+block.replace(/\*\*/g,'');
         i++; continue;
       }
       const bulletLines = block.split('\n').map(l=>l.replace(/^[-*]\s+/,'').replace(/\*\*/g,'').trim()).filter(Boolean);
@@ -4938,7 +4998,7 @@ function parseMarkdownGuide(text, destId){
 
   const guideFields = {};
   for(const key in fieldBuckets){ guideFields[key] = fieldBuckets[key].join('\n\n'); }
-  return {guideFields, packingItems, checklistItems, bucketlistItems, faqItems, newRecipes, newRoutes, packingIntro, checklistIntro, anyImported};
+  return {guideFields, packingItems, checklistItems, bucketlistItems, faqItems, newRecipes, newRoutes, packingIntro, checklistIntro, bucketlistIntro, anyImported};
 }
 async function onGuideMarkdownSelected(file){
   try{
@@ -4952,14 +5012,15 @@ async function onGuideMarkdownSelected(file){
         dd.guide[field] = dd.guide[field] ? dd.guide[field]+'\n\n'+result.guideFields[field] : result.guideFields[field];
       }
     });
-    result.bucketlistItems.forEach(it=>dd.bucketlist.push(it));
-    result.packingItems.forEach(it=>dd.packing.push(it));
-    result.checklistItems.forEach(it=>dd.checklist.push(it));
-    if(result.packingIntro) dd.packingIntro = dd.packingIntro ? dd.packingIntro+'\n\n'+result.packingIntro : result.packingIntro;
-    if(result.checklistIntro) dd.checklistIntro = dd.checklistIntro ? dd.checklistIntro+'\n\n'+result.checklistIntro : result.checklistIntro;
-    result.faqItems.forEach(it=>dd.faq.push(it));
-    result.newRoutes.forEach(r=>dd.routes.push(r));
-    result.newRecipes.forEach(r=>recipes.push(r));
+    result.bucketlistItems.forEach(it=>{ if(pushIfNew(dd.bucketlist, it, x=>x.text.trim().toLowerCase())) result.anyImported = true; });
+    result.packingItems.forEach(it=>{ if(pushIfNew(dd.packing, it, x=>x.text.trim().toLowerCase())) result.anyImported = true; });
+    result.checklistItems.forEach(it=>{ if(pushIfNew(dd.checklist, it, x=>x.text.trim().toLowerCase())) result.anyImported = true; });
+    if(result.packingIntro && !dd.packingIntro.includes(result.packingIntro)) dd.packingIntro = dd.packingIntro ? dd.packingIntro+'\n\n'+result.packingIntro : result.packingIntro;
+    if(result.checklistIntro && !dd.checklistIntro.includes(result.checklistIntro)) dd.checklistIntro = dd.checklistIntro ? dd.checklistIntro+'\n\n'+result.checklistIntro : result.checklistIntro;
+    if(result.bucketlistIntro && !dd.bucketlistIntro.includes(result.bucketlistIntro)) dd.bucketlistIntro = dd.bucketlistIntro ? dd.bucketlistIntro+'\n\n'+result.bucketlistIntro : result.bucketlistIntro;
+    result.faqItems.forEach(it=>{ if(pushIfNew(dd.faq, it, x=>x.question.trim().toLowerCase())) result.anyImported = true; });
+    result.newRoutes.forEach(r=>{ if(pushIfNew(dd.routes, r, x=>x.title.trim().toLowerCase())) result.anyImported = true; });
+    result.newRecipes.forEach(r=>{ if(pushIfNew(recipes, r, x=>x.destId+'|'+x.nameNative.trim().toLowerCase())) result.anyImported = true; });
 
     dd.guide.imported = false;
     dd.guide.importedFileName = file.name;
@@ -5083,6 +5144,7 @@ function renderListenTab(dd){
     ${renderCheckList(dd.checklist,'checklist')}
     ${renderAddItemForm('checklist','Punkt hinzufügen')}
     <h3 class="section-title" style="margin-top:28px;">Bucketliste</h3>
+    ${dd.bucketlistIntro ? `<p class="hint-text" style="margin-top:0;">${escapeHtml(dd.bucketlistIntro)}</p>` : ''}
     ${renderCheckList(dd.bucketlist,'bucketlist')}
     ${renderAddItemForm('bucketlist','Bucketlist-Eintrag hinzufügen')}
   `;
@@ -5362,7 +5424,7 @@ async function confirmAddDest(){
   const id = genId();
   destinations.push({id,name,flag,lat,lng,currency:'EUR',continent});
   await sSet('destinations', destinations);
-  destDataCache[id] = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[]};
+  destDataCache[id] = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', bucketlistIntro:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[]};
   await saveDestData(id);
   state.showAddDest = false;
   render();
