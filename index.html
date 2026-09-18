@@ -224,6 +224,9 @@
   .empty-state{font-size:14px;color:var(--ink-muted);padding:14px 0;}
 
   .input,.textarea,select.input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:14px;background:var(--surface-alt);color:var(--ink);}
+  input[type="file"].input{padding:8px;color:var(--ink-muted);font-size:13px;}
+  input[type="file"].input::file-selector-button{font-family:inherit;font-size:13px;font-weight:600;padding:8px 14px;margin-right:10px;border:none;border-radius:10px;background:var(--navy);color:var(--on-navy);cursor:pointer;}
+  input[type="file"].input::-webkit-file-upload-button{font-family:inherit;font-size:13px;font-weight:600;padding:8px 14px;margin-right:10px;border:none;border-radius:10px;background:var(--navy);color:var(--on-navy);cursor:pointer;}
   .textarea{min-height:90px;resize:vertical;}
   .day-plan-box{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--surface);font-family:inherit;font-size:14px;line-height:1.5;}
   .route-day-block{border-top:1px dashed var(--border);padding-top:10px;margin-top:10px;}
@@ -232,7 +235,7 @@
   .callout-tipp{background:#E8F2EC;color:#2F5D45;border-left:4px solid #4C9A72;}
   .callout-geheimtipp{background:#FBF0DC;color:#7A5A1E;border-left:4px solid #C99A3E;}
   .callout-achtung{background:#FBEAE8;color:#8A2E24;border-left:4px solid #B5544A;}
-  .guide-subhead{font-weight:700;font-size:14px;color:var(--brass);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.03em;}
+  .guide-subhead{font-family:var(--font-display);font-weight:600;font-size:19px;color:var(--ink);margin:18px 0 8px;letter-spacing:-0.01em;}
   .guide-subhead:first-child{margin-top:0;}
   .guide-table-wrap{overflow-x:auto;margin:10px 0;-webkit-overflow-scrolling:touch;}
   .guide-table{border-collapse:collapse;font-size:12px;min-width:100%;}
@@ -740,7 +743,7 @@ let state = {
   view:'home', destId:null, tab:'guide',
   showAddDest:false, addingList:null, addingDiary:false, addingBudget:false,
   addingDoc:null, pendingPoi:null, lightboxPhotoId:null, lightboxContext:null, lightboxFullscreen:false,
-  tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false,
+  tripId:null, tripTab:'reisedaten', addingTicket:false, addingTripDoc:false, addingTravelDoc:false,
   addingActivityTicket:false, ticketPhotoTarget:null, tripDocFileTarget:null, editingTicketId:null, lastTranslation:null, showDestSidebar:false, editingDayId:null, editingGuideField:null, confirmingResetGuide:false,
   showHikingSearch:false, hikingSearchLoading:false, hikingSearchResults:null, hikingSearchPoiIndex:0, expandedGuideFields:[],
   trackingDestId:null, trackingRouteId:null, trackingStartTime:null, trackingPoints:[], trackingDistanceKm:0, trackingWatchId:null, trackingTimerInterval:null,
@@ -755,13 +758,16 @@ let state = {
 /* ---------- Data loading ---------- */
 async function loadDestData(id){
   if(destDataCache[id]) return destDataCache[id];
-  const fallback = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', bucketlistIntro:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[], coverPhotoId:null};
+  const fallback = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', bucketlistIntro:'', packingNotes:'', checklistNotes:'', bucketlistNotes:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[], coverPhotoId:null};
   const data = await sGet('dest-data:'+id, fallback);
   if(!data.bucketlist) data.bucketlist = [];
   if(!data.checklist) data.checklist = [];
   if(data.packingIntro===undefined) data.packingIntro = '';
   if(data.checklistIntro===undefined) data.checklistIntro = '';
   if(data.bucketlistIntro===undefined) data.bucketlistIntro = '';
+  if(data.packingNotes===undefined) data.packingNotes = '';
+  if(data.checklistNotes===undefined) data.checklistNotes = '';
+  if(data.bucketlistNotes===undefined) data.bucketlistNotes = '';
   if(!data.routes) data.routes = [];
   if(!data.hikingRoutes) data.hikingRoutes = [];
   if(!data.faq) data.faq = [];
@@ -821,6 +827,7 @@ async function init(){
     if(t.buchungsdatum===undefined) t.buchungsdatum = null;
     if(!t.photoDayAssignments) t.photoDayAssignments = {};
     if(t.coverPhotoId===undefined) t.coverPhotoId = null;
+    if(!t.travelDocs) t.travelDocs = [];
     if(t.hotelName===undefined) t.hotelName = '';
   });
 
@@ -836,7 +843,7 @@ async function init(){
     }
     const hasCruiseTrip = trips.some(t=> t.destIds.includes('madeira') && t.destIds.includes('kanaren'));
     if(!hasCruiseTrip){
-      trips.push({id:genId(), dateFrom:'2027-01-16', dateTo:'2027-01-23', buchungsdatum:null, hotelName:'', type:'Schiffsreise', companions:'', destIds:['madeira','kanaren'], documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null});
+      trips.push({id:genId(), dateFrom:'2027-01-16', dateTo:'2027-01-23', buchungsdatum:null, hotelName:'', type:'Schiffsreise', companions:'', destIds:['madeira','kanaren'], documents:[], travelDocs:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null});
       await saveTrips();
     }
     await sSet('migration-v2', true);
@@ -2010,7 +2017,7 @@ async function deleteRecipe(id){
 /* ---------- Reise (Detailansicht mit 4 Reitern) ---------- */
 async function createNewTrip(){
   const trip = {id:genId(), dateFrom:null, dateTo:null, buchungsdatum:null, hotelName:'', type:'Städtetrip', companions:'', destIds:[],
-    documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null};
+    documents:[], travelDocs:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null};
   trips.push(trip);
   state.isDraftTrip = true;
   await openTripDetail(trip.id, 'reisedaten');
@@ -2022,7 +2029,7 @@ async function confirmAddTripQuick(){
   const type = document.getElementById('new-trip-type').value;
   const trip = {id:genId(), dateFrom: dateFrom||null, dateTo: dateTo||null, buchungsdatum:null, hotelName:'', type, companions:'',
     destIds: destId ? [destId] : [],
-    documents:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null};
+    documents:[], travelDocs:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null};
   trips.push(trip);
   state.isDraftTrip = true;
   state.showAddTrip = false;
@@ -2824,6 +2831,27 @@ function renderTripUnterlagenTab(trip){
       </div>
     </div>` : `<button type="button" class="btn btn-add" data-action="show-add-activity-ticket">+ Ausflugsticket hinzufügen</button>`;
 
+  const travelDocsHtml = trip.travelDocs.length ? trip.travelDocs.map(d=>`
+    <div class="doc-row">
+      <div style="flex:1;">
+        <div class="doc-label">${escapeHtml(d.label)}</div>
+        <div class="doc-value">${escapeHtml(d.value)}</div>
+        <div style="margin-top:6px;">${renderTripDocFileButton(d)}</div>
+      </div>
+      <button type="button" class="btn btn-danger" data-action="delete-travel-doc" data-id="${d.id}">${ICON.trash}</button>
+    </div>`).join('') : '<p class="empty-state">Noch keine Reiseunterlagen hinterlegt.</p>';
+  const travelDocForm = state.addingTravelDoc ? `
+    <div class="inline-form">
+      <label class="field-label">Datei/Screenshot (optional)</label>
+      <input type="file" class="input" id="new-traveldoc-file" accept=".pdf,.docx,image/*" style="margin-bottom:8px;">
+      <input class="input" id="new-traveldoc-label" placeholder="Bezeichnung (z.B. Reisebüro-Buchung)" style="margin-bottom:8px;">
+      <input class="input" id="new-traveldoc-value" placeholder="Buchungsnummer" style="margin-bottom:8px;">
+      <div class="form-actions">
+        <button type="button" class="btn btn-add" data-action="confirm-add-travel-doc">Hinzufügen</button>
+        <button type="button" class="btn" data-action="cancel-add-travel-doc">Abbrechen</button>
+      </div>
+    </div>` : `<button type="button" class="btn" data-action="show-add-travel-doc">+ Reiseunterlage hinzufügen</button>`;
+
   const docsHtml = trip.documents.length ? trip.documents.map(d=>`
     <div class="doc-row">
       <div style="flex:1;">
@@ -2853,7 +2881,10 @@ function renderTripUnterlagenTab(trip){
     </div>` : '';
 
   return `
-    <h3 class="section-title">Flugtickets</h3>
+    <h3 class="section-title">Reiseunterlagen</h3>
+    ${travelDocsHtml}
+    ${travelDocForm}
+    <h3 class="section-title" style="margin-top:28px;">Flugtickets</h3>
     ${ticketsHtml}
     ${ticketForm}
     <h3 class="section-title" style="margin-top:28px;">Ausflugstickets</h3>
@@ -3082,10 +3113,31 @@ async function onTripDocFileSelected(file, docId){
     await sSet('photo:'+fileId, fileObj);
     photoCache[fileId] = fileObj;
     const trip = trips.find(t=>t.id===state.tripId);
-    const doc = trip.documents.find(d=>d.id===docId);
+    const doc = trip.documents.find(d=>d.id===docId) || trip.travelDocs.find(d=>d.id===docId);
     if(doc){ doc.fileId = fileId; await saveTrips(); }
     render();
   }catch(e){ showToast('Datei konnte nicht gespeichert werden.'); }
+}
+async function confirmAddTravelDoc(){
+  const label = document.getElementById('new-traveldoc-label').value.trim();
+  const value = document.getElementById('new-traveldoc-value').value.trim();
+  if(!label || !value) return;
+  const fileInput = document.getElementById('new-traveldoc-file');
+  const trip = trips.find(t=>t.id===state.tripId);
+  const doc = {id:genId(), label, value, fileId:null};
+  if(fileInput && fileInput.files[0]){
+    try{ doc.fileId = await storeAttachedFile(fileInput.files[0]); }catch(e){}
+  }
+  trip.travelDocs.push(doc);
+  await saveTrips();
+  state.addingTravelDoc = false;
+  render();
+}
+async function deleteTravelDoc(id){
+  const trip = trips.find(t=>t.id===state.tripId);
+  trip.travelDocs = trip.travelDocs.filter(d=>d.id!==id);
+  await saveTrips();
+  render();
 }
 function renderTripDocFileButton(d){
   if(!d.fileId){
@@ -3428,11 +3480,38 @@ function renderGuideCalloutText(text){
       out.push(`<div class="callout ${meta.cls}"><strong>${meta.icon} ${meta.label}</strong><br>${renderBoldMarkers(escapeHtml(m[2]))}</div>`);
       i++; continue;
     }
-    const lines = block.split('\n').map(line=>{
+    const lines = block.split('\n');
+    const rendered = [];
+    let listBuf = [];
+    let listType = null;
+    function flushList(){
+      if(listBuf.length){
+        const tag = listType==='ol' ? 'ol' : 'ul';
+        const cls = listType==='ol' ? 'recipe-list recipe-list-numbered' : 'recipe-list';
+        rendered.push(`<${tag} class="${cls}">${listBuf.map(t=>`<li>${renderBoldMarkers(escapeHtml(t))}</li>`).join('')}</${tag}>`);
+      }
+      listBuf = []; listType = null;
+    }
+    lines.forEach(line=>{
       const t = line.trim();
-      return t ? `<div>${renderBoldMarkers(escapeHtml(line))}</div>` : '<br>';
-    }).join('');
-    out.push(lines);
+      if(!t){ flushList(); rendered.push('<br>'); return; }
+      let bm = t.match(/^•\s*(.*)$/);
+      if(bm){
+        if(listType!=='ul'){ flushList(); listType='ul'; }
+        listBuf.push(bm[1]);
+        return;
+      }
+      bm = t.match(/^\d+\.\s+(.*)$/);
+      if(bm){
+        if(listType!=='ol'){ flushList(); listType='ol'; }
+        listBuf.push(bm[1]);
+        return;
+      }
+      flushList();
+      rendered.push(`<div>${renderBoldMarkers(escapeHtml(line))}</div>`);
+    });
+    flushList();
+    out.push(rendered.join(''));
     i++;
   }
   return out.join('');
@@ -4482,6 +4561,7 @@ async function onGuideFileSelected(file){
     const fieldBuckets = {understanding:[], overview:[], bestTime:[], entryHealth:[], arrival:[], gettingAround:[], accommodation:[], regions:[], highlights:[], foodDrink:[], budgetInfo:[], natureSafety:[], tips:[]};
     const packingItemsBuf = [], checklistItemsBuf = [], bucketlistItemsBuf = [];
     let packingIntroBuf = '', checklistIntroBuf = '', bucketlistIntroBuf = '';
+    let packingNotesBuf = '', checklistNotesBuf = '', bucketlistNotesBuf = '';
     let currentGroup = null, inBucketPart = false;
     function extractCalloutFromNode(node){
       const txt = node.textContent.trim();
@@ -4698,9 +4778,9 @@ async function onGuideFileSelected(file){
         }
         const callout = extractCalloutFromNode(node);
         if(callout){
-          if(bucketKey==='BUCKETLIST' || (isChecklist16 && inBucketPart)) bucketlistIntroBuf += (bucketlistIntroBuf?'\n\n':'')+callout;
-          else if(bucketKey==='CHECKLIST') checklistIntroBuf += (checklistIntroBuf?'\n\n':'')+callout;
-          else packingIntroBuf += (packingIntroBuf?'\n\n':'')+callout;
+          if(bucketKey==='BUCKETLIST' || (isChecklist16 && inBucketPart)) bucketlistNotesBuf += (bucketlistNotesBuf?'\n\n':'')+callout;
+          else if(bucketKey==='CHECKLIST') checklistNotesBuf += (checklistNotesBuf?'\n\n':'')+callout;
+          else packingNotesBuf += (packingNotesBuf?'\n\n':'')+callout;
           continue;
         }
         if(node.tagName==='UL' || node.tagName==='OL'){
@@ -4788,6 +4868,9 @@ async function onGuideFileSelected(file){
     if(packingIntroBuf && !dd.packingIntro.includes(packingIntroBuf)){ dd.packingIntro = dd.packingIntro ? dd.packingIntro+'\n\n'+packingIntroBuf : packingIntroBuf; anyImported = true; }
     if(checklistIntroBuf && !dd.checklistIntro.includes(checklistIntroBuf)){ dd.checklistIntro = dd.checklistIntro ? dd.checklistIntro+'\n\n'+checklistIntroBuf : checklistIntroBuf; anyImported = true; }
     if(bucketlistIntroBuf && !dd.bucketlistIntro.includes(bucketlistIntroBuf)){ dd.bucketlistIntro = dd.bucketlistIntro ? dd.bucketlistIntro+'\n\n'+bucketlistIntroBuf : bucketlistIntroBuf; anyImported = true; }
+    if(packingNotesBuf && !dd.packingNotes.includes(packingNotesBuf)){ dd.packingNotes = dd.packingNotes ? dd.packingNotes+'\n\n'+packingNotesBuf : packingNotesBuf; anyImported = true; }
+    if(checklistNotesBuf && !dd.checklistNotes.includes(checklistNotesBuf)){ dd.checklistNotes = dd.checklistNotes ? dd.checklistNotes+'\n\n'+checklistNotesBuf : checklistNotesBuf; anyImported = true; }
+    if(bucketlistNotesBuf && !dd.bucketlistNotes.includes(bucketlistNotesBuf)){ dd.bucketlistNotes = dd.bucketlistNotes ? dd.bucketlistNotes+'\n\n'+bucketlistNotesBuf : bucketlistNotesBuf; anyImported = true; }
 
     dd.guide.imported = false;
     dd.guide.importedFileName = file.name;
@@ -4847,6 +4930,7 @@ function parseMarkdownGuide(text, destId){
   const fieldBuckets = {understanding:[], overview:[], bestTime:[], entryHealth:[], arrival:[], gettingAround:[], accommodation:[], regions:[], highlights:[], foodDrink:[], budgetInfo:[], natureSafety:[], tips:[]};
   const packingItems = [], checklistItems = [], bucketlistItems = [], faqItems = [], newRecipes = [], newRoutes = [];
   let packingIntro = '', checklistIntro = '', bucketlistIntro = '';
+  let packingNotes = '', checklistNotes = '', bucketlistNotes = '';
   let currentMode = null, currentField = null;
   let inRecipeSection = false, currentGroup = null, inBucketPart = false;
   let subBuffer = null;
@@ -4968,8 +5052,9 @@ function parseMarkdownGuide(text, destId){
       const calloutM = block.match(/^>\s*\*\*[^*A-Za-zÄÖÜäöü]*(Tipp|Geheimtipp|Achtung)\s*:?\s*\*\*\s*:?\s*([\s\S]*)$/i);
       if(calloutM){
         const noteText = calloutM[1] + ': ' + calloutM[2].trim();
-        if(currentMode==='PACKING') packingIntro += (packingIntro?'\n\n':'')+noteText;
-        else checklistIntro += (checklistIntro?'\n\n':'')+noteText;
+        if(inBucketPart) bucketlistNotes += (bucketlistNotes?'\n\n':'')+noteText;
+        else if(currentMode==='PACKING') packingNotes += (packingNotes?'\n\n':'')+noteText;
+        else checklistNotes += (checklistNotes?'\n\n':'')+noteText;
         anyImported = true;
         i++; continue;
       }
@@ -4998,7 +5083,7 @@ function parseMarkdownGuide(text, destId){
 
   const guideFields = {};
   for(const key in fieldBuckets){ guideFields[key] = fieldBuckets[key].join('\n\n'); }
-  return {guideFields, packingItems, checklistItems, bucketlistItems, faqItems, newRecipes, newRoutes, packingIntro, checklistIntro, bucketlistIntro, anyImported};
+  return {guideFields, packingItems, checklistItems, bucketlistItems, faqItems, newRecipes, newRoutes, packingIntro, checklistIntro, bucketlistIntro, packingNotes, checklistNotes, bucketlistNotes, anyImported};
 }
 async function onGuideMarkdownSelected(file){
   try{
@@ -5018,6 +5103,9 @@ async function onGuideMarkdownSelected(file){
     if(result.packingIntro && !dd.packingIntro.includes(result.packingIntro)) dd.packingIntro = dd.packingIntro ? dd.packingIntro+'\n\n'+result.packingIntro : result.packingIntro;
     if(result.checklistIntro && !dd.checklistIntro.includes(result.checklistIntro)) dd.checklistIntro = dd.checklistIntro ? dd.checklistIntro+'\n\n'+result.checklistIntro : result.checklistIntro;
     if(result.bucketlistIntro && !dd.bucketlistIntro.includes(result.bucketlistIntro)) dd.bucketlistIntro = dd.bucketlistIntro ? dd.bucketlistIntro+'\n\n'+result.bucketlistIntro : result.bucketlistIntro;
+    if(result.packingNotes && !dd.packingNotes.includes(result.packingNotes)) dd.packingNotes = dd.packingNotes ? dd.packingNotes+'\n\n'+result.packingNotes : result.packingNotes;
+    if(result.checklistNotes && !dd.checklistNotes.includes(result.checklistNotes)) dd.checklistNotes = dd.checklistNotes ? dd.checklistNotes+'\n\n'+result.checklistNotes : result.checklistNotes;
+    if(result.bucketlistNotes && !dd.bucketlistNotes.includes(result.bucketlistNotes)) dd.bucketlistNotes = dd.bucketlistNotes ? dd.bucketlistNotes+'\n\n'+result.bucketlistNotes : result.bucketlistNotes;
     result.faqItems.forEach(it=>{ if(pushIfNew(dd.faq, it, x=>x.question.trim().toLowerCase())) result.anyImported = true; });
     result.newRoutes.forEach(r=>{ if(pushIfNew(dd.routes, r, x=>x.title.trim().toLowerCase())) result.anyImported = true; });
     result.newRecipes.forEach(r=>{ if(pushIfNew(recipes, r, x=>x.destId+'|'+x.nameNative.trim().toLowerCase())) result.anyImported = true; });
@@ -5136,6 +5224,7 @@ function renderListenTab(dd){
     ${dd.packingIntro ? `<p class="hint-text" style="margin-top:0;">${escapeHtml(dd.packingIntro)}</p>` : ''}
     ${renderCheckList(dd.packing,'packing')}
     ${renderAddItemForm('packing','Gegenstand hinzufügen')}
+    ${dd.packingNotes ? `<div style="margin-top:14px;">${renderGuideCalloutText(dd.packingNotes)}</div>` : ''}
     <h3 class="section-title" style="margin-top:28px;">To-Do</h3>
     ${renderCheckList(dd.todos,'todos')}
     ${renderAddItemForm('todos','Aufgabe hinzufügen')}
@@ -5143,10 +5232,12 @@ function renderListenTab(dd){
     ${dd.checklistIntro ? `<p class="hint-text" style="margin-top:0;">${escapeHtml(dd.checklistIntro)}</p>` : ''}
     ${renderCheckList(dd.checklist,'checklist')}
     ${renderAddItemForm('checklist','Punkt hinzufügen')}
+    ${dd.checklistNotes ? `<div style="margin-top:14px;">${renderGuideCalloutText(dd.checklistNotes)}</div>` : ''}
     <h3 class="section-title" style="margin-top:28px;">Bucketliste</h3>
     ${dd.bucketlistIntro ? `<p class="hint-text" style="margin-top:0;">${escapeHtml(dd.bucketlistIntro)}</p>` : ''}
     ${renderCheckList(dd.bucketlist,'bucketlist')}
     ${renderAddItemForm('bucketlist','Bucketlist-Eintrag hinzufügen')}
+    ${dd.bucketlistNotes ? `<div style="margin-top:14px;">${renderGuideCalloutText(dd.bucketlistNotes)}</div>` : ''}
   `;
 }
 function renderCheckList(items, listKey){
@@ -5424,7 +5515,7 @@ async function confirmAddDest(){
   const id = genId();
   destinations.push({id,name,flag,lat,lng,currency:'EUR',continent});
   await sSet('destinations', destinations);
-  destDataCache[id] = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', bucketlistIntro:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[]};
+  destDataCache[id] = {guide:{...EMPTY_GUIDE}, pois:[], routes:[], hikingRoutes:[], packing:[], checklist:[], packingIntro:'', checklistIntro:'', bucketlistIntro:'', packingNotes:'', checklistNotes:'', bucketlistNotes:'', todos:[], diary:[], photoIds:[], budget:[], docs:[], emergency:[], bucketlist:[], faq:[], phrases:[]};
   await saveDestData(id);
   state.showAddDest = false;
   render();
@@ -5580,6 +5671,10 @@ async function onAppClick(e){
     case 'cancel-add-trip-doc': state.addingTripDoc=false; render(); break;
     case 'confirm-add-trip-doc': await confirmAddTripDoc(); break;
     case 'delete-trip-doc': await deleteTripDoc(el.dataset.id); break;
+    case 'show-add-travel-doc': state.addingTravelDoc=true; render(); break;
+    case 'cancel-add-travel-doc': state.addingTravelDoc=false; render(); break;
+    case 'confirm-add-travel-doc': await confirmAddTravelDoc(); break;
+    case 'delete-travel-doc': await deleteTravelDoc(el.dataset.id); break;
     case 'open-dest-from-trip': await openDestination(el.dataset.id); break;
     case 'toggle-guide-bucket-item': await toggleGuideBucketItem(el.dataset.destId, el.dataset.id); break;
     case 'delete-guide-bucket-item': await deleteGuideBucketItem(el.dataset.destId, el.dataset.id); break;
