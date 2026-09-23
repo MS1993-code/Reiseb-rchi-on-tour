@@ -829,6 +829,7 @@ async function init(){
     if(t.coverPhotoId===undefined) t.coverPhotoId = null;
     if(!t.travelDocs) t.travelDocs = [];
     if(t.hotelName===undefined) t.hotelName = '';
+    if(t.destName===undefined) t.destName = '';
   });
 
   const migrationDone = await sGet('migration-v2', false);
@@ -843,7 +844,7 @@ async function init(){
     }
     const hasCruiseTrip = trips.some(t=> t.destIds.includes('madeira') && t.destIds.includes('kanaren'));
     if(!hasCruiseTrip){
-      trips.push({id:genId(), dateFrom:'2027-01-16', dateTo:'2027-01-23', buchungsdatum:null, hotelName:'', type:'Schiffsreise', companions:'', destIds:['madeira','kanaren'], documents:[], travelDocs:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null});
+      trips.push({id:genId(), dateFrom:'2027-01-16', dateTo:'2027-01-23', buchungsdatum:null, hotelName:'', type:'Schiffsreise', companions:'', destIds:['madeira','kanaren'], destName:'', documents:[], travelDocs:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null});
       await saveTrips();
     }
     await sSet('migration-v2', true);
@@ -1175,7 +1176,7 @@ const ICON = {
   suitcase: icon('M184 48H328c4.4 0 8 3.6 8 8V96H176V56c0-4.4 3.6-8 8-8zm-56 8V96H64C28.7 96 0 124.7 0 160v96H512V160c0-35.3-28.7-64-64-64H384V56c0-30.9-25.1-56-56-56H184c-30.9 0-56 25.1-56 56zM512 288H0V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V288z', 512),
   city: icon('M480 448V32c0-17.7-14.3-32-32-32H272c-17.7 0-32 14.3-32 32V128H160c-17.7 0-32 14.3-32 32v96H64c-17.7 0-32 14.3-32 32V448H0v32H512V448H480zm-320-32H96V336h64v80zm0-128H96V208h64v80zm128 128H224V336h64v80zm0-128H224V208h64v80zm128 0H352V208h64v80zm0-128H352V80h64v80zm0 256H352V336h64v80z', 512),
   car: icon('M135.2 117.4L109.1 192H402.9l-26.1-74.6C372.3 104.6 360.2 96 346.6 96H165.4c-13.6 0-25.7 8.6-30.2 21.4zM39.6 196.8L74.8 96.3C88.3 57.8 124.6 32 165.4 32H346.6c40.8 0 77.1 25.8 90.6 64.3l35.2 100.5c23.2 9.6 39.6 32.5 39.6 59.2V400v48c0 17.7-14.3 32-32 32H448c-17.7 0-32-14.3-32-32V400H96v48c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V400 256c0-26.7 16.4-49.6 39.6-59.2zM128 288a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm288 32a32 32 0 1 0 0-64 32 32 0 1 0 0 64z', 512),
-  umbrellaBeach: icon('M346.3 271.8-60.1-21.9L214 448H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h512c17.7 0 32-14.3 32-32s-14.3-32-32-32H282.1l64.1-176.2zm121.1-.2-3.3 9.1 67.7 24.6c18.1 6.6 38-4.2 39.6-23.4 6.5-78.5-23.9-155.5-80.8-208.5 2 8 3.2 16.3 3.4 24.8l.2 6c1.8 57-7.3 113.8-26.8 167.4zM462 99.1c-1.1-34.4-22.5-64.8-54.4-77.4-.9-.4-1.9-.7-2.8-1.1-33-11.7-69.8-2.4-93.1 23.8l-4 4.5C272.4 88.3 245 134.2 226.8 184l-3.3 9.1L434 269.7l3.3-9.1c18.1-49.8 26.6-102.5 24.9-155.5l-.2-6zm-354.8 13.8c-11.1 15.7-2.8 36.8 15.3 43.4l71 25.8 3.3-9.1c19.5-53.6 49.1-103 87.1-145.5l4-4.5c6.2-6.9 13.1-13 20.5-18.2-79.6 2.5-154.7 42.2-201.2 108z', 576),
+  umbrellaBeach: icon('M497.5 341.1c-5.9 16.7-25.3 23-41.1 15.1l-178.2-89.1-1.6 3.2-88.8 177.7 292.2 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 512c-17.7 0-32-14.3-32-32s14.3-32 32-32l84.2 0 103.2-206.3 1.6-3.2-165.4-82.7c-15.8-7.9-22.4-27.3-12.5-42 45.9-68.6 124.1-113.8 212.9-113.8 141.4 0 256 114.6 256 256 0 29.8-5.1 58.5-14.5 85.1z', 512),
   ship: icon('M496.616 372.639 566.628 302.627c16.899-16.9 9.942-45.771-12.836-53.092L512 236.102V96c0-17.673-14.327-32-32-32h-64V24c0-13.255-10.745-24-24-24H248c-13.255 0-24 10.745-24 24v40h-64c-17.673 0-32 14.327-32 32v140.102l-41.792 13.433c-22.753 7.313-29.754 36.173-12.836 53.092l70.012 70.012C125.828 416.287 85.587 448 24 448c-13.255 0-24 10.745-24 24v16c0 13.255 10.745 24 24 24 61.023 0 107.499-20.61 143.258-59.396C181.677 487.432 216.021 512 256 512h128c39.979 0 74.323-24.568 88.742-59.396C508.495 491.384 554.968 512 616 512c13.255 0 24-10.745 24-24v-16c0-13.255-10.745-24-24-24-60.817 0-101.542-31.001-119.384-75.361zM192 128h256v87.531l-118.208-37.995a31.995 31.995 0 00-19.584 0L192 215.531V128z', 640),
 };
 const NAV_ICONS = {
@@ -1431,7 +1432,7 @@ async function renderHomeDashboard(){
     </div>`;
   if(nextTrip){
     const linkedDests = nextTrip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
-    const placeText = linkedDests.map(d=>d.name).join(' & ') || 'Neue Reise';
+    const placeText = getTripDisplayName(nextTrip);
     const days = daysUntil(nextTrip.dateFrom);
     const countdownText = days===0 ? 'Reise beginnt heute!' : days+' Tage bis zur Reise';
     let img = await loadCountdownImage(nextTrip);
@@ -1484,10 +1485,8 @@ async function renderHomeDashboard(){
       <div class="modal-box">
         <h3 class="section-title" style="margin-top:0;">Neue Reise</h3>
         <label class="field-label">Reiseziel</label>
-        <select class="input" id="new-trip-dest" style="margin-bottom:8px;">
-          <option value="">Noch offen</option>
-          ${destinations.map(d=>`<option value="${d.id}">${d.flag} ${escapeHtml(d.name)}</option>`).join('')}
-        </select>
+        <input class="input" id="new-trip-dest" style="margin-bottom:8px;" placeholder="z.B. Kreta" autocomplete="off">
+        <p class="hint-text" style="margin-top:-4px;margin-bottom:10px;">Ein passender Reiseführer wird automatisch verknüpft, falls einer existiert.</p>
         <div style="display:flex;gap:8px;margin-bottom:8px;">
           <div style="flex:1;">
             <label class="field-label">Von</label>
@@ -1602,7 +1601,7 @@ function getTripStatusBadge(t){
 async function renderTripRow(t){
   const confirming = state.confirmingDelete && state.confirmingDelete.type==='trip' && state.confirmingDelete.id===t.id;
   const linked = t.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
-  const names = linked.map(d=>d.name).join(' & ') || 'Neue Reise';
+  const names = getTripDisplayName(t);
   if(confirming){
     return `<div class="trip-row trip-row-confirm">
       <div class="confirm-message">${escapeHtml(names)} wirklich löschen?</div>
@@ -2016,23 +2015,25 @@ async function deleteRecipe(id){
 
 /* ---------- Reise (Detailansicht mit 4 Reitern) ---------- */
 async function createNewTrip(){
-  const trip = {id:genId(), dateFrom:null, dateTo:null, buchungsdatum:null, hotelName:'', type:'Städtetrip', companions:'', destIds:[],
+  const trip = {id:genId(), dateFrom:null, dateTo:null, buchungsdatum:null, hotelName:'', type:'Städtetrip', companions:'', destIds:[], destName:'',
     documents:[], travelDocs:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null};
   trips.push(trip);
   state.isDraftTrip = true;
   await openTripDetail(trip.id, 'reisedaten');
 }
 async function confirmAddTripQuick(){
-  const destId = document.getElementById('new-trip-dest').value;
+  const destName = document.getElementById('new-trip-dest').value.trim();
+  const matchedDest = findMatchingDestination(destName);
   const dateFrom = document.getElementById('new-trip-datefrom').value;
   const dateTo = document.getElementById('new-trip-dateto').value;
   const type = document.getElementById('new-trip-type').value;
   const trip = {id:genId(), dateFrom: dateFrom||null, dateTo: dateTo||null, buchungsdatum:null, hotelName:'', type, companions:'',
-    destIds: destId ? [destId] : [],
+    destIds: matchedDest ? [matchedDest.id] : [], destName,
     documents:[], travelDocs:[], tickets:[], activityTickets:[], diary:[], photoIds:[], dayPlan:[], budget:[], photoDayAssignments:{}, coverPhotoId:null};
   trips.push(trip);
   state.isDraftTrip = true;
   state.showAddTrip = false;
+  if(matchedDest) await loadDestData(matchedDest.id);
   await openTripDetail(trip.id, 'reisedaten');
 }
 async function saveDraftTrip(){
@@ -2060,6 +2061,28 @@ const DEST_KEYWORDS = {
 };
 const KNOWN_AIRLINES = ['Lufthansa','TAP Portugal','TAP Air','TAP','AIDA','Condor','Eurowings','Ryanair','easyJet','SAS','Norwegian Air','Icelandair','Swiss','Austrian Airlines','KLM','Air France','Vueling','Binter Canarias'];
 const MONTH_ABBR = {jan:1,feb:2,mar:3,mär:3,maer:3,apr:4,may:5,mai:5,jun:6,jul:7,aug:8,sep:9,oct:10,okt:10,nov:11,dec:12,dez:12};
+function findMatchingDestination(text){
+  if(!text) return null;
+  const t = text.trim().toLowerCase();
+  if(!t) return null;
+  let match = destinations.find(d=> d.name.toLowerCase()===t);
+  if(match) return match;
+  match = destinations.find(d=> d.name.toLowerCase().includes(t) || t.includes(d.name.toLowerCase()));
+  if(match) return match;
+  for(const id of Object.keys(DEST_KEYWORDS)){
+    if(DEST_KEYWORDS[id].some(kw=> kw.toLowerCase()===t || t.includes(kw.toLowerCase()))){
+      const d = destinations.find(d=>d.id===id);
+      if(d) return d;
+    }
+  }
+  return null;
+}
+function getTripDisplayName(trip){
+  const linkedDests = (trip.destIds||[]).map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
+  if(linkedDests.length) return linkedDests.map(d=>d.name).join(' & ');
+  if(trip.destName && trip.destName.trim()) return trip.destName.trim();
+  return 'Neue Reise';
+}
 function parseFlexibleDate(text){
   let m = text.match(/\b(\d{1,2})([A-Z]{3})(\d{2,4})\b/);
   if(m && MONTH_ABBR[m[2].toLowerCase()]){
@@ -2318,7 +2341,7 @@ async function deleteTrip(id){
 function renderTrip(){
   const trip = trips.find(t=>t.id===state.tripId);
   const linkedDests = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
-  const title = linkedDests.length ? linkedDests.map(d=>d.name).join(' & ') : 'Neue Reise';
+  const title = getTripDisplayName(trip);
   const flags = linkedDests.map(d=>d.flag).join(' ');
   const dateRange = formatDateRangeDe(trip.dateFrom, trip.dateTo);
 
@@ -2395,6 +2418,11 @@ function renderTripReisedatenTab(trip){
     <button type="button" class="btn" data-action="trigger-booking-upload" style="margin-bottom:6px;">${ICON.file} Aus Buchungsunterlagen befüllen</button>
     <p class="hint-text" style="margin-top:0;margin-bottom:18px;">PDF, Word oder Screenshot – Texterkennung bei Screenshots kann etwas dauern.</p>
     <input type="file" id="booking-file-input" accept=".pdf,.docx,image/*" style="display:none">
+    <div class="field-group">
+      <label class="field-label">Reiseziel</label>
+      <input class="input" data-trip-field="destName" value="${escapeHtml(trip.destName||'')}" placeholder="z.B. Kreta">
+      <p class="hint-text" style="margin-top:4px;margin-bottom:0;">Ein passender Reiseführer wird automatisch verknüpft, falls einer existiert.</p>
+    </div>
     <div class="field-group">
       <label class="field-label">Von</label>
       <input type="date" class="input" data-trip-field="dateFrom" value="${trip.dateFrom||''}">
@@ -2874,7 +2902,7 @@ function renderTripUnterlagenTab(trip){
     </div>` : `<button type="button" class="btn" data-action="show-add-trip-doc">+ Info hinzufügen</button>`;
 
   const linkedDestNames = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
-  const gygQuery = linkedDestNames.length ? linkedDestNames[0].name : '';
+  const gygQuery = linkedDestNames.length ? linkedDestNames[0].name : (trip.destName||'').trim();
   const gygLink = gygQuery ? `
     <div style="margin:6px 0 14px;">
       <a href="https://www.getyourguide.com/s/?q=${encodeURIComponent(gygQuery)}" target="_blank" rel="noopener" class="btn" style="text-decoration:none;display:inline-block;">${ICON.link} Ausflüge bei GetYourGuide (${escapeHtml(gygQuery)})</a>
@@ -5881,10 +5909,20 @@ document.getElementById('app').addEventListener('change', async function(e){
     const trip = trips.find(t=>t.id===state.tripId);
     if(trip){
       trip[e.target.dataset.tripField] = e.target.value;
+      if(e.target.dataset.tripField==='destName' && !trip.destIds.length){
+        const matched = findMatchingDestination(trip.destName);
+        if(matched){
+          trip.destIds = [matched.id];
+          await loadDestData(matched.id);
+        }
+      }
       await saveTrips();
       if(e.target.dataset.tripField==='dateFrom' || e.target.dataset.tripField==='dateTo'){
         const el = document.getElementById('trip-duration-display');
         if(el) el.innerHTML = renderTripDurationInfo(trip);
+      }
+      if(e.target.dataset.tripField==='destName'){
+        render();
       }
     }
   }
