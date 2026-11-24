@@ -605,6 +605,138 @@
   .gpoi-desc{font-size:14px;line-height:1.5;margin-top:8px;color:var(--ink);}
   .gpoi-btn{margin-top:10px;width:100%;min-height:40px !important;font-size:13px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;}
 
+
+  /* v2.0.3 Einheitliche Seiten: Karten, Listen, Routen, FAQ, Sprache, Wandern */
+  .pg-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:10px;}
+  .pg-pad{padding:14px 16px;}
+  .pg-intro{font-size:14px;color:var(--ink-muted);margin:0 0 12px;line-height:1.45;}
+  .pg-add-btn{width:100%;border-style:dashed !important;justify-content:center;margin-top:6px;}
+  .pg-search{width:100%;box-sizing:border-box;margin:0 0 10px !important;}
+  .pg-chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 12px;padding:2px 16px;scrollbar-width:none;}
+  .pg-chips::-webkit-scrollbar{display:none;}
+  .gch-chip.active{background:var(--navy);color:var(--on-navy);border-color:var(--navy);}
+  .gch-chip.active .seg-n{background:rgba(255,255,255,.2);color:inherit;}
+  .gch-chip .seg-n{display:inline-block;margin-left:4px;}
+  .pg-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px;}
+  .pg-actions .btn{justify-content:center;width:100%;}
+  .pg-sec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 10px;}
+  .pg-sec-head .section-title{margin:0;}
+  .pg-danger-link{color:var(--brick) !important;}
+  .seg-scroll{overflow-x:auto;scrollbar-width:none;}
+  .seg-scroll .seg-tab{flex:1 0 auto;}
+  .seg-scroll .seg-tab .seg-n{display:inline-block !important;}
+  .seg-tab:not(.active) .seg-n{background:transparent;}
+  /* Listen */
+  .ltabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+  .ltab{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer;min-height:48px;}
+  .ltab-n{font-size:12px;font-weight:700;color:var(--ink-muted);}
+  .ltab.active{background:var(--navy);border-color:var(--navy);color:var(--on-navy);}
+  .ltab.active .ltab-n{color:inherit;opacity:.8;}
+  .lprog{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:12px 16px;margin-bottom:12px;}
+  .lprog-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;color:var(--ink-muted);}
+  .lprog-top b{color:var(--ink);font-size:16px;}
+  .lprog-tools{display:flex;gap:12px;}
+  .lgroup-head{width:100%;display:flex;align-items:center;gap:10px;padding:13px 16px 9px;background:none;border:none;font:inherit;color:var(--ink);cursor:pointer;text-align:left;min-height:48px;}
+  .lgroup-title{flex:1;font-weight:700;font-size:15px;}
+  .lgroup-count{font-size:12.5px;font-weight:700;color:var(--ink-muted);background:var(--surface-alt);border-radius:999px;padding:2px 9px;}
+  .lgroup-count.complete{color:var(--green);}
+  .lgroup-bar{height:3px;background:var(--surface-alt);margin:0 16px 10px;border-radius:2px;overflow:hidden;}
+  .lgroup-bar span{display:block;height:100%;background:var(--green);border-radius:2px;}
+  .lgroup.open .lgroup-bar{margin-bottom:2px;}
+  .lgroup:not(.open):not(.force-open) .poi2-body{display:none;}
+  .lgroup-body{padding:0 16px 4px;}
+  .lrow{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--border);}
+  .lgroup-body > .lrow:first-child{border-top:none;}
+  .lrow-text{flex:1;font-size:15px;line-height:1.35;cursor:pointer;}
+  .lrow.checked .lrow-text{color:var(--ink-muted);text-decoration:line-through;text-decoration-color:var(--border);}
+  .lrow-del{background:none;border:none;color:var(--brick);cursor:pointer;padding:6px;display:flex;}
+  .lrow-del svg{width:16px;height:16px;}
+  .ladd{display:flex;gap:8px;margin-top:6px;}
+  .ladd .input{flex:1;margin:0;min-width:0;}
+  .ladd .btn{width:48px;padding:0;justify-content:center;flex:0 0 auto;}
+  /* Routen */
+  .rcard-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;}
+  .rcard{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:14px 16px;border-radius:18px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;width:100%;box-sizing:border-box;}
+  .rcard:active{transform:scale(0.99);}
+  .rcard-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .rcard-kicker{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--brass);}
+  .rcard-pill,.rpill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--navy);background:var(--surface-alt);border-radius:999px;padding:3px 10px;}
+  .rcard-pill svg,.rpill svg,.rcard-nights svg,.rcard-budget svg{width:12px;height:12px;}
+  .rcard-title{font-size:18px;font-weight:800;letter-spacing:-0.01em;line-height:1.2;}
+  .rcard-sub{font-size:14px;color:var(--ink-muted);line-height:1.45;}
+  .rcard-nights,.rcard-budget{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);}
+  .rcard-budget{color:var(--ink-muted);}
+  .rpills{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px;}
+  .rtimeline{position:relative;margin:4px 0 6px;}
+  .rtimeline::before{content:'';position:absolute;left:17px;top:6px;bottom:6px;width:2px;background:var(--border);}
+  .rday{position:relative;display:flex;gap:12px;margin-bottom:10px;}
+  .rday-dot{position:relative;z-index:1;flex:0 0 36px;height:36px;border-radius:50%;background:var(--navy);color:var(--on-navy);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:8px;box-shadow:0 0 0 4px var(--bg);}
+  .rday.is-empty .rday-dot{background:var(--surface-alt);color:var(--ink-muted);}
+  .rday.is-today .rday-dot{background:var(--brass);}
+  .rday-card{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px;cursor:default;}
+  .rday-card[data-action]{cursor:pointer;}
+  .rday.is-today .rday-card{border-color:var(--brass);}
+  .rday-num{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--brass);}
+  .rday-edit{margin-left:auto;color:var(--ink-muted);display:flex;}
+  .rday-edit svg{width:13px;height:13px;}
+  .rday-today{background:var(--brass);color:#fff;border-radius:6px;padding:1px 6px;font-size:10px;}
+  .rday-title{font-size:16px;font-weight:700;margin:3px 0 2px;line-height:1.3;}
+  .rday-text{font-size:14.5px;line-height:1.55;margin-top:4px;}
+  .rday-empty{font-size:13.5px;color:var(--ink-muted);margin-top:4px;font-style:italic;}
+  .rday-night{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-muted);margin-top:8px;}
+  .rday-night svg{width:13px;height:13px;}
+  .rday-stops{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .rday-stop{font-size:12px;background:var(--surface-alt);color:var(--ink);border-radius:8px;padding:3px 8px;}
+  .rday-maps{width:100%;margin-top:10px;min-height:40px !important;font-size:13px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;}
+  /* FAQ */
+  .faq-item + .faq-item{border-top:1px solid var(--border);}
+  .faq-q{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:none;border:none;font:inherit;font-size:15px;font-weight:700;color:var(--ink);text-align:left;cursor:pointer;min-height:52px;line-height:1.35;}
+  .faq-a{padding:0 16px 14px;font-size:15px;line-height:1.55;color:var(--ink);}
+  .faq-a-tools{display:flex;justify-content:flex-end;margin-top:6px;}
+  .kap-link{display:inline;background:var(--surface-alt);border:none;border-radius:8px;padding:2px 8px;font:inherit;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;}
+  /* Karte & Sprache: kompakte Zeilen */
+  .poi2-body{padding:0 16px 4px;}
+  .poi2-row,.vocab-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--border);}
+  .poi2-body > .poi2-row:first-child,.pg-card > .vocab-row:first-child{border-top:none;}
+  .pg-card > .vocab-row{padding-left:16px;padding-right:12px;}
+  .poi2-main,.vocab-main{flex:1;min-width:0;}
+  .poi2-name{font-size:15px;font-weight:700;line-height:1.3;}
+  .poi2-desc{font-size:13px;color:var(--ink-muted);line-height:1.4;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .poi2-actions{display:flex;gap:6px;}
+  .poi2-icon{width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--navy);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;padding:0;}
+  .poi2-icon svg{width:16px;height:16px;}
+  .poi2-icon.danger{color:var(--brick);}
+  .poi2-icon.active{background:var(--gt-bg);border-color:var(--gt-line);}
+  .vocab-de{font-size:13px;color:var(--ink-muted);}
+  .vocab-local{font-size:16px;font-weight:700;line-height:1.3;margin-top:1px;}
+  .vocab-say{font-weight:500;font-size:13.5px;color:var(--brass);}
+  /* Wandern */
+  .hike-list{margin-bottom:12px;}
+  .hike-head{width:100%;display:flex;align-items:center;gap:10px;padding:13px 14px 13px 16px;background:none;border:none;font:inherit;color:var(--ink);cursor:pointer;text-align:left;min-height:60px;}
+  .hike-head-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+  .hike-title{font-size:15.5px;font-weight:700;line-height:1.3;}
+  .hike-stats{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--ink-muted);}
+  .hike-stats span{display:inline-flex;align-items:center;gap:4px;}
+  .hike-stats svg{width:12px;height:12px;}
+  .hike-head-side{display:flex;align-items:center;gap:6px;flex:0 0 auto;}
+  .hike-diff{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;text-transform:capitalize;background:var(--surface-alt);color:var(--ink);}
+  .hike-diff.easy{background:var(--tip-bg);color:var(--tip-ink);}
+  .hike-diff.mid{background:var(--gt-bg);color:var(--gt-ink);}
+  .hike-diff.hard{background:var(--warn-bg);color:var(--warn-ink);}
+  .hike-gpx{font-size:10px;font-weight:800;color:var(--navy);border:1px solid var(--navy);border-radius:6px;padding:1px 4px;}
+  .hike.open .hike-head{border-bottom:1px solid var(--border);}
+  .hike-body{padding:12px 16px 14px;}
+  .hike-info{font-size:13px;color:var(--ink-muted);margin-bottom:8px;}
+  .hike-desc{font-size:14.5px;line-height:1.55;}
+  .hike-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+  .hike-btns:empty{display:none;}
+  .hike-btns .btn{justify-content:center;text-decoration:none;min-height:42px;font-size:13px;}
+  .hike-btns .btn:only-child{grid-column:1 / -1;}
+  .hike-komoot{color:#4F850D !important;}
+  .hike-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px 14px;margin-top:10px;border-top:1px solid var(--border);padding-top:6px;}
+  .dest-header-top svg{width:22px;height:22px;}
+  .recipe-hero-back svg{width:22px;height:22px;display:block;margin:auto;}
+
   /* v2.0 Budget */
   .bk-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:14px;}
   .bk-h{margin-top:22px;}
@@ -1187,6 +1319,7 @@ async function loadDestData(id){
   if(!data.hikingRoutes) data.hikingRoutes = [];
   if(!data.faq) data.faq = [];
   if(!data.phrases) data.phrases = [];
+  if(dedupePhrases(data)) sSet('dest-data:'+id, data);
   if(data.coverPhotoId===undefined) data.coverPhotoId = null;
   if(data.pois) data.pois.forEach(p=>{ if(p.region===undefined) p.region = ''; if(p.geheimtipp===undefined) p.geheimtipp=false; });
   data.guide = Object.assign({}, EMPTY_GUIDE, data.guide||{});
@@ -1318,7 +1451,7 @@ async function openDestination(id){
   state.view='destination'; state.destId=id; state.tab='guide';
   state.addingList=null; state.addingDiary=false; state.addingBudget=false;
   state.addingDoc=null; state.pendingPoi=null; state.lightboxPhotoId=null;
-  state.currentRoute=null; state.showDestSidebar=false; state.editingGuideField=null; state.expandedGuideFields=[]; state.guideChapter=null;
+  state.currentRoute=null; state.showDestSidebar=false; state.editingGuideField=null; state.expandedGuideFields=[]; state.guideChapter=null; state.routeOpen=null;
   render();
 }
 function goHome(){
@@ -1456,6 +1589,7 @@ async function switchTab(tab){
     hikingMapInstances = {};
   }
   state.tab = tab;
+  state.routeOpen = null; state.listEdit = false;
   state.addingList=null; state.addingDoc=null; state.pendingPoi=null;
   state.addingHikingRoute=false; state.editingHikingRouteId=null; state.showHikingSearch=false; state.hikingSearchResults=null;
   render();
@@ -1605,8 +1739,10 @@ const NAV_ICONS = {
   kochbuch:'<svg viewBox="0 0 416 512" fill="currentColor"><path d="M416 0c-16 0-128 32-128 176v112c0 35.3 28.7 64 64 64h32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V32c0-17.7-14.3-32-32-32zM64 16C64 7.8 57.9 1 49.7.1S34.2 4.6 32.4 12.5L2.1 148.8C.7 155.1 0 161.5 0 167.9c0 45.9 35.1 83.6 80 87.7V480c0 17.7 14.3 32 32 32s32-14.3 32-32V255.6c44.9-4.1 80-41.8 80-87.7 0-6.4-.7-12.8-2.1-19.1L191.6 12.5c-1.8-8-9.3-13.3-17.4-12.4S160 7.8 160 16v134.2c0 5.4-4.4 9.8-9.8 9.8-5.1 0-9.3-3.9-9.8-9L127.9 14.6C127.2 6.3 120.3 0 112 0S96.8 6.3 96.1 14.6L83.7 151c-.5 5.1-4.7 9-9.8 9-5.4 0-9.8-4.4-9.8-9.8V16zm48.3 152h-.6l.3-.7.3.7z"/></svg>',
   backup:'<svg viewBox="0 0 448 512" fill="currentColor"><path d="M304 128a80 80 0 1 0 -160 0 80 80 0 1 0 160 0zM96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM49.3 464l349.5 0c-8.9-63.3-63.3-112-129-112l-91.4 0c-65.7 0-120.1 48.7-129 112zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3z"/></svg>'
 };
+const BACK_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M14.8 5.5 8.3 12l6.5 6.5"/></svg>';
+const PLUS_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true" style="display:block"><path d="M12 5v14M5 12h14"/></svg>';
 const TRIP_TAB_GROUPS = [
-  ['Vorbereitung', ['reisedaten','tagesplaner','unterlagen','ideen']],
+  ['Vorbereitung', ['reisedaten','tagesplaner','unterlagen','ideen','bucket']],
   ['Unterwegs', ['budget','tagebuch','bilder']],
   ['Danach', ['magazin']]
 ];
@@ -2763,7 +2899,7 @@ async function renderRecipeDetail(){
   return `
     <div class="recipe-hero" ${heroPhotoUrl?`style="background-image:url('${heroPhotoUrl}')"`:''}>
       <div class="recipe-hero-overlay-bg"></div>
-      <button type="button" class="recipe-hero-back" data-action="go-kochbuch" aria-label="Zurück">‹</button>
+      <button type="button" class="recipe-hero-back" data-action="go-kochbuch" aria-label="Zurück">${BACK_SVG}</button>
       <span class="recipe-hero-mascot logo-badge logo-badge-sm" data-action="pet-mascot">${renderMascotSvg()}</span>
       <div class="recipe-hero-text">
         <p class="recipe-hero-kicker">${escapeHtml(destName)} · ${escapeHtml(r.category)}</p>
@@ -3238,7 +3374,7 @@ function renderTrip(){
   const tabs = [
     ['reisedaten',ICON.calendar,'Reisedaten'],['tagesplaner',ICON.calendarDays,'Tagesplaner'],['unterlagen',ICON.ticket,'Unterlagen'],
     ['budget',ICON.wallet,'Budget'],['tagebuch',ICON.book,'Tagebuch'],['bilder',ICON.camera,'Bilder'],
-    ['magazin',ICON.bookOpen,'Reisemagazin'],['ideen',ICON.lightbulb,'Ideen &amp; Planung']
+    ['magazin',ICON.bookOpen,'Reisemagazin'],['ideen',ICON.lightbulb,'Ideen &amp; Planung'],['bucket',ICON.listCheck,'Bucket-Liste']
   ];
   const activeTab = tabs.find(([key])=>key===state.tripTab) || tabs[0];
 
@@ -3251,6 +3387,7 @@ function renderTrip(){
   else if(state.tripTab==='bilder') content = renderTripBilderTab(trip);
   else if(state.tripTab==='magazin') content = renderTripMagazinTab(trip);
   else if(state.tripTab==='ideen') content = renderPlanungTab(trip);
+  else if(state.tripTab==='bucket') content = renderTripBucketlistSection(trip);
 
   const draftBanner = state.isDraftTrip ? `
     <div class="draft-banner">
@@ -3293,7 +3430,7 @@ function renderTrip(){
       <div class="dest-header-icon-row">${state.isDraftTrip ? `<span class="logo-badge logo-badge-sm" style="display:inline-flex;" data-action="pet-mascot">${renderMascotSvg()}</span>` : (flags || ICON.suitcase)}</div>
       <div class="dest-header-title">${escapeHtml(title)}</div>
       <div class="dest-header-coords">${escapeHtml(dateRange)}</div>
-      <div class="dest-header-top" data-action="go-home">‹</div>
+      <div class="dest-header-top" data-action="go-home" aria-label="Zurück">${BACK_SVG}</div>
     </div>
     ${draftBanner}
     <div class="toc-trigger-row">
@@ -3310,7 +3447,6 @@ function renderTrip(){
 function renderTripReisedatenTab(trip){
   const tripTypes = ['Städtetrip','Rundreise','Strandurlaub','Schiffsreise'];
   const dropdownsHtml = renderGuideDropdowns(trip);
-  const bucketlistHtml = renderTripBucketlistSection(trip);
 
   return `
     <button type="button" class="btn" data-action="trigger-booking-upload" style="margin-bottom:6px;">${ICON.file} Aus Buchungsunterlagen befüllen</button>
@@ -3354,10 +3490,6 @@ function renderTripReisedatenTab(trip){
     </div>
     ${renderDestDistances(trip)}
     ${renderIcsCard(trip)}
-    <div class="field-group">
-      <label class="field-label">Bucketliste (synchron mit dem Reiseführer)</label>
-      ${bucketlistHtml}
-    </div>
     ${state.confirmingDelete && state.confirmingDelete.type==='trip' && state.confirmingDelete.id===trip.id ? `
       <div class="confirm-inline-block">
         <div class="confirm-message">Diese Reise inkl. aller Unterlagen, Tickets, Tagebuch und Fotos wirklich löschen?</div>
@@ -3415,34 +3547,17 @@ function renderDestDistances(trip){
 }
 function renderTripBucketlistSection(trip){
   if(!trip.destIds.length){
-    return '<p class="empty-state">Wähle oben einen Reiseführer aus, um dessen Bucketliste hier zu sehen und zu bearbeiten.</p>';
+    return '<p class="empty-state">Verknüpfe unter „Reisedaten“ einen Reiseführer – dann erscheint hier seine Bucket-Liste.</p>';
   }
-  return trip.destIds.map(destId=>{
+  const multi = trip.destIds.length > 1;
+  return `<p class="pg-intro">Die Bucket-Liste ist mit dem Reiseführer verbunden: Was du hier abhakst, ist auch dort abgehakt.</p>` + trip.destIds.map(destId=>{
     const dest = destinations.find(d=>d.id===destId);
     const dd = destDataCache[destId];
     if(!dest || !dd) return '';
-    const items = dd.bucketlist || [];
-    const listHtml = items.length ? items.map(it=>`
-      <div class="list-item ${it.checked?'checked':''}">
-        <div class="checkbox ${it.checked?'checked':''}" data-action="toggle-guide-bucket-item" data-dest-id="${destId}" data-id="${it.id}">${it.checked?'✓':''}</div>
-        <div class="list-item-text">${escapeHtml(it.text)}</div>
-        <button type="button" class="btn btn-danger" data-action="delete-guide-bucket-item" data-dest-id="${destId}" data-id="${it.id}">${ICON.trash}</button>
-      </div>`).join('') : '<p class="empty-state">Noch keine Einträge.</p>';
-    const addForm = state.addingList===('bucket:'+destId) ? `
-      <div class="inline-form">
-        <input class="input" id="new-item-input" placeholder="Eintrag hinzufügen">
-        <div class="form-actions">
-          <button type="button" class="btn btn-add" data-action="confirm-add-guide-bucket-item" data-dest-id="${destId}">Hinzufügen</button>
-          <button type="button" class="btn" data-action="cancel-add-item">Abbrechen</button>
-        </div>
-      </div>` : `<button type="button" class="btn" data-action="show-add-guide-bucket-item" data-dest-id="${destId}">+ Eintrag hinzufügen</button>`;
-    return `
-      <div class="bucket-group">
-        <div class="bucket-group-title">${dest.flag} ${escapeHtml(dest.name)}</div>
-        ${listHtml}
-        ${addForm}
-      </div>`;
-  }).join('');
+    return `${multi ? `<h3 class="section-title">${dest.flag} ${escapeHtml(dest.name)}</h3>` : ''}
+      ${renderListPanel({items:dd.bucketlist||[], key:'bucket:'+destId, intro:dd.bucketlistIntro||'', addLabel:'Erlebnis hinzufügen',
+        toggleAction:'toggle-guide-bucket-item', deleteAction:'delete-guide-bucket-item', addAction:'quick-add-guide-bucket', attrs:`data-dest-id="${destId}"`})}`;
+  }).join('<div style="height:18px"></div>');
 }
 async function toggleGuideBucketItem(destId, itemId){
   const dd = destDataCache[destId];
@@ -3573,7 +3688,7 @@ function getRouteDays(route){
 }
 function renderDayImportPanel(trip){
   if(!state.showDayImport){
-    return `<button type="button" class="btn" data-action="toggle-day-import">${ICON.download} Aus Reiseführer importieren</button>`;
+    return `<button type="button" class="btn pg-add-btn" data-action="toggle-day-import" style="margin-top:12px;">${ICON.download} Route aus dem Reiseführer übernehmen</button>`;
   }
   const linkedDests = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
   if(!linkedDests.length){
@@ -3597,7 +3712,7 @@ function renderDayImportPanel(trip){
       ${days.map((d,i)=>`
         <div class="day-import-line">
           <div class="day-import-text"><strong>${escapeHtml(d.label)}</strong><br>${escapeHtml(d.text)}</div>
-          <select class="input day-import-whole-target" data-day-index="${i}" style="max-width:100px;">${dayOptions}</select>
+          <select class="input day-import-whole-target" data-day-index="${i}" style="max-width:100px;">${trip.dayPlan.map((x,j)=>`<option value="${j}" ${j===Math.min(i,trip.dayPlan.length-1)?'selected':''}>Tag ${j+1}</option>`).join('')}</select>
         </div>`).join('')}
       <button type="button" class="btn btn-add" data-action="import-whole-route" data-dest-id="${destId}" data-route-id="${routeId}" style="margin-top:10px;">Zugeordnete Tage übernehmen</button>
     `;
@@ -3640,37 +3755,45 @@ function renderDayImportPanel(trip){
 }
 function renderTripTagesplanerTab(trip){
   if(!trip.dateFrom || !trip.dateTo){
-    return '<p class="empty-state">Bitte zuerst Von- und Bis-Datum im Tab "Reisedaten" festlegen, damit die Tage angelegt werden können.</p>';
+    return '<p class="empty-state">Lege zuerst unter „Reisedaten“ das Von- und Bis-Datum fest, dann erscheinen hier deine Reisetage.</p>';
   }
   syncDayPlan(trip);
   const importPanel = renderDayImportPanel(trip);
+  const today = todayIso();
+  const planned = trip.dayPlan.filter(d=>(d.plan||'').trim() || (d.ort||'').trim()).length;
   const daysHtml = trip.dayPlan.map((day,idx)=>{
     const date = new Date(trip.dateFrom+'T00:00:00');
     date.setDate(date.getDate()+idx);
-    const dateLabel = date.toLocaleDateString('de-DE',{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
+    const iso = isoLocal(date);
+    const dateLabel = date.toLocaleDateString('de-DE',{weekday:'short', day:'2-digit', month:'2-digit'});
+    const isToday = iso===today;
     if(state.editingDayId===day.id){
-      return `
-        <div class="day-card">
-          <div class="day-card-title">Tag ${idx+1} – ${dateLabel}</div>
-          <div class="field-group">
-            <label class="field-label">Ort</label>
-            <input class="input" data-day-field="ort" data-day-id="${day.id}" value="${escapeHtml(day.ort)}" placeholder="z.B. Chania">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Tagesplan</label>
-            <textarea class="textarea" data-day-field="plan" data-day-id="${day.id}" style="min-height:160px;">${escapeHtml(day.plan)}</textarea>
-          </div>
-          <button type="button" class="btn btn-add" data-action="close-edit-day">Fertig</button>
-        </div>`;
+      return `<div class="rday"><div class="rday-dot">${idx+1}</div><div class="rday-card">
+          <div class="rday-num">Tag ${idx+1} · ${dateLabel}</div>
+          <label class="field-label">Ort</label>
+          <input class="input" data-day-field="ort" data-day-id="${day.id}" value="${escapeHtml(day.ort)}" placeholder="z.B. Chania" style="margin-bottom:8px;">
+          <label class="field-label">Tagesplan</label>
+          <textarea class="textarea" data-day-field="plan" data-day-id="${day.id}" style="min-height:150px;" placeholder="Eine Zeile pro Programmpunkt, z.B.&#10;09:00 Altstadt&#10;13:00 Mittagessen am Hafen">${escapeHtml(day.plan)}</textarea>
+          <button type="button" class="btn btn-add" data-action="close-edit-day" style="margin-top:8px;width:100%;">Fertig</button>
+        </div></div>`;
     }
-    return `
-      <div class="day-card">
-        <div class="day-card-title">Tag ${idx+1} – ${dateLabel}</div>
-        <div class="day-plan-box">${day.ort? `<div style="font-weight:700;margin-bottom:6px;">${escapeHtml(day.ort)}</div>`:''}${day.plan ? escapeHtml(day.plan).replace(/\n/g,'<br>') : '<span class="hint-text">Noch kein Plan für diesen Tag.</span>'}</div>
-        <button type="button" class="btn" data-action="edit-day" data-id="${day.id}" style="margin-top:10px;">${ICON.pen} Bearbeiten</button>
-      </div>`;
+    const empty = !(day.plan||'').trim() && !(day.ort||'').trim();
+    return `<div class="rday ${isToday?'is-today':''} ${empty?'is-empty':''}">
+      <div class="rday-dot">${idx+1}</div>
+      <div class="rday-card" data-action="edit-day" data-id="${day.id}">
+        <div class="rday-num">Tag ${idx+1} · ${dateLabel}${isToday ? ' <span class="rday-today">Heute</span>' : ''}<span class="rday-edit">${ICON.pen}</span></div>
+        ${day.ort ? `<div class="rday-title">${escapeHtml(day.ort)}</div>` : ''}
+        ${day.plan ? `<div class="rday-text">${renderGuideCalloutText(day.plan)}</div>` : '<div class="rday-empty">Noch nichts geplant – antippen zum Planen.</div>'}
+      </div>
+    </div>`;
   }).join('');
-  return `${importPanel}<div style="margin-top:16px;">${daysHtml}</div>`;
+  return `
+    <div class="lprog">
+      <div class="lprog-top"><span><b>${planned}</b> von ${trip.dayPlan.length} Tagen geplant</span></div>
+      <div class="bk-bar" style="margin:8px 0 0;"><span style="width:${trip.dayPlan.length ? planned/trip.dayPlan.length*100 : 0}%;background:var(--green);"></span></div>
+    </div>
+    ${importPanel}
+    <div class="rtimeline" style="margin-top:14px;">${daysHtml}</div>`;
 }
 async function importWholeRoute(destId, routeId){
   const trip = trips.find(t=>t.id===state.tripId);
@@ -3740,7 +3863,7 @@ function renderTripUnterlagenTab(trip){
         <button type="button" class="btn btn-add" data-action="confirm-add-ticket">Hinzufügen</button>
         <button type="button" class="btn" data-action="cancel-add-ticket">Abbrechen</button>
       </div>
-    </div>` : `<button type="button" class="btn btn-add" data-action="show-add-ticket">+ Ticket hinzufügen</button>`;
+    </div>` : `<button type="button" class="btn pg-add-btn" data-action="show-add-ticket">+ Ticket hinzufügen</button>`;
 
   const activityHtml = trip.activityTickets.length ? trip.activityTickets.map(renderActivityTicketCard).join('') : '<p class="empty-state">Noch keine Ausflugstickets hinterlegt.</p>';
   const activityForm = state.addingActivityTicket ? `
@@ -3756,7 +3879,7 @@ function renderTripUnterlagenTab(trip){
         <button type="button" class="btn btn-add" data-action="confirm-add-activity-ticket">Hinzufügen</button>
         <button type="button" class="btn" data-action="cancel-add-activity-ticket">Abbrechen</button>
       </div>
-    </div>` : `<button type="button" class="btn btn-add" data-action="show-add-activity-ticket">+ Ausflugsticket hinzufügen</button>`;
+    </div>` : `<button type="button" class="btn pg-add-btn" data-action="show-add-activity-ticket">+ Ausflugsticket hinzufügen</button>`;
 
   const travelDocsHtml = trip.travelDocs.length ? trip.travelDocs.map(d=>`
     <div class="doc-row">
@@ -3777,7 +3900,7 @@ function renderTripUnterlagenTab(trip){
         <button type="button" class="btn btn-add" data-action="confirm-add-travel-doc">Hinzufügen</button>
         <button type="button" class="btn" data-action="cancel-add-travel-doc">Abbrechen</button>
       </div>
-    </div>` : `<button type="button" class="btn" data-action="show-add-travel-doc">+ Reiseunterlage hinzufügen</button>`;
+    </div>` : `<button type="button" class="btn pg-add-btn" data-action="show-add-travel-doc">+ Reiseunterlage hinzufügen</button>`;
 
   const docsHtml = trip.documents.length ? trip.documents.map(d=>`
     <div class="doc-row">
@@ -3798,7 +3921,7 @@ function renderTripUnterlagenTab(trip){
         <button type="button" class="btn btn-add" data-action="confirm-add-trip-doc">Hinzufügen</button>
         <button type="button" class="btn" data-action="cancel-add-trip-doc">Abbrechen</button>
       </div>
-    </div>` : `<button type="button" class="btn" data-action="show-add-trip-doc">+ Info hinzufügen</button>`;
+    </div>` : `<button type="button" class="btn pg-add-btn" data-action="show-add-trip-doc">+ Info hinzufügen</button>`;
 
   const linkedDestNames = trip.destIds.map(id=>destinations.find(d=>d.id===id)).filter(Boolean);
   const gygQuery = linkedDestNames.length ? linkedDestNames[0].name : (trip.destName||'').trim();
@@ -4868,7 +4991,7 @@ function renderDestination(){
       <div class="dest-header-icon-row">${dest.flag}</div>
       <div class="dest-header-title">${escapeHtml(dest.name)}</div>
       <div class="dest-header-coords">${dest.lat.toFixed(2)}°, ${dest.lng.toFixed(2)}°</div>
-      <div class="dest-header-top" data-action="go-zielauswahl">‹</div>
+      <div class="dest-header-top" data-action="go-zielauswahl" aria-label="Zurück">${BACK_SVG}</div>
     </div>
     ${countdownBanner}
     <div class="toc-trigger-row">
@@ -5194,22 +5317,32 @@ function scrollToGuideTop(){
 
 /* ---------- Karte tab ---------- */
 function renderKarteTab(dd){
-  const poiList = dd.pois.length ? dd.pois.map(p=>`
-    <div class="poi-row">
-      <div>
-        <div class="poi-name">
-          <span class="poi-geheimtipp-toggle ${p.geheimtipp?'active':''}" data-action="toggle-poi-geheimtipp" data-id="${p.id}" title="Als Geheimtipp markieren">🤫</span>
-          ${ICON.locationDot} ${escapeHtml(p.name)}${p.stars ? ` <span style="color:var(--brass);white-space:nowrap;">${'★'.repeat(p.stars)}</span>` : ''}
-        </div>
-        ${p.region? `<div class="poi-region">${escapeHtml(p.region)}</div>`:''}
-        <div class="poi-desc">${escapeHtml(p.desc||'')}</div>
+  const edit = !!state.poiEdit;
+  const groups = [];
+  dd.pois.slice().sort((x,y)=>(x.nr||999)-(y.nr||999)).forEach(p=>{ const g = p.region || 'Ohne Region'; let x = groups.find(y=>y.name===g); if(!x){ x = {name:g, items:[]}; groups.push(x); } x.items.push(p); });
+  const openSet = state.poiOpenGroups || [];
+  const row = (p)=>`
+    <div class="poi2-row" data-search-text="${escapeHtml((p.name+' '+(p.region||'')+' '+(p.desc||'')).toLowerCase())}">
+      <div class="poi2-main">
+        <div class="poi2-name">${escapeHtml(p.name)}${p.stars ? ` <span class="gpoi-stars">${'★'.repeat(p.stars)}</span>` : ''}${p.geheimtipp ? ' <span title="Geheimtipp">🤫</span>' : ''}</div>
+        ${p.desc ? `<div class="poi2-desc">${escapeHtml(p.desc)}</div>` : ''}
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-        <button type="button" class="btn btn-danger" data-action="delete-poi" data-id="${p.id}">Entfernen</button>
-        <button type="button" class="btn" data-action="show-route" data-id="${p.id}" style="padding:6px 12px;font-size:12px;">${ICON.map} Route</button>
+      <div class="poi2-actions">
+        ${edit ? `
+          <button type="button" class="poi2-icon ${p.geheimtipp?'active':''}" data-action="toggle-poi-geheimtipp" data-id="${p.id}" aria-label="Geheimtipp">🤫</button>
+          <button type="button" class="poi2-icon danger" data-action="delete-poi" data-id="${p.id}" aria-label="Entfernen">${ICON.trash}</button>` : `
+          <button type="button" class="poi2-icon" data-action="show-route" data-id="${p.id}" aria-label="Route anzeigen">${ICON.map}</button>`}
       </div>
-    </div>`).join('') : '<p class="empty-state">Noch keine Sehenswürdigkeiten eingetragen.</p>';
-
+    </div>`;
+  const poiList = dd.pois.length ? groups.map(g=>{
+    const k = g.name, isOpen = openSet.includes(k) || groups.length===1;
+    return `<div class="pg-card lgroup ${isOpen?'open':''}" data-search-group>
+      <button type="button" class="lgroup-head" data-action="toggle-poi-group" data-key="${escapeHtml(k)}">
+        <span class="lgroup-title">${escapeHtml(g.name)}</span><span class="lgroup-count">${g.items.length}</span><span class="gch-caret">${isOpen?'▾':'▸'}</span>
+      </button>
+      <div class="lgroup-body poi2-body">${g.items.map(row).join('')}</div>
+    </div>`;
+  }).join('') : '<p class="empty-state">Noch keine Sehenswürdigkeiten eingetragen.</p>';
   const routeInfo = state.currentRoute ? `
     <div class="route-info-banner">
       <span><span>${ICON.map} ${state.currentRoute.distanceKm} km</span><span>ca. ${state.currentRoute.durationMin} Min.</span></span>
@@ -5218,27 +5351,30 @@ function renderKarteTab(dd){
 
   return `
     <div id="leaflet-map" class="map-container"></div>
-    <div class="map-tools-row">
-      <button type="button" class="btn" data-action="locate-me">${ICON.locationDot} Mein Standort</button>
-      ${state.userLocation ? '<span class="hint-text" style="margin:0;">Standort aktiv</span>' : ''}
+    <div class="pg-actions">
+      <button type="button" class="btn" data-action="locate-me">${ICON.locationDot} ${state.userLocation ? 'Standort aktiv' : 'Mein Standort'}</button>
+      <button type="button" class="btn" data-action="discover-nearby">${ICON.magnifyingGlass} In der Nähe</button>
     </div>
     ${routeInfo}
-    <p class="hint-text">Tippe auf die Karte, um einen neuen Punkt zu markieren, oder suche gezielt:</p>
-    <div class="poi-search-row">
-      <input class="input" id="poi-search-input" placeholder="Ort suchen (Name, Adresse)…">
-      <button type="button" class="btn" data-action="search-poi">Suchen</button>
-    </div>
-    <div id="poi-search-results"></div>
-    <button type="button" class="btn" data-action="discover-nearby" style="margin:4px 0 8px;">${ICON.magnifyingGlass} In der Nähe entdecken</button>
     <div id="nearby-results"></div>
     <div id="poi-pending-container"></div>
-    <div class="csv-upload-row">
-      <button type="button" class="btn" data-action="trigger-poi-csv-upload">${ICON.file} CSV importieren</button>
-      <input type="file" id="poi-csv-input" accept=".csv,text/csv" style="display:none">
-    </div>
-    <p class="hint-text">CSV-Format: Name, Breitengrad, Längengrad, Region, Beschreibung, Geheimtipp ja/nein (beides optional) – eine Zeile pro Ort.</p>
-    <h3 class="section-title">Sehenswürdigkeiten</h3>
+    <div class="pg-sec-head"><h3 class="section-title">Sehenswürdigkeiten <span class="seg-n" style="display:inline-block;">${dd.pois.length}</span></h3>
+      ${dd.pois.length ? `<button type="button" class="gch-link" data-action="toggle-poi-edit">${edit ? 'Fertig' : 'Bearbeiten'}</button>` : ''}</div>
+    ${dd.pois.length > 6 ? `<input class="input pg-search" id="poi-search" type="search" placeholder="Orte durchsuchen …" autocomplete="off">` : ''}
     ${poiList}
+    <p class="empty-state" id="poi-nohit" style="display:none;">Kein passender Ort.</p>
+    <details class="gadmin">
+      <summary>Ort hinzufügen</summary>
+      <p class="hint-text" style="margin-top:0;">Tippe auf die Karte, um einen Punkt zu setzen, oder suche gezielt:</p>
+      <div class="poi-search-row">
+        <input class="input" id="poi-search-input" placeholder="Ort suchen (Name, Adresse)…">
+        <button type="button" class="btn" data-action="search-poi">Suchen</button>
+      </div>
+      <div id="poi-search-results"></div>
+      <button type="button" class="btn" data-action="trigger-poi-csv-upload" style="margin-top:8px;">${ICON.file} CSV importieren</button>
+      <input type="file" id="poi-csv-input" accept=".csv,text/csv" style="display:none">
+      <p class="hint-text">CSV-Format: Name, Breitengrad, Längengrad, Region, Beschreibung, Geheimtipp ja/nein – eine Zeile pro Ort.</p>
+    </details>
   `;
 }
 async function searchNewDest(){
@@ -5489,34 +5625,106 @@ async function deletePoi(id){
 }
 
 /* ---------- Routen tab (Kapitel 9: Fertige Routen) ---------- */
+function parseRouteMeta(r){
+  const m = (r.title||'').match(/^(Route\s*\d+)\s*[:–-]\s*(.+?)\s*(?:\(([^)]+)\))?\s*$/i);
+  const kicker = m ? m[1] : '';
+  const name = m ? m[2] : (r.title||'');
+  const nDays = (r.days||[]).reduce((sum,d)=>{ const x = (d.label||'').match(/Tag\s*(\d+)\s*[–-]\s*(\d+)/); return sum + (x ? (parseInt(x[2],10)-parseInt(x[1],10)+1) : 1); }, 0);
+  const daysLabel = m && m[3] ? m[3] : (nDays ? nDays+' Tage' : '');
+  let budget = '', intro = [];
+  (r.text||'').split(/\n\s*\n/).forEach(par=>{
+    const bm = par.match(/^\s*Budget:\s*(.+)$/is);
+    if(bm && !budget) budget = bm[1].replace(/\s*\(.*$/s,'').replace(/\.\s*$/,'').trim();
+    else if(par.trim()) intro.push(par);
+  });
+  const nights = [];
+  (r.days||[]).forEach(d=>{ const o = parseRouteDay(d).overnight; if(o && o!=='–' && !nights.includes(o)) nights.push(o); });
+  return {kicker, name, daysLabel, budget, intro:intro.join('\n\n'), nights};
+}
+function parseRouteDay(d){
+  const lm = (d.label||'').match(/^(Tag\s*[\d–-]+)\s*[:–-]?\s*(.*)$/i);
+  const num = lm ? lm[1] : '';
+  const title = lm ? (lm[2]||'') : (d.label||'');
+  let overnight = '', stops = [], text = [];
+  (d.text||'').split(/\n\s*\n/).forEach(par=>{
+    const om = par.match(/^\s*Übernachtung:\s*([^·\n]*)(?:·\s*Stationen:\s*(.*))?$/is);
+    if(om){ overnight = om[1].trim(); if(om[2]) stops = om[2].split(',').map(x=>x.trim()).filter(Boolean); }
+    else if(par.trim()) text.push(par);
+  });
+  return {num, title, overnight, stops, text:text.join('\n\n')};
+}
+function routeDayMapsUrl(dd, stops){
+  const pts = stops.map(n=>(dd.pois||[]).find(p=>p.name===n)).filter(Boolean);
+  if(!pts.length) return '';
+  if(pts.length===1) return `https://www.google.com/maps/dir/?api=1&destination=${pts[0].lat},${pts[0].lng}`;
+  return 'https://www.google.com/maps/dir/' + pts.map(p=>`${(+p.lat).toFixed(5)},${(+p.lng).toFixed(5)}`).join('/');
+}
 function renderRoutenTab(dd){
   const routes = dd.routes || [];
-  const list = routes.length ? routes.map(r=>{
-    const daysHtml = (r.days||[]).length ? (r.days||[]).map(d=>`
-      <div class="route-day-block">
-        <div class="route-day-label">${escapeHtml(d.label)}</div>
-        <div class="diary-text">${escapeHtml(d.text)}</div>
-      </div>`).join('') : '';
-    return `
-    <div class="diary-entry">
-      <div class="diary-date">${escapeHtml(r.title)}</div>
-      ${r.text ? `<div class="diary-text">${escapeHtml(r.text)}</div>` : ''}
-      ${daysHtml}
-      <button type="button" class="btn btn-danger" data-action="delete-route" data-id="${r.id}">Route löschen</button>
-    </div>`;
-  }).join('') : '<p class="empty-state">Noch keine Routen eingetragen.</p>';
+  if(state.routeOpen && routes.some(r=>r.id===state.routeOpen)) return renderRouteDetail(dd, state.routeOpen);
+  const cards = routes.map(r=>{
+    const m = parseRouteMeta(r);
+    const first = (m.intro.split(/(?<=[.!?])\s/)[0]||'').trim();
+    return `<button type="button" class="rcard" data-action="open-route" data-id="${r.id}">
+      <div class="rcard-top">${m.kicker ? `<span class="rcard-kicker">${escapeHtml(m.kicker)}</span>` : ''}${m.daysLabel ? `<span class="rcard-pill">${ICON.calendarDays} ${escapeHtml(m.daysLabel)}</span>` : ''}</div>
+      <div class="rcard-title">${escapeHtml(m.name)}</div>
+      ${first ? `<div class="rcard-sub">${escapeHtml(first)}</div>` : ''}
+      ${m.nights.length ? `<div class="rcard-nights">${ICON.locationDot} ${m.nights.map(escapeHtml).join(' → ')}</div>` : ''}
+      ${m.budget ? `<div class="rcard-budget">${ICON.wallet} ${escapeHtml(m.budget)}</div>` : ''}
+    </button>`;
+  }).join('');
   const addForm = state.addingRoute ? `
     <div class="inline-form">
       <label class="field-label">Titel</label>
-      <input class="input" id="new-route-title" placeholder="z.B. Route 1: Westküste in 3 Tagen" style="margin-bottom:8px;">
+      <input class="input" id="new-route-title" placeholder="z.B. Route 4: Westküste in 3 Tagen" style="margin-bottom:8px;">
       <label class="field-label">Ablauf</label>
-      <textarea class="textarea" id="new-route-text" placeholder="Gerne in Ich-Form, Tag für Tag: Ich würde am ersten Tag…"></textarea>
+      <textarea class="textarea" id="new-route-text" placeholder="Tag für Tag: Am ersten Tag …"></textarea>
       <div class="form-actions">
         <button type="button" class="btn btn-add" data-action="confirm-add-route">Speichern</button>
         <button type="button" class="btn" data-action="cancel-add-route">Abbrechen</button>
       </div>
-    </div>` : `<button type="button" class="btn btn-add" data-action="show-add-route">+ Neue Route</button>`;
-  return `${addForm}<div style="margin-top:16px;">${list}</div>`;
+    </div>` : `<button type="button" class="btn pg-add-btn" data-action="show-add-route">+ Eigene Route anlegen</button>`;
+  return `
+    ${routes.length ? `<p class="pg-intro">${routes.length} fertige Route${routes.length===1?'':'n'} – tippe eine an, um sie Tag für Tag zu sehen.</p><div class="rcard-list">${cards}</div>` : '<p class="empty-state">Noch keine Routen eingetragen. Importiere einen Reiseführer oder lege eine eigene Route an.</p>'}
+    ${addForm}`;
+}
+function renderRouteDetail(dd, id){
+  const routes = dd.routes;
+  const idx = routes.findIndex(r=>r.id===id);
+  const r = routes[idx], m = parseRouteMeta(r);
+  const prev = routes[idx-1], next = routes[idx+1];
+  const pills = [m.daysLabel && `${ICON.calendarDays} ${escapeHtml(m.daysLabel)}`, m.nights.length && `${ICON.locationDot} ${m.nights.length} Unterkünfte`, m.budget && `${ICON.wallet} ${escapeHtml(m.budget)}`].filter(Boolean);
+  const days = (r.days||[]).map(d=>{
+    const x = parseRouteDay(d);
+    const maps = routeDayMapsUrl(dd, x.stops);
+    return `<div class="rday">
+      <div class="rday-dot">${escapeHtml(x.num.replace(/^Tag\s*/i,'') || '•')}</div>
+      <div class="rday-card">
+        <div class="rday-num">${escapeHtml(x.num)}</div>
+        ${x.title ? `<div class="rday-title">${escapeHtml(x.title)}</div>` : ''}
+        ${x.text ? `<div class="rday-text">${renderGuideCalloutText(x.text)}</div>` : ''}
+        ${x.overnight && x.overnight!=='–' ? `<div class="rday-night">${ICON.suitcase} Übernachtung: <b>${escapeHtml(x.overnight)}</b></div>` : ''}
+        ${x.stops.length ? `<div class="rday-stops">${x.stops.map(st=>`<span class="rday-stop">${escapeHtml(st)}</span>`).join('')}</div>` : ''}
+        ${maps ? `<a class="btn rday-maps" href="${maps}" target="_blank" rel="noopener">${ICON.map} Tagesroute in Google Maps</a>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="gch-top">
+      <button type="button" class="gch-back" data-action="close-route">‹ Alle Routen</button>
+      <span class="gch-count">${idx+1} von ${routes.length}</span>
+    </div>
+    <div class="gch-title"><span class="gch-icon">${ICON.locationDot}</span><h2>${escapeHtml(m.name)}</h2></div>
+    ${pills.length ? `<div class="rpills">${pills.map(x=>`<span class="rpill">${x}</span>`).join('')}</div>` : ''}
+    ${m.intro ? `<div class="gch-lead"><div class="gch-lead-k">Die Idee</div>${renderGuideCalloutText(m.intro)}</div>` : ''}
+    ${days ? `<div class="rtimeline">${days}</div>` : ''}
+    <div class="gch-nav">
+      ${prev ? `<button type="button" class="gch-nav-btn" data-action="open-route" data-id="${prev.id}"><small>Vorherige</small>‹ ${escapeHtml(parseRouteMeta(prev).name)}</button>` : '<span></span>'}
+      ${next ? `<button type="button" class="gch-nav-btn gch-next" data-action="open-route" data-id="${next.id}"><small>Nächste</small>${escapeHtml(parseRouteMeta(next).name)} ›</button>` : `<button type="button" class="gch-nav-btn gch-next" data-action="close-route"><small>Fertig</small>Alle Routen ›</button>`}
+    </div>
+    <details class="gadmin"><summary>Route verwalten</summary>
+      <button type="button" class="btn btn-danger" data-action="delete-route" data-id="${r.id}">${ICON.trash} Route löschen</button>
+    </details>`;
 }
 async function confirmAddRoute(){
   const title = document.getElementById('new-route-title').value.trim();
@@ -5531,6 +5739,7 @@ async function confirmAddRoute(){
 async function deleteRoute(id){
   const dd = destDataCache[state.destId];
   dd.routes = dd.routes.filter(r=>r.id!==id);
+  state.routeOpen = null;
   await saveDestData(state.destId);
   render();
 }
@@ -5577,8 +5786,10 @@ function renderHikingRouteForm(r){
       </div>
       <select class="input" id="hr-difficulty" style="margin-bottom:8px;">
         <option value="">Schwierigkeitsgrad</option>
-        ${['Leicht','Mittel','Schwer'].map(d=>`<option ${isEdit&&r.difficulty===d?'selected':''}>${d}</option>`).join('')}
+        ${['Leicht','Mittel','Schwer'].map(d=>`<option ${isEdit&&(r.difficulty||'').toLowerCase()===d.toLowerCase()?'selected':''}>${d}</option>`).join('')}
       </select>
+      <label class="field-label">Komoot-Link <span class="hint-text">(optional)</span></label>
+      <input class="input" id="hr-komoot" type="url" inputmode="url" value="${isEdit?escapeHtml(r.komootUrl||''):''}" placeholder="https://www.komoot.com/tour/…" style="margin-bottom:8px;">
       <label class="field-label">Beschreibung</label>
       <textarea class="textarea" id="hr-description">${isEdit?escapeHtml(r.description||''):''}</textarea>
       ${isEdit && r.gpxTrack && r.gpxTrack.length ? `<p class="hint-text">${ICON.locationDot} GPX-Track vorhanden (${r.gpxTrack.length} Punkte)${r.elevationGain?', ca. '+r.elevationGain+' Hm Anstieg':''}.</p>` : ''}
@@ -5611,32 +5822,57 @@ function renderHikingRouteCard(r){
           <span class="hike-log-delete" data-action="delete-hike-log" data-route-id="${r.id}" data-log-id="${l.id}" title="Löschen">${ICON.trash}</span>
         </div>`).join('')}
     </div>` : '';
+  const open = (state.hikeOpen||[]).includes(r.id) || isTracking;
+  const diff = (r.difficulty||'').toLowerCase();
+  const diffCls = diff.startsWith('leicht') ? 'easy' : diff.startsWith('schwer') ? 'hard' : diff ? 'mid' : '';
+  const stats = [
+    r.distanceKm ? `<span>${ICON.map} ${escapeHtml(String(r.distanceKm))} km</span>` : '',
+    r.durationText ? `<span>⏱ ${escapeHtml(r.durationText)}</span>` : '',
+    r.elevationGain ? `<span>↑ ${r.elevationGain} Hm</span>` : ''
+  ].filter(Boolean).join('');
+  const info = [r.loop ? 'Rundweg' : (r.endName ? 'bis '+escapeHtml(r.endName) : ''), r.season ? escapeHtml(r.season) : '', r.fee ? 'Gebühr '+escapeHtml(r.fee) : ''].filter(Boolean).join(' · ');
   return `
-    <div class="diary-entry">
-      <div class="diary-date">${escapeHtml(r.title)}</div>
-      ${(r.distanceKm || r.durationText || r.difficulty || r.elevationGain) ? `
-        <div class="route-meta">
-          ${r.distanceKm? `<span>${ICON.map} ${escapeHtml(String(r.distanceKm))} km</span>`:''}
-          ${r.durationText? `<span>⏱️ ${escapeHtml(r.durationText)}</span>`:''}
-          ${r.difficulty? `<span>${ICON.hiking} ${escapeHtml(r.difficulty)}</span>`:''}
-          ${r.elevationGain? `<span>📈 ${r.elevationGain} Hm</span>`:''}
-        </div>` : ''}
-      ${(r.season || r.fee || r.endName) ? `<div class="hint-text" style="margin:2px 0 6px;">${[r.loop ? 'Rundweg' : (r.endName ? 'bis '+escapeHtml(r.endName) : ''), r.season ? escapeHtml(r.season) : '', r.fee ? 'Gebühr '+escapeHtml(r.fee) : ''].filter(Boolean).join(' · ')}</div>` : ''}
-      ${r.description? `<div class="diary-text">${escapeHtml(r.description)}</div>`:''}
-      ${r.startLat && r.startLng ? `<a class="btn" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;margin:6px 0;" href="https://www.google.com/maps/search/?api=1&query=${r.startLat},${r.startLng}" target="_blank" rel="noopener">${ICON.locationDot} Startpunkt in Google Maps</a>` : ''}
-      ${r.gpxTrack && r.gpxTrack.length ? `<div id="hiking-map-${r.id}" class="map-container" style="height:280px;margin-bottom:10px;"></div>`:''}
-      ${trackingBlock}
-      ${logsHtml}
-      <div class="form-actions" style="margin-top:10px;">
-        <button type="button" class="btn" data-action="edit-hiking-route" data-id="${r.id}">Bearbeiten</button>
-        <button type="button" class="btn btn-danger" data-action="delete-hiking-route" data-id="${r.id}">Löschen</button>
-      </div>
+    <div class="pg-card hike ${open?'open':''}">
+      <button type="button" class="hike-head" data-action="toggle-hike" data-id="${r.id}">
+        <span class="hike-head-main">
+          <span class="hike-title">${escapeHtml(r.title)}</span>
+          ${stats ? `<span class="hike-stats">${stats}</span>` : ''}
+        </span>
+        <span class="hike-head-side">
+          ${r.difficulty ? `<span class="hike-diff ${diffCls}">${escapeHtml(r.difficulty)}</span>` : ''}
+          ${r.gpxTrack && r.gpxTrack.length ? '<span class="hike-gpx">GPX</span>' : ''}
+          <span class="gch-caret">${open?'▾':'▸'}</span>
+        </span>
+      </button>
+      ${open ? `<div class="hike-body">
+        ${info ? `<div class="hike-info">${info}</div>` : ''}
+        ${r.description ? `<div class="hike-desc">${escapeHtml(r.description)}</div>` : ''}
+        <div class="hike-btns">
+          ${r.startLat && r.startLng ? `<a class="btn" href="https://www.google.com/maps/search/?api=1&query=${r.startLat},${r.startLng}" target="_blank" rel="noopener">${ICON.locationDot} Startpunkt</a>` : ''}
+          ${r.komootUrl ? `<a class="btn hike-komoot" href="${escapeHtml(r.komootUrl)}" target="_blank" rel="noopener">${ICON.link} In Komoot öffnen</a>` : ''}
+        </div>
+        ${r.gpxTrack && r.gpxTrack.length ? `<div id="hiking-map-${r.id}" class="map-container" style="height:260px;margin:10px 0;"></div>` : ''}
+        ${trackingBlock}
+        ${logsHtml}
+        <div class="hike-foot">
+          ${!(r.gpxTrack && r.gpxTrack.length) ? `<button type="button" class="gch-link" data-action="attach-gpx" data-id="${r.id}">GPX-Track anhängen</button>` : ''}
+          ${!r.komootUrl ? `<button type="button" class="gch-link" data-action="edit-hiking-route" data-id="${r.id}">Komoot-Link ergänzen</button>` : ''}
+          <button type="button" class="gch-link" data-action="edit-hiking-route" data-id="${r.id}">Bearbeiten</button>
+          <button type="button" class="gch-link pg-danger-link" data-action="delete-hiking-route" data-id="${r.id}">Löschen</button>
+        </div>
+      </div>` : ''}
     </div>`;
+}
+function normalizeKomootUrl(v){
+  v = (v||'').trim(); if(!v) return '';
+  const m = v.match(/https?:\/\/[^\s]*komoot\.[a-z.]+\/[^\s]*/i);
+  if(m) return m[0];
+  return /^https?:\/\//i.test(v) ? v : '';
 }
 const GPS_WANDERATLAS_SLUGS = {kreta:'kreta', madeira:'madeira', sardinien:'sardinien'};
 function renderHikingSearchPanel(dd){
   if(!state.showHikingSearch){
-    return `<button type="button" class="btn" data-action="toggle-hiking-search">${ICON.magnifyingGlass} Wanderwege in der Nähe suchen</button>`;
+    return `<button type="button" class="gch-link" data-action="toggle-hiking-search">${ICON.magnifyingGlass} Weitere Wanderwege in der Nähe suchen</button>`;
   }
   const dest = getCurrentDest();
   const pois = dd.pois || [];
@@ -5675,14 +5911,24 @@ function renderHikingSearchPanel(dd){
 }
 function renderWanderroutenTab(dd){
   const routes = dd.hikingRoutes || [];
-  const list = routes.length ? routes.map(renderHikingRouteCard).join('') : '<p class="empty-state">Noch keine Wanderrouten eingetragen.</p>';
+  const lvl = (r)=>{ const d=(r.difficulty||'').toLowerCase(); return d.startsWith('leicht')?'leicht':d.startsWith('schwer')?'schwer':d?'mittel':''; };
+  const f = ['leicht','mittel','schwer'].includes(state.hikeFilter) ? state.hikeFilter : 'alle';
+  const shown = f==='alle' ? routes : routes.filter(r=>lvl(r)===f);
+  const counts = {alle:routes.length, leicht:0, mittel:0, schwer:0}; routes.forEach(r=>{ const l=lvl(r); if(l) counts[l]++; });
+  const chips = routes.length > 3 ? `<div class="pg-chips">${['alle','leicht','mittel','schwer'].filter(k=>k==='alle'||counts[k]).map(k=>`<button type="button" class="gch-chip ${f===k?'active':''}" data-action="hike-filter" data-f="${k}">${k==='alle'?'Alle':k.charAt(0).toUpperCase()+k.slice(1)} <span class="seg-n">${counts[k]}</span></button>`).join('')}</div>` : '';
+  const list = shown.length ? shown.map(renderHikingRouteCard).join('') : '<p class="empty-state">Noch keine Wanderrouten eingetragen.</p>';
   const addForm = state.addingHikingRoute ? renderHikingRouteForm(null) : `
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-      <button type="button" class="btn btn-add" data-action="show-add-hiking-route">+ Neue Wanderroute</button>
-      <button type="button" class="btn" data-action="trigger-gpx-upload">${ICON.locationDot} GPX-Datei importieren</button>
-      <input type="file" id="gpx-file-input" accept=".gpx" style="display:none">
+    <div class="pg-actions">
+      <button type="button" class="btn" data-action="show-add-hiking-route">+ Neue Wanderroute</button>
+      <button type="button" class="btn" data-action="trigger-gpx-upload">${ICON.locationDot} GPX importieren</button>
     </div>`;
-  return `${addForm}<div style="margin:10px 0 4px;">${renderHikingSearchPanel(dd)}</div><div style="margin-top:16px;">${list}</div>`;
+  return `
+    ${routes.length ? `<p class="pg-intro">${routes.length} Wanderung${routes.length===1?'':'en'} – antippen für Details, Karte und Links.</p>` : ''}
+    ${chips}
+    <div class="hike-list">${list}</div>
+    ${addForm}
+    <input type="file" id="gpx-file-input" accept=".gpx" style="display:none">
+    <div style="margin-top:8px;">${renderHikingSearchPanel(dd)}</div>`;
 }
 function initHikingMaps(dd){
   Object.values(hikingMapInstances).forEach(m=>{ try{ m.remove(); }catch(e){} });
@@ -5713,8 +5959,9 @@ async function confirmAddHikingRoute(){
   const durationText = document.getElementById('hr-duration').value.trim();
   const difficulty = document.getElementById('hr-difficulty').value;
   const description = document.getElementById('hr-description').value.trim();
+  const komootUrl = normalizeKomootUrl(document.getElementById('hr-komoot').value);
   const dd = destDataCache[state.destId];
-  dd.hikingRoutes.push({id:genId(), title, distanceKm, durationText, difficulty, description, gpxTrack:null, elevationGain:null});
+  dd.hikingRoutes.push({id:genId(), title, distanceKm, durationText, difficulty, description, komootUrl, gpxTrack:null, elevationGain:null});
   await saveDestData(state.destId);
   state.addingHikingRoute = false;
   render();
@@ -5728,6 +5975,7 @@ async function confirmEditHikingRoute(id){
   r.durationText = document.getElementById('hr-duration').value.trim();
   r.difficulty = document.getElementById('hr-difficulty').value;
   r.description = document.getElementById('hr-description').value.trim();
+  r.komootUrl = normalizeKomootUrl(document.getElementById('hr-komoot').value);
   await saveDestData(state.destId);
   state.editingHikingRouteId = null;
   render();
@@ -5748,6 +5996,14 @@ async function onGpxFileSelected(file){
     const elevationGain = calcElevationGain(points);
     const gpxTrack = points.map(p=>[p.lat,p.lng]);
     const dd = destDataCache[state.destId];
+    const target = state.gpxTargetId ? dd.hikingRoutes.find(x=>x.id===state.gpxTargetId) : null;
+    state.gpxTargetId = null;
+    if(target){
+      target.gpxTrack = gpxTrack; if(elevationGain) target.elevationGain = elevationGain; if(!target.distanceKm) target.distanceKm = String(distanceKm);
+      await saveDestData(state.destId);
+      showToast(`GPX-Track an „${target.title}“ angehängt (${distanceKm} km).`);
+      render(); return;
+    }
     const title = file.name.replace(/\.gpx$/i,'');
     dd.hikingRoutes.push({id:genId(), title, distanceKm:String(distanceKm), durationText:'', difficulty:'', description:'', gpxTrack, elevationGain});
     await saveDestData(state.destId);
@@ -5927,14 +6183,32 @@ async function deleteHikeLog(routeId, logId){
 }
 
 /* ---------- FAQ tab ---------- */
+const V3_KAP_IDS = ['ueberblick','verstehen','reisezeit','einreise','anreise','unterwegs','unterkunft','regionen','routen','erlebnisse','wandern','essen','budget','praktisch','natur','listen','faq'];
+function kapLinkLabel(n){
+  const id = V3_KAP_IDS[n-1]; if(!id) return null;
+  if(id==='routen') return 'Fertige Routen';
+  if(id==='listen') return 'Listen';
+  if(id==='faq') return 'Häufige Fragen';
+  const f = V3_FIELD[id]; const g = GUIDE_FIELDS.find(x=>x[0]===f);
+  return g ? g[1] : null;
+}
+function renderKapLinks(escapedText){
+  return escapedText.replace(/\s*\(→\s*Kap\.\s*(\d+)\)/g, (all, n)=>{
+    const label = kapLinkLabel(parseInt(n,10));
+    return label ? ` <button type="button" class="kap-link" data-action="goto-kap" data-kap="${n}">→ ${label}</button>` : all;
+  });
+}
 function renderFaqTab(dd){
   const faqs = dd.faq || [];
-  const list = faqs.length ? faqs.map(f=>`
-    <div class="diary-entry">
-      <div class="diary-date">${escapeHtml(f.question)}</div>
-      <div class="diary-text">${escapeHtml(f.answer)}</div>
-      <button type="button" class="btn btn-danger" data-action="delete-faq" data-id="${f.id}">Frage löschen</button>
-    </div>`).join('') : '<p class="empty-state">Noch keine Fragen eingetragen.</p>';
+  const open = state.faqOpen || [];
+  const list = faqs.map(f=>{
+    const isOpen = open.includes(f.id);
+    return `<div class="faq-item ${isOpen?'open':''}" data-faq-text="${escapeHtml((f.question+' '+f.answer).toLowerCase())}">
+      <button type="button" class="faq-q" data-action="toggle-faq" data-id="${f.id}"><span>${escapeHtml(f.question)}</span><span class="gch-caret">${isOpen?'▾':'▸'}</span></button>
+      ${isOpen ? `<div class="faq-a">${renderKapLinks(renderBoldMarkers(escapeHtml(f.answer))).replace(/\n/g,'<br>')}
+        <div class="faq-a-tools"><button type="button" class="gch-link pg-danger-link" data-action="delete-faq" data-id="${f.id}">Frage löschen</button></div></div>` : ''}
+    </div>`;
+  }).join('');
   const addForm = state.addingFaq ? `
     <div class="inline-form">
       <label class="field-label">Frage</label>
@@ -5945,8 +6219,11 @@ function renderFaqTab(dd){
         <button type="button" class="btn btn-add" data-action="confirm-add-faq">Speichern</button>
         <button type="button" class="btn" data-action="cancel-add-faq">Abbrechen</button>
       </div>
-    </div>` : `<button type="button" class="btn" data-action="show-add-faq">+ Neue Frage</button>`;
-  return `${addForm}<div style="margin-top:16px;">${list}</div>`;
+    </div>` : `<button type="button" class="btn pg-add-btn" data-action="show-add-faq">+ Eigene Frage hinzufügen</button>`;
+  return `
+    ${faqs.length > 4 ? `<input class="input pg-search" id="faq-search" type="search" placeholder="Fragen durchsuchen …" autocomplete="off">` : ''}
+    ${faqs.length ? `<div class="pg-card faq-list">${list}</div><p class="empty-state" id="faq-nohit" style="display:none;">Keine passende Frage gefunden.</p>` : '<p class="empty-state">Noch keine Fragen eingetragen.</p>'}
+    ${addForm}`;
 }
 async function confirmAddFaq(){
   const question = document.getElementById('new-faq-question').value.trim();
@@ -6009,48 +6286,84 @@ async function doTranslate(){
     resultEl.innerHTML = '<p class="hint-text">Übersetzung fehlgeschlagen (keine Verbindung zum Dienst).</p>';
   }
 }
+function phraseKey(local){
+  return (local||'').replace(/\([^)]*\)/g,' ').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+}
+/* Doppelte Vokabeln entfernen: gleiche Fremdsprache (ohne Aussprache, Akzente, Groß/Klein) = doppelt.
+   Behalten wird der ausführlichere Eintrag (mit Aussprache/Kategorie), an der Position des ersten. */
+function dedupePhrases(dd){
+  const list = dd.phrases || [];
+  const keep = [], idx = {};
+  let removed = 0;
+  const score = (p)=> (/\(/.test(p.local)?2:0) + (p.category?1:0) + (p.src==='guide'?1:0) + (p.local||'').length/1000;
+  list.forEach(p=>{
+    const k = phraseKey(p.local) + '|' ;
+    const key = phraseKey(p.local);
+    if(!key){ keep.push(p); return; }
+    if(key in idx){
+      removed++;
+      const j = idx[key];
+      if(score(p) > score(keep[j])) keep[j] = Object.assign({}, p, {id:keep[j].id});
+    } else { idx[key] = keep.length; keep.push(p); }
+  });
+  dd.phrases = keep;
+  return removed;
+}
+function phraseParts(local){
+  const m = (local||'').match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+  return m ? {word:m[1], say:m[2]} : {word:local, say:''};
+}
 function renderPhrasesTab(dd){
   const dest = getCurrentDest();
   const langInfo = DEST_LANG[dest.id] || {code:'en', speech:'en-US', name:'die Landessprache'};
+  if(dedupePhrases(dd)) saveDestData(state.destId);
   const phrases = dd.phrases || [];
-  const list = phrases.length ? phrases.map(p=>`
-    <div class="diary-entry">
-      <div class="diary-date">${escapeHtml(p.local)}</div>
-      <div class="diary-text">${escapeHtml(p.german)}</div>
-      <div class="form-actions" style="margin-top:8px;">
-        <button type="button" class="btn" data-action="speak-phrase" data-text="${escapeHtml(p.local)}" style="padding:6px 12px;font-size:12px;">${ICON.volumeHigh} Anhören</button>
-        <button type="button" class="btn btn-danger" data-action="delete-phrase" data-id="${p.id}">Löschen</button>
+  const cats = [...new Set(phrases.map(p=>p.category).filter(Boolean))];
+  const cat = cats.includes(state.phraseCat) ? state.phraseCat : 'alle';
+  const shown = cat==='alle' ? phrases : phrases.filter(p=>p.category===cat);
+  const edit = !!state.phraseEdit;
+  const rows = shown.map(p=>{
+    const x = phraseParts(p.local);
+    return `<div class="vocab-row" data-search-text="${escapeHtml((p.local+' '+p.german).toLowerCase())}">
+      <div class="vocab-main">
+        <div class="vocab-de">${escapeHtml(p.german)}</div>
+        <div class="vocab-local">${escapeHtml(x.word)}${x.say ? ` <span class="vocab-say">${escapeHtml(x.say)}</span>` : ''}</div>
       </div>
-    </div>`).join('') : '<p class="empty-state">Noch keine Vokabeln eingetragen.</p>';
+      ${edit ? `<button type="button" class="poi2-icon danger" data-action="delete-phrase" data-id="${p.id}" aria-label="Löschen">${ICON.trash}</button>`
+             : `<button type="button" class="poi2-icon" data-action="speak-phrase" data-text="${escapeHtml(x.word)}" aria-label="Anhören">${ICON.volumeHigh}</button>`}
+    </div>`;
+  }).join('');
   const addForm = state.addingPhrase ? `
     <div class="inline-form">
-      <label class="field-label">Fremdsprache</label>
-      <input class="input" id="new-phrase-local" placeholder="z.B. Kalimera" style="margin-bottom:8px;">
       <label class="field-label">Deutsch</label>
       <input class="input" id="new-phrase-german" placeholder="z.B. Guten Morgen" style="margin-bottom:8px;">
+      <label class="field-label">${escapeHtml(langInfo.name)}</label>
+      <input class="input" id="new-phrase-local" placeholder="z.B. Kalimera" style="margin-bottom:8px;">
       <div class="form-actions">
         <button type="button" class="btn btn-add" data-action="confirm-add-phrase">Speichern</button>
         <button type="button" class="btn" data-action="cancel-add-phrase">Abbrechen</button>
       </div>
-    </div>` : `<button type="button" class="btn" data-action="show-add-phrase">+ Vokabel hinzufügen</button>`;
-
+    </div>` : `<button type="button" class="btn pg-add-btn" data-action="show-add-phrase">+ Vokabel hinzufügen</button>`;
   return `
-    <h3 class="section-title">Live-Übersetzer (Deutsch → ${escapeHtml(langInfo.name)})</h3>
-    <div class="inline-form">
-      <textarea class="textarea" id="translate-input" placeholder="Text auf Deutsch eingeben…" style="min-height:60px;"></textarea>
-      <button type="button" class="btn btn-add" data-action="do-translate" style="margin-top:8px;">Übersetzen</button>
+    <div class="pg-card pg-pad">
+      <div class="bk-kicker">Übersetzer · Deutsch → ${escapeHtml(langInfo.name)}</div>
+      <textarea class="textarea" id="translate-input" placeholder="Text auf Deutsch eingeben…" style="min-height:56px;margin-top:8px;"></textarea>
+      <button type="button" class="btn btn-add" data-action="do-translate" style="margin-top:8px;width:100%;">Übersetzen</button>
       <div id="translate-result" style="margin-top:10px;"></div>
     </div>
-    <h3 class="section-title" style="margin-top:28px;">Vokabeln</h3>
-    ${addForm}
-    <div style="margin-top:16px;">${list}</div>
-  `;
+    <div class="pg-sec-head"><h3 class="section-title">Vokabeln <span class="seg-n" style="display:inline-block;">${phrases.length}</span></h3>
+      ${phrases.length ? `<button type="button" class="gch-link" data-action="toggle-phrase-edit">${edit ? 'Fertig' : 'Bearbeiten'}</button>` : ''}</div>
+    ${cats.length > 1 ? `<div class="pg-chips">${['alle',...cats].map(c=>`<button type="button" class="gch-chip ${cat===c?'active':''}" data-action="phrase-cat" data-cat="${escapeHtml(c)}">${c==='alle'?'Alle':escapeHtml(c)}</button>`).join('')}</div>` : ''}
+    ${phrases.length > 10 ? `<input class="input pg-search" id="phrase-search" type="search" placeholder="Vokabeln durchsuchen …" autocomplete="off">` : ''}
+    ${phrases.length ? `<div class="pg-card">${rows}</div><p class="empty-state" id="phrase-nohit" style="display:none;">Keine passende Vokabel.</p>` : '<p class="empty-state">Noch keine Vokabeln eingetragen.</p>'}
+    ${addForm}`;
 }
 async function confirmAddPhrase(){
   const german = document.getElementById('new-phrase-german').value.trim();
   const local = document.getElementById('new-phrase-local').value.trim();
   if(!german || !local) return;
   const dd = destDataCache[state.destId];
+  if(dd.phrases.some(p=>phraseKey(p.local)===phraseKey(local))){ showToast('Diese Vokabel gibt es schon.'); return; }
   dd.phrases.push({id:genId(), german, local});
   await saveDestData(state.destId);
   state.addingPhrase = false;
@@ -6857,7 +7170,7 @@ function parseMarkdownV3(text, destId){
         out.hikes.push({id:genId(), title:d.name||plain(sec.title), distanceKm:d.laenge_km||'', durationText:d.dauer||'',
           difficulty:d.schwierigkeit||'', description:desc, gpxTrack:null, elevationGain:parseInt(d.hoehenmeter_auf,10)||null,
           elevationLoss:parseInt(d.hoehenmeter_ab,10)||null, startLat:parseFloat(d.start_lat)||null, startLng:parseFloat(d.start_lng)||null,
-          endName:d.ende||'', loop:(d.rundweg||'')==='ja', season:d.saison||'', fee:d.gebuehr||'', guideId:d.id||'', src:'guide'});
+          endName:d.ende||'', loop:(d.rundweg||'')==='ja', season:d.saison||'', fee:d.gebuehr||'', komootUrl:normalizeKomootUrl(d.komoot||''), guideId:d.id||'', src:'guide'});
       });
       out.guideFields.hiking = join(ch.blocks);
       return;
@@ -6973,11 +7286,12 @@ async function applyMarkdownV3(text, fileName){
   replace('routes', r.routes);
   replace('faq', r.faq);
   replace('phrases', r.phrases);
+  dedupePhrases(dd);
   // Wanderungen: Protokolle bereits gelaufener Touren behalten
   const oldHikes = dd.hikingRoutes || [];
   r.hikes.forEach(h=>{
     const old = oldHikes.find(o=>o.src==='guide' && o.guideId && o.guideId===h.guideId);
-    if(old){ h.hikeLogs = old.hikeLogs || []; if(old.gpxTrack) h.gpxTrack = old.gpxTrack; }
+    if(old){ h.hikeLogs = old.hikeLogs || []; if(old.gpxTrack){ h.gpxTrack = old.gpxTrack; if(old.elevationGain && !h.elevationGain) h.elevationGain = old.elevationGain; } if(old.komootUrl && !h.komootUrl) h.komootUrl = old.komootUrl; }
   });
   replace('hikingRoutes', r.hikes);
   if(r.packingIntro) dd.packingIntro = r.packingIntro;
@@ -7131,27 +7445,79 @@ async function locateMeForWeather(){
 }
 
 /* ---------- Listen tab ---------- */
-function renderListenTab(dd){
+const LIST_DEFS = [
+  ['packing','Packliste','Gegenstand hinzufügen'],
+  ['todos','To-Do','Aufgabe hinzufügen'],
+  ['checklist','Checklisten','Punkt hinzufügen'],
+  ['bucketlist','Bucket-Liste','Erlebnis hinzufügen']
+];
+/* Gemeinsame Listen-Ansicht: Fortschritt, Gruppen als Karten, Bearbeiten-Modus, Schnell-Hinzufügen */
+function renderListPanel(o){
+  // o = {items, key, intro, notes, addLabel, toggleAction, deleteAction, addAction, attrs}
+  const items = o.items || [];
+  const done = items.filter(i=>i.checked).length;
+  const edit = !!state.listEdit;
+  const attrs = o.attrs || '';
+  const row = (it)=>`
+    <div class="lrow ${it.checked?'checked':''}">
+      <div class="checkbox ${it.checked?'checked':''}" data-action="${o.toggleAction}" data-list="${o.key}" data-id="${it.id}" ${attrs}>${it.checked?'✓':''}</div>
+      <div class="lrow-text" data-action="${o.toggleAction}" data-list="${o.key}" data-id="${it.id}" ${attrs}>${escapeHtml(it.text)}</div>
+      ${edit ? `<button type="button" class="lrow-del" data-action="${o.deleteAction}" data-list="${o.key}" data-id="${it.id}" ${attrs} aria-label="Löschen">${ICON.trash}</button>` : ''}
+    </div>`;
+  let body = '';
+  if(!items.length){
+    body = '<p class="empty-state">Noch nichts eingetragen.</p>';
+  } else if(!items.some(i=>i.group)){
+    body = `<div class="pg-card lgroup-body">${items.map(row).join('')}</div>`;
+  } else {
+    const groups = [];
+    items.forEach(it=>{ const g = it.group || ''; let x = groups.find(y=>y.name===g); if(!x){ x = {name:g, items:[]}; groups.push(x); } x.items.push(it); });
+    const openSet = state.listOpenGroups || [];
+    body = groups.map(g=>{
+      const gk = o.key+':'+g.name;
+      const gDone = g.items.filter(i=>i.checked).length;
+      const isOpen = openSet.includes(gk);
+      const complete = gDone===g.items.length;
+      return `<div class="pg-card lgroup ${isOpen?'open':''}">
+        <button type="button" class="lgroup-head" data-action="toggle-list-group" data-key="${escapeHtml(gk)}">
+          <span class="lgroup-title">${escapeHtml(g.name || 'Eigene Einträge')}</span>
+          <span class="lgroup-count ${complete?'complete':''}">${complete ? '✓ ' : ''}${gDone}/${g.items.length}</span>
+          <span class="gch-caret">${isOpen?'▾':'▸'}</span>
+        </button>
+        <div class="lgroup-bar"><span style="width:${gDone/g.items.length*100}%"></span></div>
+        ${isOpen ? `<div class="lgroup-body">${g.items.map(row).join('')}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+  const pct = items.length ? Math.round(done/items.length*100) : 0;
   return `
-    <h3 class="section-title">Packliste</h3>
-    ${dd.packingIntro ? `<p class="hint-text" style="margin-top:0;">${escapeHtml(dd.packingIntro)}</p>` : ''}
-    ${renderCheckList(dd.packing,'packing')}
-    ${renderAddItemForm('packing','Gegenstand hinzufügen')}
-    ${dd.packingNotes ? `<div style="margin-top:14px;">${renderGuideCalloutText(dd.packingNotes)}</div>` : ''}
-    <h3 class="section-title" style="margin-top:28px;">To-Do</h3>
-    ${renderCheckList(dd.todos,'todos')}
-    ${renderAddItemForm('todos','Aufgabe hinzufügen')}
-    <h3 class="section-title" style="margin-top:28px;">Checklisten</h3>
-    ${dd.checklistIntro ? `<p class="hint-text" style="margin-top:0;">${escapeHtml(dd.checklistIntro)}</p>` : ''}
-    ${renderCheckList(dd.checklist,'checklist')}
-    ${renderAddItemForm('checklist','Punkt hinzufügen')}
-    ${dd.checklistNotes ? `<div style="margin-top:14px;">${renderGuideCalloutText(dd.checklistNotes)}</div>` : ''}
-    <h3 class="section-title" style="margin-top:28px;">Bucketliste</h3>
-    ${dd.bucketlistIntro ? `<p class="hint-text" style="margin-top:0;">${escapeHtml(dd.bucketlistIntro)}</p>` : ''}
-    ${renderCheckList(dd.bucketlist,'bucketlist')}
-    ${renderAddItemForm('bucketlist','Bucketlist-Eintrag hinzufügen')}
-    ${dd.bucketlistNotes ? `<div style="margin-top:14px;">${renderGuideCalloutText(dd.bucketlistNotes)}</div>` : ''}
-  `;
+    ${items.length ? `<div class="lprog">
+      <div class="lprog-top"><span><b>${done}</b> von ${items.length} erledigt</span>
+        <span class="lprog-tools">
+          ${items.some(i=>i.group) ? `<button type="button" class="gch-link" data-action="list-open-all" data-list="${o.key}">${(state.listOpenGroups||[]).some(k=>k.startsWith(o.key+':')) ? 'Alle zu' : 'Alle auf'}</button>` : ''}
+          <button type="button" class="gch-link" data-action="toggle-list-edit">${edit ? 'Fertig' : 'Bearbeiten'}</button>
+        </span></div>
+      <div class="bk-bar" style="margin:8px 0 0;"><span style="width:${pct}%;background:var(--green);"></span></div>
+    </div>` : ''}
+    ${o.intro ? `<p class="pg-intro">${escapeHtml(o.intro)}</p>` : ''}
+    ${body}
+    <div class="ladd">
+      <input class="input" id="quick-add-${o.key}" placeholder="${escapeHtml(o.addLabel)} …" autocomplete="off">
+      <button type="button" class="btn btn-add" data-action="${o.addAction}" data-list="${o.key}" ${attrs} aria-label="Hinzufügen">${PLUS_SVG}</button>
+    </div>
+    ${o.notes ? `<div style="margin-top:14px;">${renderGuideCalloutText(o.notes)}</div>` : ''}`;
+}
+function renderListenTab(dd){
+  const tab = LIST_DEFS.some(x=>x[0]===state.listTab) ? state.listTab : 'packing';
+  const def = LIST_DEFS.find(x=>x[0]===tab);
+  const tabs = LIST_DEFS.map(([k,l])=>{
+    const it = dd[k] || []; const d = it.filter(i=>i.checked).length;
+    return `<button type="button" class="ltab ${tab===k?'active':''}" data-action="list-tab" data-tab="${k}"><span class="ltab-l">${l}</span><span class="ltab-n">${it.length ? `${d}/${it.length}` : 'leer'}</span></button>`;
+  }).join('');
+  return `
+    <div class="ltabs">${tabs}</div>
+    ${renderListPanel({items:dd[tab]||[], key:tab, intro:dd[tab+'Intro']||'', notes:dd[tab+'Notes']||'', addLabel:def[2],
+      toggleAction:'toggle-check', deleteAction:'delete-item', addAction:'quick-add-item'})}`;
 }
 function renderCheckList(items, listKey){
   if(!items.length) return '<p class="empty-state">Noch nichts eingetragen.</p>';
@@ -7594,7 +7960,7 @@ function renderDokumenteTab(dd){
         <button type="button" class="btn btn-add" data-action="confirm-add-doc" data-kind="docs">Hinzufügen</button>
         <button type="button" class="btn" data-action="cancel-add-doc">Abbrechen</button>
       </div>
-    </div>` : `<button type="button" class="btn" data-action="show-add-doc" data-kind="docs">+ Info hinzufügen</button>`;
+    </div>` : `<button type="button" class="btn pg-add-btn" data-action="show-add-doc" data-kind="docs">+ Info hinzufügen</button>`;
 
   const emergencyForm = state.addingDoc==='emergency' ? `
     <div class="inline-form">
@@ -7604,7 +7970,7 @@ function renderDokumenteTab(dd){
         <button type="button" class="btn btn-add" data-action="confirm-add-doc" data-kind="emergency">Hinzufügen</button>
         <button type="button" class="btn" data-action="cancel-add-doc">Abbrechen</button>
       </div>
-    </div>` : `<button type="button" class="btn" data-action="show-add-doc" data-kind="emergency">+ Kontakt hinzufügen</button>`;
+    </div>` : `<button type="button" class="btn pg-add-btn" data-action="show-add-doc" data-kind="emergency">+ Kontakt hinzufügen</button>`;
 
   return `
     <h3 class="section-title">Wichtige Infos</h3>
@@ -7794,7 +8160,14 @@ async function onAppClick(e){
     case 'start-hike-tracking': await startHikeTracking(el.dataset.destId, el.dataset.id); break;
     case 'stop-hike-tracking': await stopHikeTracking(); break;
     case 'delete-hike-log': await deleteHikeLog(el.dataset.routeId, el.dataset.logId); break;
-    case 'trigger-gpx-upload': document.getElementById('gpx-file-input').click(); break;
+    case 'trigger-gpx-upload': state.gpxTargetId = null; document.getElementById('gpx-file-input').click(); break;
+    case 'attach-gpx': state.gpxTargetId = el.dataset.id; document.getElementById('gpx-file-input').click(); break;
+    case 'toggle-hike': { const o = state.hikeOpen || (state.hikeOpen = []); const k = o.indexOf(el.dataset.id); if(k>=0) o.splice(k,1); else o.push(el.dataset.id); render(); break; }
+    case 'hike-filter': state.hikeFilter = el.dataset.f; render(); break;
+    case 'toggle-poi-edit': state.poiEdit = !state.poiEdit; render(); break;
+    case 'toggle-poi-group': { const o = state.poiOpenGroups || (state.poiOpenGroups = []); const k = o.indexOf(el.dataset.key); if(k>=0) o.splice(k,1); else o.push(el.dataset.key); render(); break; }
+    case 'phrase-cat': state.phraseCat = el.dataset.cat; render(); break;
+    case 'toggle-phrase-edit': state.phraseEdit = !state.phraseEdit; render(); break;
     case 'toggle-hiking-search':
       state.showHikingSearch = !state.showHikingSearch;
       state.hikingSearchResults = null;
@@ -8117,6 +8490,42 @@ async function onAppClick(e){
     case 'show-add-doc': state.addingDoc=el.dataset.kind; render(); break;
     case 'cancel-add-doc': state.addingDoc=null; render(); break;
     case 'confirm-add-doc': await confirmAddDoc(el.dataset.kind); break;
+    case 'list-tab': state.listTab = el.dataset.tab; state.listEdit = false; render(); break;
+    case 'toggle-list-edit': state.listEdit = !state.listEdit; render(); break;
+    case 'toggle-list-group': { const o = state.listOpenGroups || (state.listOpenGroups = []); const k = o.indexOf(el.dataset.key); if(k>=0) o.splice(k,1); else o.push(el.dataset.key); render(); break; }
+    case 'list-open-all': {
+      const key = el.dataset.list; const o = state.listOpenGroups || [];
+      const c = getListContainer(); const items = (key.startsWith('bucket:') ? (destDataCache[key.slice(7)]||{}).bucketlist : c[key]) || [];
+      const groups = [...new Set(items.map(i=>i.group||''))].map(g=>key+':'+g);
+      state.listOpenGroups = o.some(k=>k.startsWith(key+':')) ? o.filter(k=>!k.startsWith(key+':')) : [...o, ...groups];
+      render(); break;
+    }
+    case 'quick-add-guide-bucket': {
+      const destId = el.dataset.destId; const inp = document.getElementById('quick-add-bucket:'+destId);
+      const text = inp ? inp.value.trim() : ''; if(!text){ if(inp) inp.focus(); break; }
+      const dd = destDataCache[destId]; (dd.bucketlist = dd.bucketlist || []).push({id:genId(), text, checked:false});
+      await saveDestData(destId); render(); break;
+    }
+    case 'quick-add-item': {
+      const key = el.dataset.list; const inp = document.getElementById('quick-add-'+key);
+      const text = inp ? inp.value.trim() : ''; if(!text){ if(inp) inp.focus(); break; }
+      const c = getListContainer(); (c[key] = c[key] || []).push({id:genId(), text, checked:false});
+      await saveListContainer(); render();
+      setTimeout(()=>{ const i = document.getElementById('quick-add-'+key); if(i) i.focus(); }, 30);
+      break;
+    }
+    case 'open-route': state.routeOpen = el.dataset.id; render(); scrollToGuideTop(); break;
+    case 'close-route': state.routeOpen = null; render(); scrollToGuideTop(); break;
+    case 'toggle-faq': { const o = state.faqOpen || (state.faqOpen = []); const k = o.indexOf(el.dataset.id); if(k>=0) o.splice(k,1); else o.push(el.dataset.id); render(); break; }
+    case 'goto-kap': {
+      const id = V3_KAP_IDS[parseInt(el.dataset.kap,10)-1];
+      if(id==='routen' || id==='listen' || id==='faq'){ state.routeOpen = null; await switchTab(id); scrollToGuideTop(); break; }
+      const f = V3_FIELD[id]; if(!f) break;
+      state.tab = 'guide'; state.guideChapter = f; state.editingGuideField = null;
+      const dd = destDataCache[state.destId]; const n = splitGuideSections(dd.guide[f]||'').secs.length;
+      state.guideOpenSecs = n <= 2 ? [...Array(n).keys()] : [];
+      render(); scrollToGuideTop(); break;
+    }
     case 'delete-doc': await deleteDoc(el.dataset.kind, el.dataset.id); break;
   }
 }
@@ -8298,6 +8707,16 @@ document.getElementById('app').addEventListener('change', async function(e){
   }
 });
 
+document.getElementById('app').addEventListener('input', function(e){
+  if(e.target.id==='faq-search' || e.target.id==='phrase-search' || e.target.id==='poi-search'){
+    const q = e.target.value.trim().toLowerCase();
+    const sel = {'faq-search':'.faq-item','phrase-search':'.vocab-row','poi-search':'.poi2-row'}[e.target.id];
+    let hits = 0;
+    document.querySelectorAll(sel).forEach(el=>{ const ok = !q || (el.dataset.searchText||el.dataset.faqText||'').includes(q); el.style.display = ok ? '' : 'none'; if(ok) hits++; });
+    document.querySelectorAll('[data-search-group]').forEach(g=>{ const any = [...g.querySelectorAll(sel)].some(x=>x.style.display!=='none'); g.style.display = any ? '' : 'none'; if(q && any) g.classList.add('force-open'); else g.classList.remove('force-open'); });
+    const nh = document.getElementById(e.target.id.replace('-search','-nohit')); if(nh) nh.style.display = hits ? 'none' : '';
+  }
+});
 document.getElementById('app').addEventListener('focusout', async function(e){
   if(e.target.dataset && e.target.dataset.guideField){
     const dd = destDataCache[state.destId];
