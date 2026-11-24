@@ -1,5 +1,5 @@
 // Reisebärchi on Tour – Service Worker v2.0
-const CACHE_NAME = 'reisebaerchi-v5';
+const CACHE_NAME = 'reisebaerchi-v7';
 const APP_SHELL = [
   './',
   './index.html',
